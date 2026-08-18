@@ -1,0 +1,20 @@
+{
+  "name": "city-idle",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "도시 발전 방치형 게임 - 코어 프로토타입",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit",
+    "sim": "tsx tools/balance-sim.ts"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
