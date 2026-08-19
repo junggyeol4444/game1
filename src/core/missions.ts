@@ -10,6 +10,7 @@ export type MissionEvent =
   | 'levelBought'
   | 'manualCycle'
   | 'adWatched'
+  | 'minigamePlayed'
   | `produced:${BusinessId}`;
 
 export interface MissionReward {
@@ -64,6 +65,14 @@ export const MISSION_DEFS: MissionDef[] = [
     target: () => 3,
     label: (t) => `부스터 ${t}회 사용`,
     reward: (s) => ({ kind: 'cash', amount: cashPerSec(s) * 1800 }),
+  },
+  {
+    id: 'minigame2',
+    event: 'minigamePlayed',
+    icon: '🎮',
+    target: () => 2,
+    label: (t) => `미니게임 ${t}판 하기`,
+    reward: (s) => ({ kind: 'cash', amount: cashPerSec(s) * 2400 }),
   },
   ...BUSINESSES.map<MissionDef>((def) => ({
     id: `produce_${def.id}`,

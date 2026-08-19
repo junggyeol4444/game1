@@ -2,16 +2,31 @@ import { BUSINESSES, BUSINESS_BY_ID } from '../data/businesses';
 import { CONFIG } from '../data/config';
 import { AdService, type AdPlacement, type AdProvider } from './ads';
 import {
+  businessRatePerSecond,
   computeOffline,
+  equipCost,
+  invalidateStats,
   isAutomated,
   isUnlocked,
   managerCost,
   produce,
+  projectedEfficiency,
   tickBusinesses,
   totalCashPerSecond,
   unitCost,
   unitMaxAffordable,
 } from './economy';
+import {
+  buildFacility as doBuildFacility,
+  buyTrack as doBuyTrack,
+  buildPrice,
+  isBuilt,
+  trackPrice,
+} from './facilities';
+import { tickEvents } from './events';
+import type { FacilityId } from '../data/buildings';
+import { MINIGAMES, MINIGAME_SPOILS, RARE_FISH } from '../ui/minigames/games';
+import { playMinigame, type MinigameResult } from '../ui/minigames/host';
 import { PIGGY_GOAL, piggyReady, type IapId, type PurchaseProvider } from './iap';
 import {
   allMissionsClaimed,
@@ -31,6 +46,7 @@ type GameEvent =
   | 'toast'
   | 'unlock'
   | 'cityLevel'
+  | 'cityEvent'
   | 'offline';
 
 type Listener = (payload?: unknown) => void;
@@ -119,6 +135,11 @@ export class Game {
     }
     if (unlocked.length > 0) this.emit('structure');
 
+    for (const notice of tickEvents(this.state, t)) {
+      this.toast(notice.text);
+      this.emit('cityEvent', notice);
+    }
+
     this.saveTimer += dt;
     if (this.saveTimer >= CONFIG.autosaveInterval) {
       this.saveTimer = 0;
@@ -181,6 +202,22 @@ export class Game {
     return true;
   }
 
+  /** 2단계 자동화: 설비 배치 (효율 50%) */
+  buyEquip(id: BusinessId, index: number): boolean {
+    const def = this.def(id);
+    const u = this.state.businesses[id].units[index];
+    if (u.equip || u.manager || u.level <= 0) return false;
+    const cost = equipCost(def, index);
+    if (this.state.resources.cash < cost) return false;
+    this.state.resources.cash -= cost;
+    u.equip = true;
+    this.state.shop.piggyValue += 1;
+    invalidateStats();
+    this.emit('structure');
+    this.toast(`${def.units[index].name} 설비 배치 (효율 50%)`);
+    return true;
+  }
+
   buyManager(id: BusinessId, index: number): boolean {
     const def = this.def(id);
     const u = this.state.businesses[id].units[index];
@@ -193,6 +230,106 @@ export class Game {
     this.emit('structure');
     this.toast(`${def.units[index].managerName} 고용 완료`);
     return true;
+  }
+
+  // ---------- 시설 건물 ----------
+  buildFacility(id: FacilityId): boolean {
+    const ok = doBuildFacility(this.state, id);
+    if (ok) {
+      invalidateStats();
+      this.state.shop.piggyValue += 10;
+      this.emit('structure');
+    }
+    return ok;
+  }
+
+  buyFacilityTrack(id: FacilityId, trackId: string): boolean {
+    const ok = doBuyTrack(this.state, id, trackId);
+    if (ok) {
+      invalidateStats();
+      this.state.shop.piggyValue += 1;
+      this.bump('levelBought', 1);
+      this.emit('structure');
+    }
+    return ok;
+  }
+
+  facilityBuilt(id: FacilityId): boolean {
+    return isBuilt(this.state, id);
+  }
+
+  facilityBuildPrice(id: FacilityId) {
+    return buildPrice(id);
+  }
+
+  facilityTrackPrice(id: FacilityId, trackId: string) {
+    return trackPrice(this.state, id, trackId);
+  }
+
+  // ---------- 미니게임 ----------
+  private refreshMinigameDay(id: BusinessId): void {
+    const m = this.state.minigames[id];
+    const day = todayKey(now());
+    if (m.day !== day) {
+      m.day = day;
+      m.plays = 0;
+    }
+  }
+
+  minigamePlaysLeft(id: BusinessId): number {
+    this.refreshMinigameDay(id);
+    return Math.max(0, CONFIG.minigame.freePlaysPerDay - this.state.minigames[id].plays);
+  }
+
+  /** 미니게임 1판. 무료 횟수를 다 쓰면 광고로 1판 더. */
+  async playMinigame(id: BusinessId): Promise<MinigameResult | null> {
+    this.refreshMinigameDay(id);
+    if (this.minigamePlaysLeft(id) <= 0) {
+      const ok = await this.watchAd('minigame');
+      if (!ok) return null;
+    } else {
+      this.state.minigames[id].plays += 1;
+    }
+    const def = MINIGAMES[id];
+    if (!def) return null;
+    const result = await playMinigame(def);
+    if (result) this.applyMinigameResult(id, result);
+    this.persist();
+    this.emit('structure');
+    return result;
+  }
+
+  private applyMinigameResult(id: BusinessId, r: MinigameResult): void {
+    const s = this.state;
+    const def = this.def(id);
+    const eff = projectedEfficiency(s, def);
+    const rate = businessRatePerSecond(s, def).cash * eff;
+    const reward = Math.max(200, rate * r.rewardSeconds * r.mult);
+    s.resources.cash += reward;
+    s.stats.cashEarnedRun += reward;
+    s.stats.cashEarnedTotal += reward;
+
+    const m = s.minigames[id];
+    m.bestScore = Math.max(m.bestScore, r.score);
+    m.boostMult = r.mult;
+    m.boostUntil = now() + CONFIG.minigame.boostSeconds * 1000;
+
+    // 자동화로는 못 얻는 특산물
+    const spoil = MINIGAME_SPOILS[id];
+    const qty = Math.max(1, Math.round(r.ratio * 5));
+    if (spoil.key === 'fish') {
+      const idx = Math.min(RARE_FISH.length - 1, Math.floor(r.ratio * RARE_FISH.length));
+      const name = RARE_FISH[idx];
+      if (!s.collection.fish.includes(name)) {
+        s.collection.fish.push(name);
+        this.toast(`🐠 새 어종 발견: ${name}`);
+      }
+    } else {
+      s.collection[spoil.key] += qty;
+    }
+    s.shop.piggyValue += 4;
+    this.bump('minigamePlayed', 1);
+    invalidateStats();
   }
 
   // ---------- 도시 시설 ----------

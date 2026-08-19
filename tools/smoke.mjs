@@ -17,10 +17,10 @@ page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 
 const shot = (n) => page.screenshot({ path: `${OUT}/${n}.png` });
-const tab = (i) => page.locator('.tabbar button').nth(i);
+const menu = (i) => page.locator('.menubar button').nth(i);
 
 async function dismiss() {
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 10; i++) {
     if (!(await page.locator('.scrim').count())) return;
     const top = page.locator('.scrim').last();
     const ok = top.locator('button:has-text("확인")');
@@ -29,122 +29,125 @@ async function dismiss() {
     await page.waitForTimeout(250);
   }
 }
+async function settle() {
+  let clean = 0;
+  for (let i = 0; i < 30 && clean < 3; i++) {
+    if (await page.locator('.scrim').count()) { await dismiss(); clean = 0; }
+    else clean++;
+    await page.waitForTimeout(200);
+  }
+}
+const goto = (id) => page.evaluate((i) => window.goto(i), id);
+async function back() {
+  await settle();
+  await page.locator('.id-chip.back').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(300);
+}
 
 await page.goto(url, { waitUntil: 'load' });
-await page.waitForTimeout(600);
-await shot('01-start');
+await page.waitForTimeout(800);
+await shot('01-city-empty');
 
-// 광산 탭에서 수동 가동
-await tab(1).click();
-await page.waitForTimeout(300);
-for (let i = 0; i < 8; i++) {
-  await page.locator('.u-icon.tappable').first().click({ force: true, timeout: 2000 }).catch(() => {});
+// 광산 진입 후 수동 가동
+await goto('mine');
+await page.waitForTimeout(400);
+for (let i = 0; i < 6; i++) {
+  await page.locator('.band.tappable').first().click({ force: true, timeout: 2000 }).catch(() => {});
   await page.waitForTimeout(150);
 }
-await shot('02-mine-manual');
+await shot('02-mine');
 
-// 자금 지급 후 광산 전개
-await page.evaluate(() => window.game.devGrant(1e12));
-await page.evaluate(() => {
-  const g = window.game;
-  g.buyMode = 100;
-  for (let i = 0; i < 6; i++) { g.buyUnit('mine', i); g.buyManager('mine', i); }
-});
-await page.waitForTimeout(1000);
+// 미니게임 1판
+await page.locator('button:has-text("미니게임")').first().click({ timeout: 3000 }).catch(() => {});
+await page.waitForTimeout(1200);
+await shot('03-minigame-mine');
+for (let i = 0; i < 24; i++) {
+  await page.locator('.mg-canvas').click({ position: { x: 180, y: 260 }, timeout: 1500 }).catch(() => {});
+  await page.waitForTimeout(280);
+}
+await page.waitForTimeout(2500);
 await dismiss();
-await shot('03-mine-built');
 
-// 도시 성장
+// 자금/진행 치트로 도시를 키운다
+// 1) 도시 레벨을 먼저 올린다 (해금 조건)
 await page.evaluate(() => {
   const g = window.game;
+  g.state.resources.cash = 1e22;
+  g.state.resources.material = 1e18;
   g.state.city.taxRun = 5e11;
-  g.state.resources.cash = 1e20;
-  g.emit('structure');
 });
-await page.waitForTimeout(800);
-await dismiss();
-await tab(0).click();
-await page.waitForTimeout(600);
-await shot('04-city-grown');
-
-// 모든 사업에 유닛/매니저 배치 (장면이 실제로 움직이는지 확인)
+await page.waitForTimeout(900);
+await settle();
+// 2) 해금된 뒤에 사업/시설을 채운다
 await page.evaluate(() => {
   const g = window.game;
-  g.state.resources.cash = 1e30;
-  g.buyMode = 10;
-  for (const id of ['factory', 'fishery', 'park', 'corp']) {
-    for (let i = 0; i < 6; i++) { g.buyUnit(id, i); g.buyManager(id, i); }
-  }
+  g.state.resources.cash = 1e22;
+  g.state.resources.material = 1e18;
   g.buyMode = 100;
+  for (const id of ['mine', 'factory', 'fishery', 'park', 'corp']) {
+    for (let i = 0; i < 6; i++) { g.buyUnit(id, i); g.buyEquip(id, i); g.buyManager(id, i); }
+  }
+  for (const f of ['housing', 'shops', 'power', 'school', 'hospital', 'road', 'green', 'fire', 'police']) {
+    g.buildFacility(f);
+    const def = g.state.facilities[f];
+    if (def) for (const tr of Object.keys(def.tracks)) for (let k = 0; k < 8; k++) g.buyFacilityTrack(f, tr);
+  }
+  g.state.city.pop = 40000;
   g.emit('structure');
 });
 await page.waitForTimeout(1500);
-await dismiss();
+await settle();
+await back();
+await page.waitForTimeout(900);
+await shot('04-city-grown');
 
-// 공장 탭 (자원 사슬 표시 확인)
-await tab(2).click();
+// 지도 드래그 + 줌아웃
+await page.mouse.move(300, 400);
+await page.mouse.down();
+await page.mouse.move(80, 400, { steps: 12 });
+await page.mouse.up();
 await page.waitForTimeout(500);
-await shot('05-factory');
+await shot('05-city-pan');
 
-// 어항 탭
-await tab(3).click();
-await page.waitForTimeout(500);
-await shot('06-fishery');
-
-// 놀이공원 탭
-await tab(4).click();
-await page.waitForTimeout(500);
-await shot('07-park');
-
-// 기업 탭
-await tab(5).click();
-await page.waitForTimeout(500);
-await shot('08-corp');
-
-// 재개발 시트
-await tab(0).click();
+// 시설: 주거지
+await goto('housing');
+await page.waitForTimeout(600);
+await shot('06-housing');
+await page.locator('button:has-text("현황")').first().click({ timeout: 2000 }).catch(() => {});
 await page.waitForTimeout(400);
-await page.locator('button:has-text("재개발")').first().click({ timeout: 4000 }).catch(() => {});
-await page.waitForTimeout(500);
-await shot('09-prestige');
-await dismiss();
+await shot('07-housing-status');
+await back();
 
-// 상점
-await page.locator('button:has-text("상점")').first().click({ timeout: 4000 }).catch(() => {});
-await page.waitForTimeout(500);
-await shot('10-shop');
-await dismiss();
+// 시설: 발전소
+await goto('power');
+await page.waitForTimeout(600);
+await shot('08-power');
+await back();
 
-// 미션
-await page.locator('button:has-text("일일 미션")').first().click({ timeout: 4000 }).catch(() => {});
-await page.waitForTimeout(400);
-await shot('11-missions');
-await dismiss();
+// 놀이공원
+await goto('park');
+await page.waitForTimeout(600);
+await shot('09-park');
+await back();
 
-// 설정 (글자 크게)
-await page.locator('button:has-text("설정")').first().click({ timeout: 4000 }).catch(() => {});
-await page.waitForTimeout(400);
-await page.locator('.sheet button:has-text("아주 크게")').first().click({ timeout: 2000 }).catch(() => {});
-await page.waitForTimeout(400);
-await shot('12-settings-large');
-await dismiss();
-await tab(1).click();
-await page.waitForTimeout(400);
-await shot('13-large-text');
+// 하단 메뉴: 도감 / 레벨 / 건설 / 미션
+await settle(); await menu(0).click(); await page.waitForTimeout(500); await shot('10-collection'); await dismiss();
+await settle(); await menu(2).click(); await page.waitForTimeout(500); await shot('11-level'); await dismiss();
+await settle(); await menu(3).click(); await page.waitForTimeout(500); await shot('12-build'); await dismiss();
+await settle(); await menu(1).click(); await page.waitForTimeout(500); await shot('13-menu'); await dismiss();
 
-// 오프라인 복귀 모달 (세이브 시각을 3시간 전으로 되돌리고 리로드)
+// 오프라인 복귀
 await page.evaluate(() => {
   const g = window.game;
-  g.state.settings.textScale = 1;
   g.persist();
-  g.persist = () => {};   // 리로드 시 pagehide 저장이 lastSeen 을 덮어쓰지 않도록
+  g.persist = () => {};
   const key = 'city-idle-save-v1';
   const s = JSON.parse(localStorage.getItem(key));
   s.lastSeen = Date.now() - 3 * 3600 * 1000;
   localStorage.setItem(key, JSON.stringify(s));
 });
 await page.reload({ waitUntil: 'load' });
-await page.waitForTimeout(900);
+await page.waitForTimeout(1100);
 await shot('14-offline');
 
 console.log(errors.length ? 'CONSOLE ERRORS:\n' + errors.join('\n') : 'no console errors');

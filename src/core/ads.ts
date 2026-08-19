@@ -8,7 +8,8 @@ export type AdPlacement =
   | 'trialManager'
   | 'cashDrop'
   | 'prestigeBonus'
-  | 'missionReroll';
+  | 'missionReroll'
+  | 'minigame';
 
 export type AdResult = 'completed' | 'skipped' | 'failed';
 

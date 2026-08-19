@@ -17,6 +17,17 @@ import {
   unitCost,
 } from '../src/core/economy';
 import { applyCityLevelUps, blueprintsOnPrestige, cumulativeTaxForLevel } from '../src/core/progression';
+import { FACILITIES } from '../src/data/buildings';
+import {
+  buildFacility,
+  buildPrice,
+  buyTrack,
+  canAfford,
+  cityStats,
+  facilityUnlocked,
+  isBuilt,
+  trackPrice,
+} from '../src/core/facilities';
 import { createInitialState } from '../src/core/state';
 import { formatDuration, formatNumber } from '../src/core/num';
 
@@ -28,6 +39,33 @@ let t = 0;
 const dt = 2;
 const marks: string[] = [];
 const seenLevel = new Set<number>([1]);
+
+/** 시설: 지을 수 있으면 짓고, 부족한 쪽부터 올린다 */
+function facilityStep() {
+  for (const f of FACILITIES) {
+    if (!facilityUnlocked(state, f.id) || isBuilt(state, f.id)) continue;
+    if (canAfford(state, buildPrice(f.id))) buildFacility(state, f.id);
+  }
+  const cs = cityStats(state);
+  // 우선순위: 전력 -> 주거(노동력) -> 학교(산출) -> 상가(세수) -> 나머지
+  const order: string[] = [];
+  if (cs.powerEff < 1) order.push('power');
+  if (cs.laborEff < 1) order.push('housing', 'hospital');
+  order.push('school', 'shops', 'road', 'green', 'fire', 'police');
+  // 여유가 크면 굳이 더 올리지 않는다
+  if (cs.powerSupply < cs.powerDemand * 3) order.push('power');
+  if (cs.laborSupply < cs.laborDemand * 3) order.push('housing', 'hospital');
+  for (const fid of order) {
+    const def = FACILITIES.find((f) => f.id === fid);
+    if (!def || !isBuilt(state, def.id)) continue;
+    for (const tr of def.tracks) {
+      if (canAfford(state, trackPrice(state, def.id, tr.id))) {
+        buyTrack(state, def.id, tr.id);
+        return;
+      }
+    }
+  }
+}
 
 function buyStep(now: number) {
   // 1) 매니저 우선 (자동화가 방치형의 핵심 가치)
@@ -81,7 +119,10 @@ while (t < total) {
         `  도시 Lv.${String(state.city.level).padStart(2)}      @ ${formatDuration(t)}  (초당 ${formatNumber(totalCashPerSecond(state, 0))})`,
       );
   }
-  if (t % 60 === 0) for (let k = 0; k < 30; k++) buyStep(0);
+  if (t % 60 === 0) {
+    for (let k = 0; k < 30; k++) buyStep(0);
+    for (let k = 0; k < 6; k++) facilityStep();
+  }
   t += dt;
 }
 
@@ -91,6 +132,14 @@ console.log(`\n최종 도시 레벨: ${state.city.level} / ${CONFIG.cityLevel.ma
 console.log(`누적 수익      : ${formatNumber(state.stats.cashEarnedRun)}`);
 console.log(`초당 수익      : ${formatNumber(totalCashPerSecond(state, 0))}`);
 console.log(`재개발 설계도  : ${blueprintsOnPrestige(state)}`);
+const cs = cityStats(state);
+console.log(`\n도시 시설`);
+console.log(`  인구 ${formatNumber(state.city.pop)} / 상한 ${formatNumber(cs.popCap)}`);
+console.log(`  노동력 ${formatNumber(cs.laborSupply)} / ${formatNumber(cs.laborDemand)}  (가동률 ${Math.round(cs.laborEff * 100)}%)`);
+console.log(`  전력   ${formatNumber(cs.powerSupply)} / ${formatNumber(cs.powerDemand)}  (가동률 ${Math.round(cs.powerEff * 100)}%)`);
+console.log(`  세수 x${cs.taxMult.toFixed(2)} · 산출 x${cs.outputMult.toFixed(2)} · 물자 ${formatNumber(state.resources.material)}`);
+console.log(`  건설: ${FACILITIES.filter((f) => isBuilt(state, f.id)).map((f) => f.name).join(', ') || '없음'}`);
+
 console.log(`\n사업별 초당 산출`);
 for (const def of BUSINESSES) {
   if (!isUnlocked(state, def)) continue;

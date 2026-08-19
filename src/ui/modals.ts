@@ -1,11 +1,18 @@
 import { CONFIG } from '../data/config';
 import { BUSINESSES } from '../data/businesses';
+import { BUSINESS_TIERS, FACILITIES } from '../data/buildings';
+import { buildPrice, buildableFacilities, builtFacilities, canAfford, cityStats } from '../core/facilities';
+import { RARE_FISH } from './minigames/games';
+import { terrainName } from './cityMap';
 import { IAP_PRODUCTS } from '../core/iap';
 import { formatDuration, formatInt, formatNumber } from '../core/num';
 import { totalCashPerSecond, offlineCapSeconds, offlineRate, isUnlocked } from '../core/economy';
 import {
   blueprintUpgradeCost,
+  cityProgress,
   cumulativeTaxForLevel,
+  logisticsCost,
+  storageCost,
   visibleBlueprintUpgrades,
 } from '../core/progression';
 import { missionComplete, missionDef, missionTarget } from '../core/missions';
@@ -502,4 +509,299 @@ export function showCashDropSheet(game: Game): void {
 
 export function unlockedBusinesses(state: GameState): BusinessDef[] {
   return BUSINESSES.filter((b) => isUnlocked(state, b));
+}
+
+// ═══════════════ 건설 ═══════════════
+export function showBuildSheet(game: Game, onEnter: (id: string) => void): void {
+  const s = game.state;
+  sheet({
+    title: '건설',
+    sub: '도시 레벨이 오르면 지을 수 있는 건물이 늘어납니다',
+    build: (hd) => {
+      const buildable = buildableFacilities(s);
+      const locked = FACILITIES.filter((f) => s.city.level < f.unlockCityLevel);
+      const built = builtFacilities(s);
+
+      const card = (f: (typeof FACILITIES)[number], state: 'can' | 'locked' | 'built') => {
+        const p = buildPrice(f.id);
+        const ok = canAfford(s, p);
+        return h(
+          'div',
+          { class: 'card', style: { borderLeft: `4px solid ${f.color}` } },
+          h(
+            'div',
+            { class: 'row' },
+            h('span', { style: { fontSize: '26px' } }, f.icon),
+            h(
+              'div',
+              { class: 'grow' },
+              h('div', { style: { fontWeight: '800' } }, f.name),
+              h('div', { class: 'small muted' }, f.effect),
+              state === 'can'
+                ? h('div', { class: 'small', style: { marginTop: '3px' } }, `💰 ${fmt(s, p.cash)} · 📦 ${fmt(s, p.material)}`)
+                : null,
+            ),
+            state === 'locked'
+              ? h('span', { class: 'chip' }, `Lv.${f.unlockCityLevel}`)
+              : state === 'built'
+                ? h(
+                    'button',
+                    {
+                      onclick: () => {
+                        hd.close();
+                        onEnter(f.id);
+                      },
+                    },
+                    '들어가기',
+                  )
+                : h(
+                    'button',
+                    {
+                      class: ok ? 'gold' : '',
+                      disabled: !ok,
+                      onclick: () => {
+                        if (game.buildFacility(f.id)) {
+                          hd.close();
+                          onEnter(f.id);
+                        }
+                      },
+                    },
+                    '건설',
+                  ),
+          ),
+        );
+      };
+
+      return [
+        buildable.length ? h('h3', { class: 'muted' }, '지을 수 있는 건물') : null,
+        ...buildable.map((f) => card(f, 'can')),
+        built.length ? h('h3', { class: 'muted', style: { marginTop: '12px' } }, '건설 완료') : null,
+        ...built.map((f) => card(f, 'built')),
+        locked.length ? h('h3', { class: 'muted', style: { marginTop: '12px' } }, '잠김') : null,
+        ...locked.map((f) => card(f, 'locked')),
+      ];
+    },
+  });
+}
+
+// ═══════════════ 도시 레벨 ═══════════════
+export function showCityLevelSheet(game: Game): void {
+  const s = game.state;
+  const cs = cityStats(s);
+  const prog = cityProgress(s);
+  sheet({
+    title: terrainName(s.city.level) === '도시' ? `도시 Lv.${s.city.level}` : `${terrainName(s.city.level)} · 도시 Lv.${s.city.level}`,
+    sub: '세수가 쌓이면 도시 레벨이 오르고 새 건물이 열립니다',
+    build: () => {
+      const row = (label: string, value: string, tone = '') =>
+        h('div', { class: 'row spread', style: { padding: '4px 0' } }, h('span', { class: 'muted' }, label), h('b', { class: tone }, value));
+
+      const nextBiz = BUSINESSES.filter((b) => b.unlockCityLevel > s.city.level).slice(0, 2);
+      const nextFac = FACILITIES.filter((f) => f.unlockCityLevel > s.city.level).slice(0, 3);
+
+      return [
+        h(
+          'div',
+          { class: 'card' },
+          h('div', { class: 'bar' }, h('i', { style: { width: `${prog.ratio * 100}%` } })),
+          h('div', { class: 'small muted', style: { marginTop: '6px' } }, `세수 ${fmt(s, prog.current)} / ${fmt(s, prog.need)}`),
+        ),
+        h(
+          'div',
+          { class: 'card' },
+          h('h3', null, '도시 현황'),
+          row('인구', formatInt(s.city.pop), ''),
+          row('인구 상한', formatInt(cs.popCap)),
+          row('노동력', `${fmt(s, cs.laborSupply)} / ${fmt(s, cs.laborDemand)}`, cs.laborEff < 1 ? 'bad' : 'good'),
+          row('전력', `${fmt(s, cs.powerSupply)} / ${fmt(s, cs.powerDemand)}`, cs.powerEff < 1 ? 'bad' : 'good'),
+          row('사업 가동률', `${Math.round(cs.powerEff * cs.laborEff * 100)}%`, cs.powerEff * cs.laborEff < 1 ? 'warn' : 'good'),
+          row('세수 배율', `x${cs.taxMult.toFixed(2)}`, 'good'),
+          row('전 사업 산출', `x${cs.outputMult.toFixed(2)}`, 'good'),
+        ),
+        nextBiz.length || nextFac.length
+          ? h(
+              'div',
+              { class: 'card' },
+              h('h3', null, '다음 해금'),
+              ...nextBiz.map((b) => row(`${b.icon} ${b.name}`, `Lv.${b.unlockCityLevel}`)),
+              ...nextFac.map((f) => row(`${f.icon} ${f.name}`, `Lv.${f.unlockCityLevel}`)),
+            )
+          : null,
+        h(
+          'div',
+          { class: 'card' },
+          h('h3', null, '지형 단계'),
+          ...['들판', '마을', '소도시', '도시', '대도시'].map((name) =>
+            row(name, terrainName(s.city.level) === name ? '지금 여기' : '', terrainName(s.city.level) === name ? 'gold' : 'muted'),
+          ),
+        ),
+      ];
+    },
+  });
+}
+
+// ═══════════════ 도감 ═══════════════
+export function showCollectionSheet(game: Game): void {
+  const s = game.state;
+  sheet({
+    title: '도감',
+    sub: '건물 외형과 미니게임 특산물을 모읍니다',
+    build: () => {
+      const all = [
+        ...BUSINESSES.map((b) => ({ id: b.id as string, icon: b.icon, name: b.name, tiers: BUSINESS_TIERS[b.id] })),
+        ...FACILITIES.map((f) => ({ id: f.id as string, icon: f.icon, name: f.name, tiers: f.tiers })),
+      ];
+      const seen = s.collection.seenTiers;
+      const total = all.reduce((a, b) => a + b.tiers.length - 1, 0);
+      const got = all.reduce((a, b) => a + Math.min(seen[b.id] ?? 0, b.tiers.length - 1), 0);
+
+      const spoils = [
+        { icon: '💎', name: '보석', v: s.collection.gems, from: '광산 미니게임' },
+        { icon: '🔩', name: '고급 규격품', v: s.collection.specs, from: '공장 미니게임' },
+        { icon: '💗', name: '만족도', v: s.collection.satisfaction, from: '놀이공원 미니게임' },
+        { icon: '💼', name: '투자 자금', v: s.collection.funds, from: '기업 미니게임' },
+      ];
+
+      return [
+        h(
+          'div',
+          { class: 'card center' },
+          h('div', { class: 'muted small' }, '건물 외형'),
+          h('div', { class: 'cash' }, `${got} / ${total}`),
+        ),
+        ...all.map((b) =>
+          h(
+            'div',
+            { class: 'card' },
+            h(
+              'div',
+              { class: 'row' },
+              h('span', { style: { fontSize: '22px' } }, b.icon),
+              h(
+                'div',
+                { class: 'grow' },
+                h('div', { style: { fontWeight: '700' } }, b.name),
+                h(
+                  'div',
+                  { class: 'small muted' },
+                  b.tiers
+                    .slice(1)
+                    .map((name, i) => ((seen[b.id] ?? 0) >= i + 1 ? name : '???'))
+                    .join(' → '),
+                ),
+              ),
+              h('span', { class: 'chip' }, `${Math.min(seen[b.id] ?? 0, b.tiers.length - 1)}/${b.tiers.length - 1}`),
+            ),
+          ),
+        ),
+        h('h3', { class: 'muted', style: { marginTop: '12px' } }, '특산물 — 자동화로는 못 얻습니다'),
+        ...spoils.map((sp) =>
+          h(
+            'div',
+            { class: 'card' },
+            h(
+              'div',
+              { class: 'row' },
+              h('span', { style: { fontSize: '22px' } }, sp.icon),
+              h('div', { class: 'grow' }, h('div', null, sp.name), h('div', { class: 'small muted' }, sp.from)),
+              h('b', { class: 'gold' }, formatInt(sp.v)),
+            ),
+          ),
+        ),
+        h(
+          'div',
+          { class: 'card' },
+          h(
+            'div',
+            { class: 'row' },
+            h('span', { style: { fontSize: '22px' } }, '🐠'),
+            h(
+              'div',
+              { class: 'grow' },
+              h('div', null, '희귀 어종'),
+              h('div', { class: 'small muted' }, RARE_FISH.map((f) => (s.collection.fish.includes(f) ? f : '???')).join(' · ')),
+            ),
+            h('b', { class: 'gold' }, `${s.collection.fish.length}/${RARE_FISH.length}`),
+          ),
+        ),
+      ];
+    },
+  });
+}
+
+// ═══════════════ 메뉴 ═══════════════
+export function showMenuSheet(game: Game): void {
+  const s = game.state;
+  sheet({
+    title: '메뉴',
+    build: (hd) => {
+      const item = (icon: string, name: string, sub: string, run: () => void, hot = false) =>
+        h(
+          'button',
+          {
+            class: `wide ${hot ? 'gold' : ''}`,
+            style: { marginBottom: '8px', textAlign: 'left' },
+            onclick: () => {
+              hd.close();
+              run();
+            },
+          },
+          `${icon} ${name}`,
+          h('span', { class: 'btn-sub' }, sub),
+        );
+      return [
+        item('📅', '출석 보상', s.attendance.claimedToday ? '내일 다시' : `${s.attendance.streak + 1}일차 수령 가능`, () => showAttendanceSheet(game), !s.attendance.claimedToday),
+        item('🏗️', '재개발', game.canPrestige() ? `설계도 ${formatInt(game.prestigeGain())} 획득` : `도시 Lv.${CONFIG.prestige.unlockCityLevel} 필요`, () => showPrestigeSheet(game), game.canPrestige()),
+        item('🛒', '상점', '스타터 팩 · 저금통 · 광고 제거', () => showShopSheet(game)),
+        item('📦', '창고 / 물류', `오프라인 최대 ${formatDuration(offlineCapSeconds(s))}`, () => showFacilityUpgradeSheet(game)),
+        item('⚙️', '설정', '글자 크기 · 숫자 표기 · 세이브', () => showSettingsSheet(game)),
+      ];
+    },
+  });
+}
+
+/** 오프라인 창고/물류 (기존 도시 시설 업그레이드) */
+export function showFacilityUpgradeSheet(game: Game): void {
+  const s = game.state;
+  sheet({
+    title: '창고 / 물류',
+    sub: '자리를 비운 동안 쌓이는 수익을 늘립니다',
+    build: (hd) => {
+      const mk = (
+        label: string,
+        level: number,
+        max: number,
+        cost: number,
+        run: () => boolean,
+        note: string,
+      ) =>
+        h(
+          'div',
+          { class: 'card' },
+          h(
+            'div',
+            { class: 'row' },
+            h('div', { class: 'grow' }, h('div', null, `${label} Lv.${level}`), h('div', { class: 'small muted' }, note)),
+            h(
+              'button',
+              {
+                class: level < max && s.resources.cash >= cost ? 'primary' : '',
+                disabled: level >= max,
+                onclick: () => {
+                  if (run()) {
+                    hd.close();
+                    showFacilityUpgradeSheet(game);
+                  }
+                },
+              },
+              level >= max ? 'MAX' : fmt(s, cost),
+            ),
+          ),
+        );
+      return [
+        mk('📦 창고', s.city.storageLevel, CONFIG.offline.maxStorageLevel, storageCost(s), () => game.buyStorage(), `오프라인 상한 ${formatDuration(offlineCapSeconds(s))}`),
+        mk('🚚 물류', s.city.logisticsLevel, CONFIG.offline.maxLogisticsLevel, logisticsCost(s), () => game.buyLogistics(), `오프라인 효율 ${Math.round(offlineRate(s) * 100)}%`),
+      ];
+    },
+  });
 }

@@ -1,12 +1,15 @@
 import { CONFIG } from '../data/config';
 import { RESOURCE_META } from '../data/businesses';
 import {
+  automationStage,
   businessRatePerSecond,
   chainActive,
   cycleTime,
+  equipCost,
   isAutomated,
   isBoosted,
   managerCost,
+  minigameMultiplier,
   nextMilestone,
   outputPerCycle,
   projectedEfficiency,
@@ -41,6 +44,21 @@ export function createBusinessView(game: Game, id: BusinessId): View {
   const effChip = h('span', { class: 'chip' }, '');
   const boostChip = h('span', { class: 'chip on', style: { display: 'none' } }, '');
 
+  const mgBtn = h(
+    'button',
+    {
+      class: 'primary',
+      onclick: async (e: Event) => {
+        e.stopPropagation();
+        haptic(game.state.settings.haptics);
+        const r = await game.playMinigame(id);
+        if (r) game.toast(`${r.grade}등급! 배율 x${r.mult.toFixed(2)}`);
+      },
+    },
+    '▶ 미니게임',
+    h('span', { class: 'btn-sub' }, ''),
+  );
+
   const boostBtn = h(
     'button',
     {
@@ -72,7 +90,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
     siteCanvas,
     h('div', { class: 'site-top' }, siteName, siteRate),
     h('div', { class: 'site-chips' }, effChip, boostChip),
-    h('div', { class: 'site-actions' }, boostBtn, trialBtn),
+    h('div', { class: 'site-actions' }, mgBtn, boostBtn, trialBtn),
   );
 
   // ── 구매 단위 ────────────────────────────────────────────────
@@ -116,8 +134,12 @@ export function createBusinessView(game: Game, id: BusinessId): View {
 
     mgrBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (game.state.resources.cash < managerCost(def, i)) return showCashDropSheet(game);
-      game.buyManager(id, i);
+      const u = game.state.businesses[id].units[i];
+      if (u.manager) return;
+      const cost = u.equip ? managerCost(def, i) : equipCost(def, i);
+      if (game.state.resources.cash < cost) return showCashDropSheet(game);
+      if (u.equip) game.buyManager(id, i);
+      else game.buyEquip(id, i);
     });
 
     const band = h(
@@ -221,6 +243,17 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       boostChip.textContent = `⚡ ${CONFIG.ads.boostFactor}배 ${formatClock((bs.boostUntil - now) / 1000)}`;
     } else boostChip.style.display = 'none';
 
+    const left = game.minigamePlaysLeft(id);
+    mgBtn.innerHTML = '';
+    mgBtn.className = left > 0 ? 'primary' : 'ad';
+    mgBtn.append('▶ 미니게임', h('span', { class: 'btn-sub' }, left > 0 ? `무료 ${left}회` : '광고 보고 1판'));
+
+    const mgMult = minigameMultiplier(st, id, now);
+    if (mgMult > 1) {
+      boostChip.style.display = '';
+      boostChip.textContent = `🎮 x${mgMult.toFixed(2)} ${formatClock((st.minigames[id].boostUntil - now) / 1000)}`;
+    }
+
     boostBtn.disabled = !game.ads.isAvailable('tabBoost');
     const allManaged = bs.units.every((u) => u.level <= 0 || u.manager);
     trialBtn.style.display = allManaged ? 'none' : '';
@@ -239,8 +272,9 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       const ct = cycleTime(st, def, b.i);
       const per = outputPerCycle(st, def, b.i, now) * eff;
       const ms = nextMilestone(u.level);
+      const STAGE = ['', '수동', '반자동 50%', '자동 100%', '고효율'];
       b.metaEl.textContent = owned
-        ? `초당 ${fmt(per / ct)} · 인력 ${crewCount(u.level)}명` +
+        ? `초당 ${fmt(per / ct)} · 인력 ${crewCount(u.level)}명 · ${STAGE[automationStage(st, id, b.i)]}` +
           (ms ? ` · Lv.${ms.level}에 ${ms.type === 'output' ? '산출' : '속도'} x${ms.factor}` : ' · 보너스 전부 달성')
         : `1회 ${fmt(b.udef.baseOutput * def.outScale)} · ${b.udef.cycleTime}초`;
 
@@ -262,13 +296,20 @@ export function createBusinessView(game: Game, id: BusinessId): View {
         b.mgrBtn.disabled = true;
         b.mgrBtn.innerHTML = '';
         b.mgrBtn.append('👤', h('span', { class: 'btn-sub' }, b.udef.managerName));
-      } else {
+      } else if (u.equip) {
         b.mgrBtn.style.display = '';
         const mcost = managerCost(def, b.i);
         b.mgrBtn.className = `band-mgr ${st.resources.cash >= mcost ? 'gold' : ''}`;
         b.mgrBtn.disabled = false;
         b.mgrBtn.innerHTML = '';
-        b.mgrBtn.append('매니저', h('span', { class: 'btn-sub' }, fmt(mcost)));
+        b.mgrBtn.append('매니저 100%', h('span', { class: 'btn-sub' }, fmt(mcost)));
+      } else {
+        b.mgrBtn.style.display = '';
+        const ecost = equipCost(def, b.i);
+        b.mgrBtn.className = `band-mgr ${st.resources.cash >= ecost ? 'primary' : ''}`;
+        b.mgrBtn.disabled = false;
+        b.mgrBtn.innerHTML = '';
+        b.mgrBtn.append('설비 50%', h('span', { class: 'btn-sub' }, fmt(ecost)));
       }
     }
   }

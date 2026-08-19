@@ -1,6 +1,15 @@
 import { BUSINESSES } from '../data/businesses';
+import { FACILITIES } from '../data/buildings';
 import { CONFIG } from '../data/config';
-import type { BusinessId, BusinessState, GameState, ResourceId } from './types';
+import type {
+  BusinessId,
+  BusinessState,
+  CollectionState,
+  FacilityState,
+  GameState,
+  MinigameState,
+  ResourceId,
+} from './types';
 
 /** 기기 로컬 자정 기준 날짜 키 */
 export function todayKey(now = Date.now()): string {
@@ -15,12 +24,33 @@ function emptyBusiness(def: (typeof BUSINESSES)[number], firstUnitLevel = 0): Bu
       level: i === 0 ? firstUnitLevel : 0,
       progress: 0,
       running: false,
+      equip: false,
       manager: false,
     })),
     boostUntil: 0,
     trialUntil: 0,
     totalProduced: 0,
   };
+}
+
+export function emptyFacilities(): Record<string, FacilityState> {
+  const out: Record<string, FacilityState> = {};
+  for (const f of FACILITIES) {
+    out[f.id] = { built: false, tracks: Object.fromEntries(f.tracks.map((t) => [t.id, 0])) };
+  }
+  return out;
+}
+
+export function emptyMinigames(): Record<string, MinigameState> {
+  const out: Record<string, MinigameState> = {};
+  for (const b of BUSINESSES) {
+    out[b.id] = { day: '', plays: 0, bestScore: 0, boostUntil: 0, boostMult: 1 };
+  }
+  return out;
+}
+
+export function emptyCollection(): CollectionState {
+  return { gems: 0, specs: 0, satisfaction: 0, funds: 0, fish: [], seenTiers: {} };
 }
 
 export function createInitialState(now = Date.now()): GameState {
@@ -30,6 +60,7 @@ export function createInitialState(now = Date.now()): GameState {
   }
   const resources: Record<ResourceId, number> = {
     cash: CONFIG.startCash,
+    material: CONFIG.startMaterial,
     ore: 0,
     goods: 0,
     food: 0,
@@ -42,7 +73,12 @@ export function createInitialState(now = Date.now()): GameState {
     timeSkew: 0,
     resources,
     businesses,
-    city: { level: 1, taxRun: 0, taxTotal: 0, storageLevel: 0, logisticsLevel: 0 },
+    facilities: emptyFacilities(),
+    minigames: emptyMinigames(),
+    events: [],
+    nextEventAt: now + 10 * 60 * 1000,
+    collection: emptyCollection(),
+    city: { level: 1, taxRun: 0, taxTotal: 0, storageLevel: 0, logisticsLevel: 0, pop: 0 },
     prestige: { blueprints: 0, upgrades: {}, count: 0, lastAt: now },
     missions: { day: '', ids: [], targets: [], progress: [], claimed: [] },
     attendance: { day: '', streak: 0, claimedToday: false },
@@ -89,18 +125,23 @@ export function applyPrestigeReset(state: GameState, gainedBlueprints: number, n
   }
 
   state.resources.cash = cashLevel > 0 ? 1000 * Math.pow(9, cashLevel - 1) : CONFIG.startCash;
+  state.resources.material = CONFIG.startMaterial;
   state.resources.ore = 0;
   state.resources.goods = 0;
   state.resources.food = 0;
   state.resources.pop = 0;
   state.resources.blueprint += gainedBlueprints;
 
+  const keepFacilities = (up['keepFacilities'] ?? 0) > 0;
+  if (!keepFacilities) state.facilities = emptyFacilities();
+  state.events = [];
   state.city = {
     level: 1,
     taxRun: 0,
     taxTotal: state.city.taxTotal,
     storageLevel: 0,
     logisticsLevel: 0,
+    pop: 0,
   };
   state.prestige.blueprints += gainedBlueprints;
   state.prestige.count += 1;
@@ -125,6 +166,11 @@ export function migrate(raw: unknown): GameState | null {
     settings: { ...base.settings, ...(loaded.settings ?? {}) },
     shop: { ...base.shop, ...(loaded.shop ?? {}) },
     stats: { ...base.stats, ...(loaded.stats ?? {}) },
+    facilities: { ...base.facilities },
+    minigames: { ...base.minigames },
+    events: loaded.events ?? [],
+    nextEventAt: loaded.nextEventAt ?? Date.now() + 600_000,
+    collection: { ...base.collection, ...(loaded.collection ?? {}) },
     flags: { ...base.flags, ...(loaded.flags ?? {}) },
     adCooldowns: { ...base.adCooldowns, ...(loaded.adCooldowns ?? {}) },
     businesses: { ...base.businesses },
@@ -142,6 +188,23 @@ export function migrate(raw: unknown): GameState | null {
       trialUntil: saved.trialUntil ?? 0,
       totalProduced: saved.totalProduced ?? 0,
       units: def.units.map((_, i) => saved.units?.[i] ?? fresh.units[i]),
+    };
+  }
+  for (const f of FACILITIES) {
+    const saved = loaded.facilities?.[f.id];
+    merged.facilities[f.id] = {
+      built: saved?.built ?? false,
+      tracks: Object.fromEntries(f.tracks.map((t) => [t.id, saved?.tracks?.[t.id] ?? 0])),
+    };
+  }
+  for (const b of BUSINESSES) {
+    const saved = loaded.minigames?.[b.id];
+    merged.minigames[b.id] = {
+      day: saved?.day ?? '',
+      plays: saved?.plays ?? 0,
+      bestScore: saved?.bestScore ?? 0,
+      boostUntil: saved?.boostUntil ?? 0,
+      boostMult: saved?.boostMult ?? 1,
     };
   }
   merged.version = CONFIG.saveVersion;

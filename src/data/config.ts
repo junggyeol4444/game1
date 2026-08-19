@@ -11,6 +11,7 @@ export const CONFIG = {
   backgroundThreshold: 8,
 
   startCash: 20,
+  startMaterial: 0,
 
   /** 현금 획득액 중 도시 세수로 잡히는 비율(= 도시 레벨 경험치) */
   taxRate: 0.1,
@@ -25,6 +26,53 @@ export const CONFIG = {
 
   /** 인구 노동력 배율: 1 + coef * log10(1+pop) */
   laborCoef: 0.1,
+
+  /** 시설(전력/노동력/인구) */
+  facility: {
+    /** 유닛 수요 포인트 1점당 전력/노동력 */
+    powerPerPoint: 2,
+    laborPerPoint: 1,
+    /** 발전소를 안 지어도 도시 기본 전력망이 이만큼은 준다 */
+    powerBase: 400,
+    /** 주거지를 안 지어도 이만큼은 산다 */
+    popBase: 150,
+    /** 초당 인구 유입 (공원이 배율) */
+    popGrowthBase: 0.35,
+    /** 전력/노동력이 모자라도 최소 이만큼은 돈다 */
+    gateFloor: 0.25,
+  },
+
+  /** 사업이 생산할 때 건설 물자로 적립되는 비율 (생산 포인트 기준) */
+  materialYield: { mine: 0.6, factory: 1.0, fishery: 0.25, park: 0.15, corp: 0.4 } as Record<string, number>,
+
+  /** 사고 / 도난 이벤트 */
+  events: {
+    /** 평균 발생 간격(초) */
+    intervalSeconds: 900,
+    /** 최초 발생까지 유예(초) */
+    graceSeconds: 600,
+    /** 화재 지속(초) / 산출 감소율 */
+    fireSeconds: 90,
+    fireSeverity: 0.5,
+    /** 도난 손실 = 초당수입 x 이 초 */
+    theftSeconds: 120,
+    /** 이 도시 레벨부터 이벤트 발생 */
+    startCityLevel: 6,
+  },
+
+  /** 미니게임 */
+  minigame: {
+    freePlaysPerDay: 3,
+    durationSeconds: 30,
+    /** 보상 환산초 범위 (성적에 따라 보간) */
+    rewardSecondsMin: 3600,
+    rewardSecondsMax: 14400,
+    /** 성적 배율 범위 */
+    gradeMultMin: 0.5,
+    gradeMultMax: 3.0,
+    /** 성적 배율이 해당 사업에 유지되는 시간(초) */
+    boostSeconds: 600,
+  },
 
   offline: {
     baseCapHours: 2,
@@ -80,6 +128,7 @@ export const CONFIG = {
       cashDrop: 300,
       prestigeBonus: 0,
       missionReroll: 600,
+      minigame: 0,
     } as Record<string, number>,
     /** 재화 부족 시 광고 지급량: 현재 초당 수입 * 이 초 */
     cashDropSeconds: 900,
