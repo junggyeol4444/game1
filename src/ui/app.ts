@@ -1,7 +1,7 @@
 import { BUSINESSES } from '../data/businesses';
 import { FACILITY_BY_ID, isFacilityId, type BuildingId, type FacilityId } from '../data/buildings';
 import { totalCashPerSecond, stats } from '../core/economy';
-import { buildableFacilities, canAfford, buildPrice } from '../core/facilities';
+import { buildableFacilities, facilityCost } from '../core/facilities';
 import { formatInt, formatNumber } from '../core/num';
 import { cityProgress } from '../core/progression';
 import { missionComplete } from '../core/missions';
@@ -145,6 +145,7 @@ export function mountApp(game: Game, host: HTMLElement): void {
     idChip.append('👤 ', h('b', null, `시장 Lv.${s.city.level}`));
     matEl.innerHTML = '';
     matEl.append('📦 ', h('b', null, fmt(s.resources.material)));
+    if (s.resources.gem > 0) matEl.append(h('span', { class: 'gem' }, ` 💎 ${formatInt(s.resources.gem)}`));
     cashEl.innerHTML = '';
     cashEl.append('💰 ', h('b', null, fmt(s.resources.cash)));
     rateEl.textContent = `+${fmt(totalCashPerSecond(s))}/초`;
@@ -153,7 +154,7 @@ export function mountApp(game: Game, host: HTMLElement): void {
   function updateQuick(): void {
     const s = game.state;
     const buildable = buildableFacilities(s);
-    const ready = buildable.filter((f) => canAfford(s, buildPrice(f.id))).length;
+    const ready = buildable.filter((f) => s.resources.cash >= facilityCost(s, f.id)).length;
     quickBuild.innerHTML = '';
     quickBuild.className = `quick ${ready > 0 ? 'gold' : ''}`;
     quickBuild.append('🔨 건설', h('span', { class: 'btn-sub' }, ready > 0 ? `${ready}곳 가능` : `${buildable.length}곳 대기`));
@@ -170,12 +171,12 @@ export function mountApp(game: Game, host: HTMLElement): void {
     const s = game.state;
     const missionReady = s.missions.ids.some((_, i) => missionComplete(s, i) && !s.missions.claimed[i]);
     menuDots.get('mission')!.style.display = missionReady ? '' : 'none';
-    const buildReady = buildableFacilities(s).some((f) => canAfford(s, buildPrice(f.id)));
+    const buildReady = buildableFacilities(s).some((f) => s.resources.cash >= facilityCost(s, f.id));
     menuDots.get('build')!.style.display = buildReady ? '' : 'none';
     const menuReady = !s.attendance.claimedToday || game.canPrestige();
     menuDots.get('menu')!.style.display = menuReady ? '' : 'none';
     const cs = stats(s);
-    menuDots.get('level')!.style.display = cs.powerEff < 1 || cs.laborEff < 1 ? '' : 'none';
+    menuDots.get('level')!.style.display = cs.powerEff < 1 || cs.laborSupply < cs.popDemand ? '' : 'none';
   }
 
   function applySettings(): void {
@@ -218,6 +219,28 @@ export function mountApp(game: Game, host: HTMLElement): void {
     }
   });
   game.on('unlock', (def) => showUnlockModal(def as BusinessDef));
+  // 재화 획득 연출: 코인이 상단바로 날아간다 (아트 스타일 9장)
+  game.on('coin', () => {
+    if (game.state.settings.reducedMotion) return;
+    const target = cashEl.getBoundingClientRect();
+    const from = stage.getBoundingClientRect();
+    for (let i = 0; i < 4; i++) {
+      const sx = from.left + from.width * (0.3 + Math.random() * 0.4);
+      const sy = from.top + from.height * (0.3 + Math.random() * 0.3);
+      const el = h('div', {
+        class: 'coin',
+        style: {
+          left: `${sx}px`,
+          top: `${sy}px`,
+          '--dx': `${target.left + target.width / 2 - sx}px`,
+          '--dy': `${target.top + 8 - sy}px`,
+          animationDelay: `${i * 55}ms`,
+        } as unknown as string,
+      }, '🪙');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 900 + i * 55);
+    }
+  });
   game.on('cityEvent', (n) => {
     const notice = n as { target?: string };
     if (notice.target && screen.kind === 'city') map.focus(notice.target as BuildingId);
@@ -232,5 +255,4 @@ export function mountApp(game: Game, host: HTMLElement): void {
   // 병목이 생긴 건물로 바로 이동하는 헬퍼 (도시 화면 롱프레스 대체)
   (window as unknown as Record<string, unknown>).goto = (id: string) => enterBuilding(id as BuildingId);
   void buildingAlert;
-  void formatInt;
 }

@@ -1,10 +1,10 @@
 import { BUSINESSES, BUSINESS_BY_ID } from '../data/businesses';
 import { CONFIG } from '../data/config';
-import { cityStats, type CityStats } from './facilities';
+import { HOIST_LEVELS } from '../data/units';
+import { cityStats, staffedUnits, type CityStats } from './facilities';
 import { clamp, geometricCost, maxAffordable } from './num';
 import type { BusinessDef, BusinessId, GameState, OfflineReport, ResourceId } from './types';
 
-/** 어떤 사업이 어떤 자원을 만드는가 (사슬 역참조용) */
 export const PRODUCER_OF: Partial<Record<ResourceId, BusinessId>> = {
   ore: 'mine',
   goods: 'factory',
@@ -12,60 +12,79 @@ export const PRODUCER_OF: Partial<Record<ResourceId, BusinessId>> = {
   pop: 'park',
 };
 
-// 도시 능력치는 한 틱에 한 번만 계산한다 (유닛마다 다시 계산하면 시뮬레이터가 죽는다)
+// 도시 능력치는 한 틱에 한 번만 계산한다
 let statsCache: CityStats | null = null;
+let staffCache: Record<string, number> | null = null;
 let statsOwner: GameState | null = null;
 
 export function invalidateStats(): void {
   statsCache = null;
+  staffCache = null;
 }
 
 export function stats(state: GameState): CityStats {
   if (!statsCache || statsOwner !== state) {
     statsCache = cityStats(state);
+    staffCache = staffedUnits(state, statsCache);
     statsOwner = state;
   }
   return statsCache;
+}
+
+/** 인구가 감당하는 유닛 수 (사업별) */
+export function staffed(state: GameState, id: BusinessId): number {
+  stats(state);
+  return staffCache?.[id] ?? 0;
 }
 
 export function bpLevel(state: GameState, id: string): number {
   return state.prestige.upgrades[id] ?? 0;
 }
 
-/** 인구 노동력 배율 (도시 인구 기반) */
-export function laborMultiplier(state: GameState): number {
-  return 1 + CONFIG.laborCoef * Math.log10(1 + Math.max(0, state.city.pop));
-}
-
+// ── 마일스톤 ────────────────────────────────────────────────
 export function milestoneBonus(level: number): { output: number; speed: number } {
-  let output = 1;
-  let speed = 1;
-  for (const m of CONFIG.milestones) {
-    if (level >= m.level) {
-      if (m.type === 'output') output *= m.factor;
-      else speed *= m.factor;
-    }
-  }
-  return { output, speed };
+  let out = 0;
+  for (const m of CONFIG.milestones) if (level >= m) out++;
+  let half = 0;
+  for (const m of CONFIG.cycleHalfLevels) if (level >= m) half++;
+  return { output: Math.pow(2, out), speed: Math.pow(2, half) };
 }
 
-export function nextMilestone(level: number): { level: number; type: string; factor: number } | null {
-  for (const m of CONFIG.milestones) if (level < m.level) return { ...m };
+export function nextMilestone(level: number): number | null {
+  for (const m of CONFIG.milestones) if (level < m) return m;
   return null;
+}
+
+// ── 배율 ────────────────────────────────────────────────────
+export function hoistMult(state: GameState, id: BusinessId): number {
+  const lv = clamp(state.businesses[id].hoistLevel, 1, HOIST_LEVELS.length);
+  return HOIST_LEVELS[lv - 1].mult;
+}
+
+/** 보석 요구량 (광산 상세: 보석은 엘리베이터 업그레이드 재료) */
+export function hoistGemCost(state: GameState, id: BusinessId): number {
+  const lv = state.businesses[id].hoistLevel;
+  if (lv >= HOIST_LEVELS.length) return 0;
+  return Math.max(0, (lv - 2) * 2);
+}
+
+export function hoistCost(state: GameState, id: BusinessId): number {
+  const def = BUSINESS_BY_ID[id];
+  const lv = state.businesses[id].hoistLevel;
+  if (lv >= HOIST_LEVELS.length) return Infinity;
+  return HOIST_LEVELS[lv].cost * def.costScale;
 }
 
 export function isBoosted(state: GameState, id: BusinessId, now = Date.now()): boolean {
   return state.businesses[id].boostUntil > now;
 }
 
-/** 미니게임 성적 배율 (일정 시간 유지) */
 export function minigameMultiplier(state: GameState, id: BusinessId, now = Date.now()): number {
   const m = state.minigames[id];
   if (!m || m.boostUntil <= now) return 1;
   return m.boostMult;
 }
 
-/** 화재 중이면 산출이 깎인다 */
 export function eventPenalty(state: GameState, id: BusinessId, now = Date.now()): number {
   let p = 1;
   for (const e of state.events) {
@@ -74,7 +93,7 @@ export function eventPenalty(state: GameState, id: BusinessId, now = Date.now())
   return p;
 }
 
-const BLUEPRINT_BOOST_ID: Record<BusinessId, string> = {
+const BP_BOOST: Record<BusinessId, string> = {
   mine: 'boostMine',
   factory: 'boostFactory',
   fishery: 'boostFishery',
@@ -82,17 +101,15 @@ const BLUEPRINT_BOOST_ID: Record<BusinessId, string> = {
   corp: 'boostCorp',
 };
 
-/** 사업 전체에 걸리는 배율 (마일스톤 제외) */
 export function businessMultiplier(state: GameState, def: BusinessDef, now = Date.now()): number {
   const cs = stats(state);
   let m = 1;
-  m *= 1 + bpLevel(state, 'allOutput') * 0.25;
-  const own = BLUEPRINT_BOOST_ID[def.id];
+  m *= 1 + bpLevel(state, 'output_bonus') * 0.1;
+  const own = BP_BOOST[def.id];
   if (own) m *= 1 + bpLevel(state, own) * 0.5;
-  m *= laborMultiplier(state);
-  m *= cs.outputMult;        // 학교
-  m *= cs.powerEff;          // 발전소
-  m *= cs.laborEff;          // 주거지 + 병원
+  m *= cs.outputMult; // 학교
+  m *= cs.powerEff; // 발전소
+  m *= hoistMult(state, def.id); // 엘리베이터 등 공통 배율
   m *= minigameMultiplier(state, def.id, now);
   m *= eventPenalty(state, def.id, now);
   if (isBoosted(state, def.id, now)) m *= CONFIG.ads.boostFactor;
@@ -101,43 +118,43 @@ export function businessMultiplier(state: GameState, def: BusinessDef, now = Dat
 
 export function outputPerCycle(state: GameState, def: BusinessDef, index: number, now = Date.now()): number {
   const u = state.businesses[def.id].units[index];
-  if (u.level <= 0) return 0;
+  if (!u.unlocked || u.level <= 0) return 0;
   const d = def.units[index];
   const ms = milestoneBonus(u.level);
-  return d.baseOutput * def.outScale * u.level * ms.output * businessMultiplier(state, def, now);
+  return d.baseOutput * u.level * ms.output * businessMultiplier(state, def, now);
 }
 
 export function cycleTime(state: GameState, def: BusinessDef, index: number): number {
   const u = state.businesses[def.id].units[index];
   const ms = milestoneBonus(u.level);
-  const bpSpeed = Math.pow(0.95, bpLevel(state, 'cycleSpeed'));
-  return Math.max(CONFIG.minCycleTime, (def.units[index].cycleTime * bpSpeed) / ms.speed);
+  return Math.max(CONFIG.minCycleTime, def.units[index].cycleTime / ms.speed);
+}
+
+export function unitUnlockCost(def: BusinessDef, index: number): number {
+  return def.units[index].unlockCost;
 }
 
 export function unitCost(state: GameState, def: BusinessDef, index: number, count = 1): number {
   const u = state.businesses[def.id].units[index];
   const d = def.units[index];
-  return geometricCost(d.baseCost * def.costScale, d.costGrowth, u.level, count);
+  return geometricCost(d.baseCost, d.costGrowth, Math.max(0, u.level - 1), count);
 }
 
 export function unitMaxAffordable(state: GameState, def: BusinessDef, index: number): number {
   const u = state.businesses[def.id].units[index];
   const d = def.units[index];
-  return maxAffordable(d.baseCost * def.costScale, d.costGrowth, u.level, state.resources.cash);
+  return maxAffordable(d.baseCost, d.costGrowth, Math.max(0, u.level - 1), state.resources.cash);
 }
 
 export function managerCost(def: BusinessDef, index: number): number {
-  return def.units[index].managerCost * def.costScale;
+  return def.units[index].managerCost;
 }
 
-/** 설비(반자동)는 매니저보다 훨씬 싸다 */
 export function equipCost(def: BusinessDef, index: number): number {
-  return def.units[index].managerCost * def.costScale * 0.15;
+  return def.units[index].managerCost * 0.15;
 }
 
-// ───────────────────────── 자동화 4단계 ─────────────────────────
-// 0 = 수동(미니게임/탭) · 0.5 = 설비 · 1.0 = 매니저 · 1.0+ = 고효율
-
+// ── 자동화 4단계 ────────────────────────────────────────────
 export function autoFactor(state: GameState, id: BusinessId, index: number, now = Date.now()): number {
   const bs = state.businesses[id];
   const u = bs.units[index];
@@ -157,18 +174,18 @@ export function automationStage(state: GameState, id: BusinessId, index: number)
   return 1;
 }
 
-// ───────────────────────── 자원 사슬 ─────────────────────────
+/** 인구가 모자라 멈춘 유닛인가 */
+export function isUnderstaffed(state: GameState, id: BusinessId, index: number): boolean {
+  return index >= staffed(state, id);
+}
 
+// ── 자원 사슬 ───────────────────────────────────────────────
 export function chainActive(state: GameState): boolean {
   return state.city.level >= CONFIG.chainStartLevel;
 }
 
 export function chainFloor(state: GameState): number {
-  return clamp(
-    CONFIG.chainIdleFloor + bpLevel(state, 'chainFloor') * 0.05 + stats(state).chainFloorBonus,
-    0,
-    1,
-  );
+  return clamp(CONFIG.chainIdleFloor + bpLevel(state, 'chainFloor') * 0.05, 0, 1);
 }
 
 function consumeInput(state: GameState, def: BusinessDef, producedPoints: number): number {
@@ -206,9 +223,10 @@ export function businessRatePerSecond(
 ): { amount: number; cash: number } {
   let amount = 0;
   const bs = state.businesses[def.id];
+  const staff = staffed(state, def.id);
   for (let i = 0; i < def.units.length; i++) {
     const u = bs.units[i];
-    if (u.level <= 0) continue;
+    if (!u.unlocked || u.level <= 0 || i >= staff) continue;
     const af = autoFactor(state, def.id, i, now);
     if (onlyAutomated && af <= 0) continue;
     const rate = onlyAutomated ? af : Math.max(af, 1);
@@ -225,8 +243,7 @@ export function totalCashPerSecond(state: GameState, now = Date.now(), onlyAutom
   let sum = 0;
   for (const def of BUSINESSES) {
     if (!isUnlocked(state, def)) continue;
-    const eff = projectedEfficiency(state, def, now);
-    sum += businessRatePerSecond(state, def, now, onlyAutomated).cash * eff;
+    sum += businessRatePerSecond(state, def, now, onlyAutomated).cash * projectedEfficiency(state, def, now);
   }
   return sum;
 }
@@ -260,7 +277,6 @@ export function produce(
     state.resources[def.output] += amount;
     state.resources.cash += cash;
   }
-  // 건설 물자 적립 (생산 포인트 기준)
   state.resources.material += (amount / def.outScale) * (CONFIG.materialYield[def.id] ?? 0);
 
   state.businesses[def.id].totalProduced += amount;
@@ -275,13 +291,10 @@ export function produce(
 /** 인구는 주거지 상한까지 서서히 유입된다 (공원이 속도) */
 export function tickPopulation(state: GameState, dt: number): void {
   const cs = stats(state);
-  const tourists = state.resources.pop;
-  const target = Math.min(cs.popCap, CONFIG.facility.popBase + tourists);
-  if (state.city.pop < target) {
-    state.city.pop = Math.min(target, state.city.pop + cs.popGrowthPerSec * dt * (1 + state.city.level * 0.05));
-  } else if (state.city.pop > target) {
-    state.city.pop = Math.max(target, state.city.pop - cs.popGrowthPerSec * dt);
-  }
+  const target = cs.popCap;
+  const speed = CONFIG.facility.popGrowthBase * cs.popGrowthMult * (1 + state.city.level * 0.1);
+  if (state.city.pop < target) state.city.pop = Math.min(target, state.city.pop + speed * dt);
+  else if (state.city.pop > target) state.city.pop = Math.max(target, state.city.pop - speed * dt);
 }
 
 export function tickBusinesses(state: GameState, dt: number, now = Date.now()): number {
@@ -290,14 +303,18 @@ export function tickBusinesses(state: GameState, dt: number, now = Date.now()): 
   for (const def of BUSINESSES) {
     if (!isUnlocked(state, def)) continue;
     const bs = state.businesses[def.id];
+    const staff = staffed(state, def.id);
     for (let i = 0; i < def.units.length; i++) {
       const u = bs.units[i];
-      if (u.level <= 0) continue;
+      if (!u.unlocked || u.level <= 0) continue;
+      if (i >= staff) {
+        u.running = false;
+        continue;
+      }
       const af = autoFactor(state, def.id, i, now);
       if (!u.running && af > 0) u.running = true;
       if (!u.running) continue;
       const ct = cycleTime(state, def, i);
-      // 수동으로 돌린 사이클은 항상 100% 속도, 자동은 자동화 단계 속도
       u.progress += dt * (af > 0 ? af : 1);
       if (u.progress < ct) continue;
       if (af > 0) {
@@ -315,23 +332,21 @@ export function tickBusinesses(state: GameState, dt: number, now = Date.now()): 
   return state.resources.cash - cashBefore;
 }
 
+// ── 오프라인 ────────────────────────────────────────────────
 export function offlineCapSeconds(state: GameState): number {
-  const hours =
-    CONFIG.offline.baseCapHours +
-    state.city.storageLevel * CONFIG.offline.capPerStorage +
-    bpLevel(state, 'offlineCap') * 2;
-  return hours * 3600;
+  const base = CONFIG.offline.baseCapHours;
+  const lv = state.city.capLevel;
+  const hours = lv > 0 ? CONFIG.offline.capHours[lv - 1] : base;
+  return (hours + bpLevel(state, 'offline_cap') * 2) * 3600;
 }
 
 export function offlineRate(state: GameState): number {
-  return clamp(
-    CONFIG.offline.baseRate +
-      state.city.logisticsLevel * CONFIG.offline.ratePerLogistics +
-      bpLevel(state, 'offlineRate') * 0.05 +
-      stats(state).offlineBonus,
-    0,
-    1,
-  );
+  const lv = state.city.effLevel;
+  return lv > 0 ? CONFIG.offline.effRates[lv - 1] : CONFIG.offline.baseRate;
+}
+
+export function offlineUpgradeCost(level: number): number {
+  return CONFIG.offline.upgradeCost[level] ?? Infinity;
 }
 
 export function computeOffline(state: GameState, seconds: number, now = Date.now()): OfflineReport {
@@ -345,10 +360,10 @@ export function computeOffline(state: GameState, seconds: number, now = Date.now
     if (!isUnlocked(state, def)) continue;
     let gross = 0;
     const bs = state.businesses[def.id];
+    const staff = staffed(state, def.id);
     for (let i = 0; i < def.units.length; i++) {
       const u = bs.units[i];
-      if (u.level <= 0) continue;
-      // 오프라인은 설비/매니저만 (체험 매니저는 이미 만료)
+      if (!u.unlocked || u.level <= 0 || i >= staff) continue;
       const af = u.manager ? 1 + bpLevel(state, 'overclock') * 0.05 : u.equip ? 0.5 : 0;
       if (af <= 0) continue;
       gross += (outputPerCycle(state, def, i, now) / cycleTime(state, def, i)) * capped * af;

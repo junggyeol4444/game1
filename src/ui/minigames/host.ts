@@ -16,6 +16,10 @@ export interface MgCtx {
 
 export interface MinigameInstance {
   draw(c: MgCtx): void;
+  /** 성공률 0~1 (없으면 score/target 으로 계산) */
+  successRate?: () => number;
+  /** 미니게임으로만 얻는 특산물 개수 */
+  bonusItems?: number;
   down?(x: number, y: number): void;
   move?(x: number, y: number): void;
   up?(x: number, y: number): void;
@@ -40,12 +44,13 @@ export type Grade = 'F' | 'C' | 'B' | 'A' | 'S';
 export interface MinigameResult {
   score: number;
   target: number;
-  ratio: number;
+  /** 성공률 0~1 */
+  rate: number;
   grade: Grade;
-  /** 성적 배율 0.5 ~ 3.0 */
+  /** 성적 배율 = 0.5 + 성공률 x 2.5 */
   mult: number;
-  /** 보상 환산초 */
-  rewardSeconds: number;
+  /** 미니게임 특산물 획득 수 */
+  bonusItems: number;
 }
 
 function gradeOf(ratio: number): Grade {
@@ -56,7 +61,6 @@ function gradeOf(ratio: number): Grade {
   return 'F';
 }
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /** 미니게임 1판. 결과를 돌려준다 (보상 적용은 Game 쪽) */
 export function playMinigame(def: MinigameDef): Promise<MinigameResult | null> {
@@ -127,15 +131,14 @@ export function playMinigame(def: MinigameDef): Promise<MinigameResult | null> {
       cancelAnimationFrame(raf);
       const score = Math.max(0, Math.round(inst?.score ?? 0));
       const target = Math.max(1, inst?.target ?? 1);
-      const ratio = Math.min(1.2, score / target);
-      const grade = gradeOf(ratio);
+      const rate = Math.max(0, Math.min(1, inst?.successRate ? inst.successRate() : score / target));
       const result: MinigameResult = {
         score,
         target,
-        ratio,
-        grade,
-        mult: lerp(C.gradeMultMin, C.gradeMultMax, Math.min(1, ratio)),
-        rewardSeconds: lerp(C.rewardSecondsMin, C.rewardSecondsMax, Math.min(1, ratio)),
+        rate,
+        grade: gradeOf(rate),
+        mult: C.gradeBase + rate * C.gradeSlope,
+        bonusItems: inst?.bonusItems ?? 0,
       };
       overlay.remove();
       resolve(result);

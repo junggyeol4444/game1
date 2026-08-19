@@ -1,111 +1,179 @@
-import { fillRR, person, seeded, sparkle, vGradient } from '../scene/gfx';
+import { fillRR, person, vGradient } from '../scene/gfx';
 import type { MgCtx, MinigameDef, MinigameInstance } from './host';
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 
-// ───────────────────────── 광산: 광맥 캐기 (타이밍 탭) ─────────────────────────
+// ───────────────────────── 광산: 광맥 캐기 (기획서 광산 상세 6장) ─────────────────────────
 const mineGame: MinigameDef = {
   id: 'mine',
   title: '광맥 캐기',
-  howto: '표시 구간에 바늘이 들어왔을 때 화면을 탭하세요. 연속 성공하면 배율이 올라갑니다.',
+  howto: '커서가 안전 구간에 들어왔을 때 탭. 정타를 연속하면 배율이 올라갑니다.',
   create(w, h) {
-    let pos = 0;
+    const HIT = 0.08;   // 정타 ±8%
+    const NEAR = 0.2;   // 근접 ±20%
+    const SPAWN = 1.2;  // 광석 출현 간격(초)
+    const COMBO = [
+      { n: 15, m: 3.0 },
+      { n: 12, m: 2.5 },
+      { n: 8, m: 2.0 },
+      { n: 5, m: 1.5 },
+      { n: 3, m: 1.2 },
+    ];
+
+    let pos = 0.5;
     let dir = 1;
-    let speed = 0.55;
-    let zone = 0.24;
-    let zoneAt = 0.5;
     let combo = 0;
+    let trials = 0;
+    let hits = 0;
+    let armed = false;
+    let spawnT = 0;
     let flash = 0;
-    let ok = false;
+    let flashKind: 'hit' | 'near' | 'miss' = 'hit';
+    let isGem = false;
+    let gems = 0;
     const chips: { x: number; y: number; vx: number; vy: number; c: string }[] = [];
-    const barY = () => h * 0.62;
+    const veins: { x: number; y: number; gem: boolean; life: number }[] = [];
+
+    const comboMult = () => COMBO.find((c) => combo >= c.n)?.m ?? 1;
+    const barY = () => h * 0.68;
+
+    function judge(): void {
+      const d = Math.abs(pos - 0.5);
+      const band = isGem ? 0.05 : HIT;
+      trials += 1;
+      let mult = 0.1;
+      if (d <= band) {
+        mult = 1.0;
+        hits += 1;
+        combo += 1;
+        flashKind = 'hit';
+        if (isGem) gems += 1;
+      } else if (d <= NEAR) {
+        mult = 0.5;
+        combo = 0;
+        flashKind = 'near';
+      } else {
+        combo = 0;
+        flashKind = 'miss';
+      }
+      inst.score += 40 * mult * comboMult();
+      flash = 0.25;
+      armed = false;
+      veins.length = 0;
+      for (let i = 0; i < (mult === 1 ? 10 : 4); i++) {
+        chips.push({
+          x: w * 0.5,
+          y: h * 0.3,
+          vx: (Math.random() - 0.5) * 300,
+          vy: -80 - Math.random() * 240,
+          c: isGem ? '#B0E8FF' : ['#8B6F47', '#FFC845', '#E08A4B'][i % 3],
+        });
+      }
+    }
 
     const inst: MinigameInstance = {
       score: 0,
-      target: 620,
+      target: 25 * 40,
       status: '',
+      bonusItems: 0,
+      successRate: () => (trials === 0 ? 0 : hits / trials),
       down() {
-        const d = Math.abs(pos - zoneAt);
-        if (d <= zone / 2) {
-          combo += 1;
-          const mult = 1 + Math.min(combo, 12) * 0.25;
-          inst.score += 12 * mult;
-          zone = Math.max(0.075, zone * 0.94);
-          speed = Math.min(2.1, speed * 1.06);
-          ok = true;
-          for (let i = 0; i < 8; i++) {
-            chips.push({
-              x: w * 0.5,
-              y: h * 0.33,
-              vx: (Math.random() - 0.5) * 260,
-              vy: -60 - Math.random() * 220,
-              c: ['#7fd1c4', '#ffd166', '#c48be0'][i % 3],
-            });
-          }
-        } else {
-          combo = 0;
-          zone = 0.24;
-          speed = Math.max(0.55, speed * 0.9);
-          ok = false;
-        }
-        zoneAt = 0.18 + Math.random() * 0.64;
-        flash = 0.3;
+        if (armed) judge();
       },
-      draw({ ctx, t, dt }: MgCtx) {
-        pos += dir * speed * dt;
+      draw({ ctx, t, dt, remain }: MgCtx) {
+        // 커서 왕복: 1.6초 -> 0.8초
+        const period = 1.6 - (1 - remain / 30) * 0.8;
+        pos += (dir * dt * 2) / period;
         if (pos > 1) { pos = 1; dir = -1; }
         if (pos < 0) { pos = 0; dir = 1; }
         flash = Math.max(0, flash - dt);
-        inst.status = combo > 0 ? `연속 ${combo}회 · 배율 x${(1 + Math.min(combo, 12) * 0.25).toFixed(2)}` : '연속 성공을 노리세요';
 
-        ctx.fillStyle = vGradient(ctx, 0, h, '#4a3a2c', '#241a12');
+        spawnT -= dt;
+        if (spawnT <= 0 && !armed) {
+          spawnT = SPAWN;
+          armed = true;
+          isGem = Math.random() < 0.05;
+          veins.push({ x: 0.2 + Math.random() * 0.6, y: 0.12 + Math.random() * 0.3, gem: isGem, life: 1 });
+        } else if (spawnT <= 0 && armed) {
+          // 놓침
+          trials += 1;
+          combo = 0;
+          armed = false;
+          veins.length = 0;
+          spawnT = SPAWN;
+          flash = 0.2;
+          flashKind = 'miss';
+        }
+
+        inst.bonusItems = gems;
+        inst.status = `정타 ${hits}/${trials} · 콤보 ${combo} (x${comboMult().toFixed(1)})${gems ? ` · 💎${gems}` : ''}`;
+
+        // 암벽
+        ctx.fillStyle = '#A98058';
         ctx.fillRect(0, 0, w, h);
-        // 암벽 + 광맥
-        const rand = seeded(7);
-        for (let i = 0; i < 22; i++) {
-          ctx.fillStyle = 'rgba(0,0,0,0.16)';
+        ctx.fillStyle = 'rgba(0,0,0,0.09)';
+        for (let i = 0; i < 26; i++) {
+          const x = ((i * 79) % 100) / 100 * w;
+          const y = ((i * 43) % 100) / 100 * h * 0.62;
           ctx.beginPath();
-          ctx.ellipse(rand() * w, rand() * h * 0.55, 8 + rand() * 26, 5 + rand() * 12, rand(), 0, 7);
+          ctx.ellipse(x, y, 12 + (i % 5) * 8, 6 + (i % 3) * 4, 0.4, 0, Math.PI * 2);
           ctx.fill();
         }
-        for (let i = 0; i < 5; i++) {
+        // 광석 지점
+        for (const v of veins) {
+          const gl = 0.6 + 0.4 * Math.sin(t * 8);
           ctx.save();
-          const col = ['#7fd1c4', '#ffd166', '#c48be0'][i % 3];
-          ctx.shadowColor = col;
-          ctx.shadowBlur = 12;
-          ctx.fillStyle = col;
+          ctx.shadowColor = v.gem ? '#B0E8FF' : '#FFC845';
+          ctx.shadowBlur = 22 * gl;
+          ctx.fillStyle = v.gem ? '#B0E8FF' : '#FFC845';
           ctx.beginPath();
-          ctx.ellipse(w * (0.2 + i * 0.15), h * (0.2 + Math.sin(t + i) * 0.03), 9, 6, 0.4, 0, 7);
+          ctx.ellipse(v.x * w, v.y * h, 16, 12, 0.4, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
-        // 곡괭이 든 광부
-        person(ctx, w * 0.5, h * 0.5, h * 0.2, { work: flash > 0 ? 0.25 : t * 0.4, facing: 1, body: '#f4a261' });
-        if (flash > 0 && ok) sparkle(ctx, w * 0.5, h * 0.33, 16, '#ffe08a', flash / 0.3);
-
         // 파편
         for (let i = chips.length - 1; i >= 0; i--) {
           const c = chips[i];
-          c.vy += 620 * dt;
+          c.vy += 700 * dt;
           c.x += c.vx * dt;
           c.y += c.vy * dt;
           if (c.y > h) { chips.splice(i, 1); continue; }
           ctx.fillStyle = c.c;
-          ctx.fillRect(c.x, c.y, 5, 5);
+          ctx.fillRect(c.x, c.y, 6, 6);
         }
 
         // 타이밍 바
-        const bx = w * 0.08;
-        const bw = w * 0.84;
+        const bx = w * 0.07;
+        const bw = w * 0.86;
         const by = barY();
-        fillRR(ctx, bx, by, bw, h * 0.075, 10, '#141c2e');
-        const zx = bx + (zoneAt - zone / 2) * bw;
-        fillRR(ctx, zx, by, zone * bw, h * 0.075, 10, 'rgba(74,222,128,0.55)');
-        ctx.strokeStyle = '#4ade80';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(zx, by, zone * bw, h * 0.075);
-        ctx.fillStyle = flash > 0 ? (ok ? '#4ade80' : '#f87171') : '#ffd166';
-        ctx.fillRect(bx + pos * bw - 3, by - 8, 6, h * 0.075 + 16);
+        const bh = h * 0.085;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, bh / 2);
+        ctx.fill();
+        // 근접 구간
+        ctx.fillStyle = 'rgba(255,200,69,0.55)';
+        ctx.fillRect(bx + (0.5 - NEAR) * bw, by, NEAR * 2 * bw, bh);
+        // 정타 구간
+        const band = isGem ? 0.05 : HIT;
+        ctx.fillStyle = isGem ? 'rgba(120,200,255,0.95)' : 'rgba(82,183,136,0.95)';
+        ctx.fillRect(bx + (0.5 - band) * bw, by, band * 2 * bw, bh);
+        // 커서
+        ctx.fillStyle = armed ? '#E85D4A' : '#9AA6B4';
+        ctx.fillRect(bx + pos * bw - 3, by - 9, 6, bh + 18);
+
+        // 안내
+        ctx.fillStyle = '#4A3A28';
+        ctx.font = `700 ${Math.round(h * 0.045)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(armed ? (isGem ? '보석 광맥! 좁은 구간' : '지금 탭!') : '다음 광석 대기', w / 2, by - 22);
+        ctx.textAlign = 'left';
+
+        if (flash > 0) {
+          const c = flashKind === 'hit' ? '82,183,136' : flashKind === 'near' ? '255,200,69' : '232,93,74';
+          ctx.fillStyle = `rgba(${c},${flash})`;
+          ctx.fillRect(0, 0, w, h);
+        }
       },
     };
     return inst;
@@ -574,8 +642,8 @@ export const MINIGAMES: Record<string, MinigameDef> = {
 };
 
 /** 미니게임으로만 얻는 특산물 (기획서 7장) */
-export const MINIGAME_SPOILS: Record<string, { key: 'gems' | 'specs' | 'satisfaction' | 'funds' | 'fish'; label: string; icon: string }> = {
-  mine: { key: 'gems', label: '보석', icon: '💎' },
+export const MINIGAME_SPOILS: Record<string, { key: 'gem' | 'specs' | 'satisfaction' | 'funds' | 'fish'; label: string; icon: string }> = {
+  mine: { key: 'gem', label: '보석', icon: '💎' },
   factory: { key: 'specs', label: '고급 규격품', icon: '🔩' },
   fishery: { key: 'fish', label: '희귀 어종', icon: '🐠' },
   park: { key: 'satisfaction', label: '만족도', icon: '💗' },

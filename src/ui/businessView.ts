@@ -1,31 +1,37 @@
 import { CONFIG } from '../data/config';
 import { RESOURCE_META } from '../data/businesses';
+import { HOIST_LEVELS, EQUIPMENT, equipmentTier, workerCount } from '../data/units';
 import {
   automationStage,
+  autoFactor,
   businessRatePerSecond,
   chainActive,
   cycleTime,
   equipCost,
-  isAutomated,
+  hoistCost,
+  hoistGemCost,
+  hoistMult,
   isBoosted,
   managerCost,
   minigameMultiplier,
   nextMilestone,
   outputPerCycle,
   projectedEfficiency,
+  staffed,
   unitCost,
   unitMaxAffordable,
+  unitUnlockCost,
 } from '../core/economy';
 import { formatClock, formatInt, formatNumber } from '../core/num';
 import type { Game, BuyMode } from '../core/game';
 import type { BusinessId } from '../core/types';
 import { h, haptic } from './dom';
 import { showCashDropSheet } from './modals';
-import { fitCanvas } from './scene/gfx';
-import { BAND_PAINTERS, crewCount } from './scene/bands';
-import { SITE_PAINTERS } from './scene/site';
+import { fit } from './scene/iso';
+import { drawFloorStrip } from './scene/floorStrip';
 
 const BUY_MODES: BuyMode[] = [1, 10, 100, 'max'];
+const STAGE_LABEL = ['', '수동', '반자동 50%', '자동 100%', '고효율'];
 
 export interface View {
   root: HTMLElement;
@@ -37,102 +43,74 @@ export function createBusinessView(game: Game, id: BusinessId): View {
   const def = game.def(id);
   const fmt = (v: number) => formatNumber(v, game.state.settings.notation);
 
-  // ── 사업장 전경 ──────────────────────────────────────────────
-  const siteCanvas = h('canvas', { class: 'site-art' });
-  const siteName = h('div', { class: 'site-name' }, `${def.icon} ${def.name}`);
-  const siteRate = h('div', { class: 'site-rate' }, '');
-  const effChip = h('span', { class: 'chip' }, '');
+  // ── 지상부 ──
+  const rateEl = h('b', { class: 'surface-rate' }, '');
+  const stockEl = h('span', { class: 'chip' }, '');
   const boostChip = h('span', { class: 'chip on', style: { display: 'none' } }, '');
+  const hoistTitle = h('div', { class: 'hoist-title' }, '');
+  const hoistDesc = h('div', { class: 'small muted' }, '');
+  const hoistBtn = h('button', { class: 'buy' }, '');
+  hoistBtn.addEventListener('click', () => {
+    if (!game.buyHoist(id)) game.toast('자금 또는 보석이 모자랍니다');
+    else haptic(game.state.settings.haptics);
+  });
 
-  const mgBtn = h(
-    'button',
-    {
-      class: 'primary',
-      onclick: async (e: Event) => {
-        e.stopPropagation();
-        haptic(game.state.settings.haptics);
-        const r = await game.playMinigame(id);
-        if (r) game.toast(`${r.grade}등급! 배율 x${r.mult.toFixed(2)}`);
-      },
-    },
-    '▶ 미니게임',
-    h('span', { class: 'btn-sub' }, ''),
-  );
+  const mgBtn = h('button', { class: 'primary grow' }, '');
+  mgBtn.addEventListener('click', async () => {
+    haptic(game.state.settings.haptics);
+    const r = await game.playMinigame(id);
+    if (r) game.toast(`성공률 ${Math.round(r.rate * 100)}% · 배율 x${r.mult.toFixed(2)}`);
+  });
+  const boostBtn = h('button', { class: 'ad grow' }, '');
+  boostBtn.addEventListener('click', async () => {
+    haptic(game.state.settings.haptics);
+    await game.adBoost(id);
+  });
 
-  const boostBtn = h(
-    'button',
-    {
-      class: 'ad',
-      onclick: async () => {
-        haptic(game.state.settings.haptics);
-        await game.adBoost(id);
-      },
-    },
-    `⚡ ${CONFIG.ads.boostFactor}배`,
-    h('span', { class: 'btn-sub' }, `광고 ${Math.round(CONFIG.ads.boostSeconds / 60)}분`),
-  );
-  const trialBtn = h(
-    'button',
-    {
-      class: 'ad',
-      onclick: async () => {
-        haptic(game.state.settings.haptics);
-        await game.adTrialManager(id);
-      },
-    },
-    '👷 임시 매니저',
-    h('span', { class: 'btn-sub' }, `광고 ${Math.round(CONFIG.ads.trialManagerSeconds / 60)}분 자동`),
-  );
-
-  const site = h(
+  const surface = h(
     'div',
-    { class: 'site', style: { borderColor: def.color } },
-    siteCanvas,
-    h('div', { class: 'site-top' }, siteName, siteRate),
-    h('div', { class: 'site-chips' }, effChip, boostChip),
-    h('div', { class: 'site-actions' }, mgBtn, boostBtn, trialBtn),
-  );
-
-  // ── 구매 단위 ────────────────────────────────────────────────
-  const segButtons = BUY_MODES.map((m) =>
+    { class: 'surface', style: { borderColor: def.color } },
     h(
-      'button',
-      {
-        class: game.buyMode === m ? 'on' : '',
-        onclick: () => {
-          game.buyMode = m;
-          segButtons.forEach((b, i) => b.classList.toggle('on', BUY_MODES[i] === m));
-          update();
-        },
-      },
-      m === 'max' ? 'MAX' : `x${m}`,
+      'div',
+      { class: 'row spread' },
+      h('div', null, h('div', { class: 'surface-name' }, `${def.icon} ${def.name}`), h('div', { class: 'small muted' }, def.subtitle)),
+      h('div', { class: 'center' }, rateEl, h('div', { class: 'small muted' }, '초당')),
     ),
+    h('div', { class: 'row', style: { marginTop: '8px', flexWrap: 'wrap', gap: '6px' } }, stockEl, boostChip),
+    h(
+      'div',
+      { class: 'hoist' },
+      h('div', { class: 'grow' }, hoistTitle, hoistDesc),
+      hoistBtn,
+    ),
+    h('div', { class: 'row', style: { gap: '6px', marginTop: '8px' } }, mgBtn, boostBtn),
   );
-  const seg = h('div', { class: 'seg buymode' }, ...segButtons);
 
-  // ── 유닛 밴드 ────────────────────────────────────────────────
-  const bands = def.units.map((udef, i) => {
-    const canvas = h('canvas', { class: 'band-art' });
-    const nameEl = h('div', { class: 'band-name' }, udef.name);
-    const lvEl = h('span', { class: 'band-lv' }, '');
-    const metaEl = h('div', { class: 'band-meta' }, '');
-    const hintEl = h('div', { class: 'band-hint' }, '탭하여 가동');
+  // ── 층 ──
+  const floors = def.units.map((udef, i) => {
+    const canvas = h('canvas', { class: 'floor-art' });
+    const nameEl = h('b', { class: 'floor-name' }, udef.name);
+    const lvEl = h('span', { class: 'floor-lv' }, '');
+    const metaEl = h('div', { class: 'floor-meta' }, '');
     const progFill = h('i', { style: { width: '0%' } });
-    const buyBtn = h('button', { class: 'band-buy' }, '');
-    const mgrBtn = h('button', { class: 'band-mgr' }, '');
+    const buyBtn = h('button', { class: 'buy' }, '');
+    const autoBtn = h('button', { class: 'auto' }, '');
+    const lockBtn = h('button', { class: 'gold lock-btn' }, '');
 
     buyBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      const u = game.state.businesses[id].units[i];
       const count = game.buyMode === 'max' ? unitMaxAffordable(game.state, def, i) : game.buyMode;
-      const cost = unitCost(game.state, def, i, Math.max(1, count));
+      const cost = u.unlocked ? unitCost(game.state, def, i, Math.max(1, count)) : unitUnlockCost(def, i);
       if (game.state.resources.cash < cost) return showCashDropSheet(game);
-      if (game.buyUnit(id, i)) {
-        haptic(game.state.settings.haptics);
-        floaty(buyBtn, `Lv +${game.buyMode === 'max' ? formatInt(Math.max(1, count)) : count}`);
-      }
+      if (game.buyUnit(id, i)) haptic(game.state.settings.haptics);
     });
-
-    mgrBtn.addEventListener('click', (e) => {
+    lockBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (game.state.resources.cash < unitUnlockCost(def, i)) return showCashDropSheet(game);
+      game.unlockUnit(id, i);
+    });
+    autoBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const u = game.state.businesses[id].units[i];
       if (u.manager) return;
@@ -142,185 +120,196 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       else game.buyEquip(id, i);
     });
 
-    const band = h(
+    const row = h(
       'div',
       {
-        class: 'band',
+        class: 'floor',
         onclick: () => {
           if (game.tapUnit(id, i)) haptic(game.state.settings.haptics);
         },
       },
       canvas,
-      h('div', { class: 'band-scrim' }),
-      h('div', { class: 'band-info' }, h('div', { class: 'band-title' }, nameEl, lvEl), metaEl),
-      hintEl,
-      h('div', { class: 'band-actions' }, buyBtn, mgrBtn),
-      h('div', { class: 'band-progress' }, progFill),
+      h('div', { class: 'floor-scrim' }),
+      h('div', { class: 'floor-info' }, h('div', { class: 'floor-title' }, nameEl, lvEl), metaEl),
+      h('div', { class: 'floor-actions' }, buyBtn, autoBtn),
+      lockBtn,
+      h('div', { class: 'floor-progress' }, progFill),
     );
-
-    return { band, canvas, nameEl, lvEl, metaEl, hintEl, progFill, buyBtn, mgrBtn, udef, i };
+    return { row, canvas, nameEl, lvEl, metaEl, progFill, buyBtn, autoBtn, lockBtn, udef, i };
   });
 
-  const root = h('div', { class: 'biz' }, site, seg, ...bands.map((b) => b.band));
+  // ── 구매 단위 ──
+  const segButtons = BUY_MODES.map((m) =>
+    h(
+      'button',
+      {
+        class: game.buyMode === m ? 'on' : '',
+        onclick: () => {
+          game.buyMode = m;
+          segButtons.forEach((b, k) => b.classList.toggle('on', BUY_MODES[k] === m));
+          update();
+        },
+      },
+      m === 'max' ? '최대' : `x${m}`,
+    ),
+  );
+  const buyBar = h('div', { class: 'buybar' }, ...segButtons);
 
-  // ── 그리기 (매 프레임) ───────────────────────────────────────
+  const root = h('div', { class: 'biz' }, surface, h('div', { class: 'floors' }, ...floors.map((f) => f.row)), buyBar);
+
   function draw(t: number): void {
     const st = game.state;
     const now = Date.now();
-    const eff = projectedEfficiency(st, def, now);
     const bs = st.businesses[id];
-
-    const sw = site.clientWidth;
-    const sh = site.clientHeight;
-    if (sw > 0 && sh > 0) {
-      const owned = bs.units.filter((u) => u.level > 0).length;
-      const lv = bs.units.reduce((a, u) => a + u.level, 0);
-      const dev = Math.min(1, (owned / def.units.length) * 0.5 + Math.min(1, Math.log10(lv + 1) / 3) * 0.5);
-      SITE_PAINTERS[id]({
-        ctx: fitCanvas(siteCanvas, sw, sh),
-        w: sw,
-        h: sh,
-        t,
-        dev,
-        boosted: isBoosted(st, id, now),
-        eff,
-      });
-    }
-
-    const paint = BAND_PAINTERS[id];
-    for (const b of bands) {
-      const u = bs.units[b.i];
-      const bw = b.band.clientWidth;
-      const bh = b.band.clientHeight;
-      if (bw <= 0 || bh <= 0) continue;
-      const ct = cycleTime(st, def, b.i);
+    const staff = staffed(st, id);
+    for (const f of floors) {
+      const u = bs.units[f.i];
+      const w = f.row.clientWidth;
+      const hh = f.row.clientHeight;
+      if (w <= 0 || hh <= 0) continue;
+      const ct = cycleTime(st, def, f.i);
       const p = u.running ? Math.min(1, u.progress / ct) : 0;
-      paint({
-        ctx: fitCanvas(b.canvas, bw, bh),
-        w: bw,
-        h: bh,
-        index: b.i,
+      drawFloorStrip({
+        ctx: fit(f.canvas, w, hh),
+        w,
+        h: hh,
+        biz: id,
+        color: def.color,
+        index: f.i,
         level: u.level,
-        owned: u.level > 0,
+        unlocked: u.unlocked,
         p,
         running: u.running,
-        auto: isAutomated(st, id, b.i, now),
-        boosted: isBoosted(st, id, now),
-        eff,
+        auto: autoFactor(st, id, f.i, now) > 0,
+        idle: u.unlocked && f.i >= staff,
         t,
       });
-      b.progFill.style.width = `${p * 100}%`;
+      f.progFill.style.width = `${p * 100}%`;
     }
   }
 
-  // ── 텍스트/버튼 갱신 (10Hz) ──────────────────────────────────
   function update(): void {
     const st = game.state;
     const now = Date.now();
     const bs = st.businesses[id];
     const eff = projectedEfficiency(st, def, now);
     const rate = businessRatePerSecond(st, def, now);
+    const staff = staffed(st, id);
 
-    siteRate.innerHTML = '';
-    siteRate.append(fmt(rate.cash * eff), h('small', null, '/초'));
+    rateEl.textContent = fmt(rate.cash * eff);
 
     const meta = RESOURCE_META[def.output];
     if (def.input && chainActive(st)) {
       const inMeta = RESOURCE_META[def.input.resource];
       const pct = Math.round(eff * 100);
-      effChip.textContent = `가동률 ${pct}% · ${inMeta.icon} ${fmt(st.resources[def.input.resource])}`;
-      effChip.className = `chip ${pct >= 95 ? 'on' : 'warn'}`;
+      stockEl.textContent = `가동률 ${pct}% · ${inMeta.icon} ${fmt(st.resources[def.input.resource])}`;
+      stockEl.className = `chip ${pct >= 95 ? 'on' : 'warn'}`;
     } else if (def.output !== 'cash') {
-      effChip.textContent = `${meta.icon} ${meta.name} ${fmt(st.resources[def.output])}`;
-      effChip.className = 'chip';
+      stockEl.textContent = `${meta.icon} ${meta.name} ${fmt(st.resources[def.output])}`;
+      stockEl.className = 'chip';
     } else {
-      effChip.textContent = `누적 매출 ${fmt(bs.totalProduced)}`;
-      effChip.className = 'chip';
+      stockEl.textContent = `누적 매출 ${fmt(bs.totalProduced)}`;
+      stockEl.className = 'chip';
     }
 
+    const mgMult = minigameMultiplier(st, id, now);
     if (isBoosted(st, id, now)) {
       boostChip.style.display = '';
       boostChip.textContent = `⚡ ${CONFIG.ads.boostFactor}배 ${formatClock((bs.boostUntil - now) / 1000)}`;
+    } else if (mgMult > 1) {
+      boostChip.style.display = '';
+      boostChip.textContent = `🎮 x${mgMult} ${formatClock((st.minigames[id].boostUntil - now) / 1000)}`;
     } else boostChip.style.display = 'none';
 
-    const left = game.minigamePlaysLeft(id);
-    mgBtn.innerHTML = '';
-    mgBtn.className = left > 0 ? 'primary' : 'ad';
-    mgBtn.append('▶ 미니게임', h('span', { class: 'btn-sub' }, left > 0 ? `무료 ${left}회` : '광고 보고 1판'));
-
-    const mgMult = minigameMultiplier(st, id, now);
-    if (mgMult > 1) {
-      boostChip.style.display = '';
-      boostChip.textContent = `🎮 x${mgMult.toFixed(2)} ${formatClock((st.minigames[id].boostUntil - now) / 1000)}`;
+    // 엘리베이터
+    const hl = bs.hoistLevel;
+    hoistTitle.textContent = `${def.hoistIcon} ${def.hoistName} Lv.${hl}`;
+    const maxed = hl >= HOIST_LEVELS.length;
+    hoistDesc.textContent = maxed
+      ? `전 ${def.unitLabel} 산출 x${hoistMult(st, id)} (최대)`
+      : `전 ${def.unitLabel} 산출 x${hoistMult(st, id)} → x${HOIST_LEVELS[hl].mult}`;
+    const hc = hoistCost(st, id);
+    const hg = hoistGemCost(st, id);
+    hoistBtn.disabled = maxed;
+    hoistBtn.innerHTML = '';
+    if (maxed) hoistBtn.append('MAX');
+    else {
+      hoistBtn.className = `buy ${st.resources.cash >= hc && st.resources.gem >= hg ? '' : 'dim'}`;
+      hoistBtn.append('올리기', h('span', { class: 'btn-sub' }, hg > 0 ? `💰${fmt(hc)} · 💎${hg}` : `💰${fmt(hc)}`));
     }
 
+    const left = game.minigamePlaysLeft(id);
+    const adLeft = game.minigameAdPlaysLeft(id);
+    mgBtn.innerHTML = '';
+    mgBtn.className = left > 0 ? 'primary grow' : adLeft > 0 ? 'ad grow' : 'grow';
+    mgBtn.disabled = left <= 0 && adLeft <= 0;
+    mgBtn.append('▶ 미니게임', h('span', { class: 'btn-sub' }, left > 0 ? `무료 ${left}회` : adLeft > 0 ? `광고 +1 (${adLeft})` : '내일 다시'));
     boostBtn.disabled = !game.ads.isAvailable('tabBoost');
-    const allManaged = bs.units.every((u) => u.level <= 0 || u.manager);
-    trialBtn.style.display = allManaged ? 'none' : '';
-    trialBtn.disabled = !game.ads.isAvailable('trialManager') || bs.trialUntil > now;
+    boostBtn.innerHTML = '';
+    boostBtn.append(`⚡ ${CONFIG.ads.boostFactor}배`, h('span', { class: 'btn-sub' }, `광고 ${Math.round(CONFIG.ads.boostSeconds / 60)}분`));
 
-    for (const b of bands) {
-      const u = bs.units[b.i];
-      const owned = u.level > 0;
-      const auto = isAutomated(st, id, b.i, now);
-      b.band.classList.toggle('locked', !owned);
-      b.band.classList.toggle('tappable', owned && !auto && !u.running);
+    for (const f of floors) {
+      const u = bs.units[f.i];
+      f.row.classList.toggle('locked', !u.unlocked);
+      const auto = autoFactor(st, id, f.i, now) > 0;
+      const idle = u.unlocked && f.i >= staff;
+      f.row.classList.toggle('tappable', u.unlocked && !auto && !u.running && !idle);
+      f.row.classList.toggle('idle', idle);
 
-      b.lvEl.textContent = owned ? `Lv.${formatInt(u.level)}` : '미개발';
-      b.hintEl.style.display = owned && !auto && !u.running ? '' : 'none';
+      if (!u.unlocked) {
+        f.lockBtn.style.display = '';
+        f.buyBtn.style.display = 'none';
+        f.autoBtn.style.display = 'none';
+        const cost = unitUnlockCost(def, f.i);
+        f.lockBtn.className = `lock-btn ${st.resources.cash >= cost ? 'gold' : ''}`;
+        f.lockBtn.innerHTML = '';
+        f.lockBtn.append('🔒 해금', h('span', { class: 'btn-sub' }, fmt(cost)));
+        f.lvEl.textContent = '미개발';
+        f.metaEl.textContent = `1회 ${fmt(f.udef.baseOutput)} · ${f.udef.cycleTime}초`;
+        continue;
+      }
 
-      const ct = cycleTime(st, def, b.i);
-      const per = outputPerCycle(st, def, b.i, now) * eff;
+      f.lockBtn.style.display = 'none';
+      f.buyBtn.style.display = '';
+      f.autoBtn.style.display = '';
+      f.lvEl.textContent = `Lv.${formatInt(u.level)}`;
+
+      const ct = cycleTime(st, def, f.i);
+      const per = outputPerCycle(st, def, f.i, now) * eff;
       const ms = nextMilestone(u.level);
-      const STAGE = ['', '수동', '반자동 50%', '자동 100%', '고효율'];
-      b.metaEl.textContent = owned
-        ? `초당 ${fmt(per / ct)} · 인력 ${crewCount(u.level)}명 · ${STAGE[automationStage(st, id, b.i)]}` +
-          (ms ? ` · Lv.${ms.level}에 ${ms.type === 'output' ? '산출' : '속도'} x${ms.factor}` : ' · 보너스 전부 달성')
-        : `1회 ${fmt(b.udef.baseOutput * def.outScale)} · ${b.udef.cycleTime}초`;
+      const equip = EQUIPMENT[id]?.[equipmentTier(u.level)] ?? '';
+      f.metaEl.textContent = idle
+        ? '인구 부족으로 정지'
+        : `초당 ${fmt(per / ct)} · ${equip} · 인력 ${workerCount(u.level)}명 · ${STAGE_LABEL[automationStage(st, id, f.i)]}` +
+          (ms ? ` · Lv.${ms} 산출x2` : '');
 
-      const count = game.buyMode === 'max' ? Math.max(1, unitMaxAffordable(st, def, b.i)) : game.buyMode;
-      const cost = unitCost(st, def, b.i, count);
-      const canBuy = st.resources.cash >= cost;
-      b.buyBtn.className = `band-buy ${canBuy ? 'primary' : ''}`;
-      b.buyBtn.innerHTML = '';
-      b.buyBtn.append(
-        owned ? `Lv +${game.buyMode === 'max' ? formatInt(count) : count}` : '개발하기',
-        h('span', { class: 'btn-sub' }, fmt(cost)),
-      );
+      const count = game.buyMode === 'max' ? Math.max(1, unitMaxAffordable(st, def, f.i)) : game.buyMode;
+      const cost = unitCost(st, def, f.i, count);
+      f.buyBtn.className = `buy ${st.resources.cash >= cost ? '' : 'dim'}`;
+      f.buyBtn.innerHTML = '';
+      f.buyBtn.append(`Lv +${game.buyMode === 'max' ? formatInt(count) : count}`, h('span', { class: 'btn-sub' }, fmt(cost)));
 
-      if (!owned) {
-        b.mgrBtn.style.display = 'none';
-      } else if (u.manager) {
-        b.mgrBtn.style.display = '';
-        b.mgrBtn.className = 'band-mgr hired';
-        b.mgrBtn.disabled = true;
-        b.mgrBtn.innerHTML = '';
-        b.mgrBtn.append('👤', h('span', { class: 'btn-sub' }, b.udef.managerName));
+      if (u.manager) {
+        f.autoBtn.className = 'auto hired';
+        f.autoBtn.disabled = true;
+        f.autoBtn.innerHTML = '';
+        f.autoBtn.append('👤', h('span', { class: 'btn-sub' }, f.udef.managerName));
       } else if (u.equip) {
-        b.mgrBtn.style.display = '';
-        const mcost = managerCost(def, b.i);
-        b.mgrBtn.className = `band-mgr ${st.resources.cash >= mcost ? 'gold' : ''}`;
-        b.mgrBtn.disabled = false;
-        b.mgrBtn.innerHTML = '';
-        b.mgrBtn.append('매니저 100%', h('span', { class: 'btn-sub' }, fmt(mcost)));
+        const mc = managerCost(def, f.i);
+        f.autoBtn.className = `auto ${st.resources.cash >= mc ? 'gold' : 'dim'}`;
+        f.autoBtn.disabled = false;
+        f.autoBtn.innerHTML = '';
+        f.autoBtn.append('매니저', h('span', { class: 'btn-sub' }, fmt(mc)));
       } else {
-        b.mgrBtn.style.display = '';
-        const ecost = equipCost(def, b.i);
-        b.mgrBtn.className = `band-mgr ${st.resources.cash >= ecost ? 'primary' : ''}`;
-        b.mgrBtn.disabled = false;
-        b.mgrBtn.innerHTML = '';
-        b.mgrBtn.append('설비 50%', h('span', { class: 'btn-sub' }, fmt(ecost)));
+        const ec = equipCost(def, f.i);
+        f.autoBtn.className = `auto ${st.resources.cash >= ec ? '' : 'dim'}`;
+        f.autoBtn.disabled = false;
+        f.autoBtn.innerHTML = '';
+        f.autoBtn.append('설비 50%', h('span', { class: 'btn-sub' }, fmt(ec)));
       }
     }
   }
 
   update();
   return { root, update, draw };
-}
-
-function floaty(anchor: HTMLElement, text: string): void {
-  const rect = anchor.getBoundingClientRect();
-  const el = h('div', { class: 'floaty', style: { left: `${rect.left}px`, top: `${rect.top}px` } }, text);
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 900);
 }

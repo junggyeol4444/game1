@@ -1,18 +1,19 @@
-export type ResourceId = 'cash' | 'material' | 'ore' | 'goods' | 'food' | 'pop' | 'blueprint';
+export type ResourceId = 'cash' | 'material' | 'ore' | 'goods' | 'food' | 'pop' | 'gem' | 'blueprint';
 export type BusinessId = 'mine' | 'factory' | 'fishery' | 'park' | 'corp';
 
 export interface UnitDef {
   id: string;
   name: string;
-  /** 1레벨 구매가 (사업 costScale 적용 전) */
+  /** 이 유닛을 여는 비용 (1번 유닛은 0) */
+  unlockCost: number;
+  /** 레벨업 base_cost */
   baseCost: number;
   /** 레벨당 가격 상승률 */
   costGrowth: number;
-  /** 1레벨 기준 1사이클 산출 (사업 outScale 적용 전) */
+  /** 1레벨 기준 1사이클 산출 */
   baseOutput: number;
   /** 1사이클 소요 초 */
   cycleTime: number;
-  /** 매니저 고용가 (costScale 적용 전) */
   managerCost: number;
   managerName: string;
 }
@@ -31,6 +32,9 @@ export interface BusinessDef {
   color: string;
   unlockCityLevel: number;
   unitLabel: string;
+  /** 전 유닛 공통 배율 장치 (광산의 엘리베이터) */
+  hoistName: string;
+  hoistIcon: string;
   output: ResourceId;
   /** 산출 1단위당 현금 */
   price: number;
@@ -41,6 +45,8 @@ export interface BusinessDef {
 }
 
 export interface UnitState {
+  /** 유닛이 열렸는가 */
+  unlocked: boolean;
   level: number;
   /** 진행 중인 사이클의 경과 초 */
   progress: number;
@@ -57,20 +63,23 @@ export interface BusinessState {
   boostUntil: number;
   /** 매니저 체험(광고) 만료 시각(ms epoch) */
   trialUntil: number;
+  /** 공통 배율 장치 레벨 (1부터) */
+  hoistLevel: number;
   totalProduced: number;
 }
 
 export interface FacilityState {
-  built: boolean;
-  /** 트랙 id -> 레벨 */
-  tracks: Record<string, number>;
+  unlocked: boolean;
+  level: number;
 }
 
 export interface MinigameState {
-  /** 무료 횟수가 리셋된 날짜 */
+  /** 무료 횟수가 리셋된 날짜 (매일 04:00 기준) */
   day: string;
   plays: number;
-  bestScore: number;
+  adPlays: number;
+  /** 최고 성공률 0~1 */
+  bestRate: number;
   /** 미니게임 성적 배율 만료 시각 */
   boostUntil: number;
   boostMult: number;
@@ -90,7 +99,6 @@ export interface CityEvent {
 
 export interface CollectionState {
   /** 미니게임 특산물 */
-  gems: number;
   specs: number;
   satisfaction: number;
   funds: number;
@@ -105,8 +113,10 @@ export interface CityState {
   taxRun: number;
   /** 전체 누적 세수 */
   taxTotal: number;
-  storageLevel: number;   // 오프라인 상한 업그레이드
-  logisticsLevel: number; // 오프라인 효율 업그레이드
+  /** 오프라인 상한 업그레이드 0~5 */
+  capLevel: number;
+  /** 오프라인 효율 업그레이드 0~5 */
+  effLevel: number;
   /** 현재 인구 (주거지 상한까지 서서히 유입) */
   pop: number;
 }

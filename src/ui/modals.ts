@@ -1,20 +1,13 @@
 import { CONFIG } from '../data/config';
 import { BUSINESSES } from '../data/businesses';
 import { BUSINESS_TIERS, FACILITIES } from '../data/buildings';
-import { buildPrice, buildableFacilities, builtFacilities, canAfford, cityStats } from '../core/facilities';
+import { buildableFacilities, builtFacilities, cityStats, facilityCost } from '../core/facilities';
 import { RARE_FISH } from './minigames/games';
 import { terrainName } from './cityMap';
 import { IAP_PRODUCTS } from '../core/iap';
 import { formatDuration, formatInt, formatNumber } from '../core/num';
-import { totalCashPerSecond, offlineCapSeconds, offlineRate, isUnlocked } from '../core/economy';
-import {
-  blueprintUpgradeCost,
-  cityProgress,
-  cumulativeTaxForLevel,
-  logisticsCost,
-  storageCost,
-  visibleBlueprintUpgrades,
-} from '../core/progression';
+import { totalCashPerSecond, offlineCapSeconds, offlineRate, offlineUpgradeCost, isUnlocked } from '../core/economy';
+import { blueprintUpgradeCost, cityProgress, cityRequirement, visibleBlueprintUpgrades } from '../core/progression';
 import { missionComplete, missionDef, missionTarget } from '../core/missions';
 import type { Game } from '../core/game';
 import type { BusinessDef, GameState, OfflineReport } from '../core/types';
@@ -299,7 +292,7 @@ export function showPrestigeSheet(game: Game): void {
           h('div', { class: 'row spread' }, h('span', null, '재개발 시 획득'), h('b', { class: 'gold' }, `📐 ${formatInt(gain)}`)),
           h('div', { class: 'row spread small muted', style: { marginTop: '4px' } },
             h('span', null, '조건'),
-            h('span', { class: can ? 'good' : 'bad' }, `도시 레벨 ${CONFIG.prestige.unlockCityLevel} 이상 (현재 ${s.city.level})`)),
+            h('span', { class: can ? 'good' : 'bad' }, `누적 세수 ${fmt(s, CONFIG.prestige.minTax)} 이상`)),
           h(
             'button',
             {
@@ -477,7 +470,7 @@ export function showSettingsSheet(game: Game): void {
           h('div', null, `누적 플레이 ${formatDuration(s.stats.playSeconds)}`),
           h('div', null, `누적 수익 ${fmt(s, s.stats.cashEarnedTotal)}`),
           h('div', null, `재개발 ${s.prestige.count}회 · 광고 ${s.stats.adsWatched}회`),
-          h('div', null, `다음 도시 레벨까지 세수 ${fmt(s, Math.max(0, cumulativeTaxForLevel(s.city.level + 1) - s.city.taxRun))}`),
+          h('div', null, `다음 도시 레벨까지 세수 ${fmt(s, Math.max(0, cityRequirement(s.city.level + 1) - s.city.taxRun))}`),
         ),
       ];
     },
@@ -523,8 +516,8 @@ export function showBuildSheet(game: Game, onEnter: (id: string) => void): void 
       const built = builtFacilities(s);
 
       const card = (f: (typeof FACILITIES)[number], state: 'can' | 'locked' | 'built') => {
-        const p = buildPrice(f.id);
-        const ok = canAfford(s, p);
+        const cost = facilityCost(s, f.id);
+        const ok = s.resources.cash >= cost;
         return h(
           'div',
           { class: 'card', style: { borderLeft: `4px solid ${f.color}` } },
@@ -538,7 +531,7 @@ export function showBuildSheet(game: Game, onEnter: (id: string) => void): void 
               h('div', { style: { fontWeight: '800' } }, f.name),
               h('div', { class: 'small muted' }, f.effect),
               state === 'can'
-                ? h('div', { class: 'small', style: { marginTop: '3px' } }, `💰 ${fmt(s, p.cash)} · 📦 ${fmt(s, p.material)}`)
+                ? h('div', { class: 'small', style: { marginTop: '3px' } }, `💰 ${fmt(s, cost)}`)
                 : null,
             ),
             state === 'locked'
@@ -560,7 +553,7 @@ export function showBuildSheet(game: Game, onEnter: (id: string) => void): void 
                       class: ok ? 'gold' : '',
                       disabled: !ok,
                       onclick: () => {
-                        if (game.buildFacility(f.id)) {
+                        if (game.buyFacility(f.id)) {
                           hd.close();
                           onEnter(f.id);
                         }
@@ -612,9 +605,9 @@ export function showCityLevelSheet(game: Game): void {
           h('h3', null, '도시 현황'),
           row('인구', formatInt(s.city.pop), ''),
           row('인구 상한', formatInt(cs.popCap)),
-          row('노동력', `${fmt(s, cs.laborSupply)} / ${fmt(s, cs.laborDemand)}`, cs.laborEff < 1 ? 'bad' : 'good'),
+          row('노동력', `${fmt(s, cs.laborSupply)} / ${fmt(s, cs.popDemand)}`, cs.laborSupply < cs.popDemand ? 'bad' : 'good'),
           row('전력', `${fmt(s, cs.powerSupply)} / ${fmt(s, cs.powerDemand)}`, cs.powerEff < 1 ? 'bad' : 'good'),
-          row('사업 가동률', `${Math.round(cs.powerEff * cs.laborEff * 100)}%`, cs.powerEff * cs.laborEff < 1 ? 'warn' : 'good'),
+          row('산출 배율', `${Math.round(cs.powerEff * 100)}%`, cs.powerEff < 1 ? 'warn' : 'good'),
           row('세수 배율', `x${cs.taxMult.toFixed(2)}`, 'good'),
           row('전 사업 산출', `x${cs.outputMult.toFixed(2)}`, 'good'),
         ),
@@ -656,7 +649,7 @@ export function showCollectionSheet(game: Game): void {
       const got = all.reduce((a, b) => a + Math.min(seen[b.id] ?? 0, b.tiers.length - 1), 0);
 
       const spoils = [
-        { icon: '💎', name: '보석', v: s.collection.gems, from: '광산 미니게임' },
+        { icon: '💎', name: '보석', v: s.resources.gem, from: '광산 미니게임 · 엘리베이터 재료' },
         { icon: '🔩', name: '고급 규격품', v: s.collection.specs, from: '공장 미니게임' },
         { icon: '💗', name: '만족도', v: s.collection.satisfaction, from: '놀이공원 미니게임' },
         { icon: '💼', name: '투자 자금', v: s.collection.funds, from: '기업 미니게임' },
@@ -751,7 +744,7 @@ export function showMenuSheet(game: Game): void {
         );
       return [
         item('📅', '출석 보상', s.attendance.claimedToday ? '내일 다시' : `${s.attendance.streak + 1}일차 수령 가능`, () => showAttendanceSheet(game), !s.attendance.claimedToday),
-        item('🏗️', '재개발', game.canPrestige() ? `설계도 ${formatInt(game.prestigeGain())} 획득` : `도시 Lv.${CONFIG.prestige.unlockCityLevel} 필요`, () => showPrestigeSheet(game), game.canPrestige()),
+        item('🏗️', '재개발', game.canPrestige() ? `설계도 ${formatInt(game.prestigeGain())} 획득` : `누적 세수 ${fmt(s, CONFIG.prestige.minTax)} 필요`, () => showPrestigeSheet(game), game.canPrestige()),
         item('🛒', '상점', '스타터 팩 · 저금통 · 광고 제거', () => showShopSheet(game)),
         item('📦', '창고 / 물류', `오프라인 최대 ${formatDuration(offlineCapSeconds(s))}`, () => showFacilityUpgradeSheet(game)),
         item('⚙️', '설정', '글자 크기 · 숫자 표기 · 세이브', () => showSettingsSheet(game)),
@@ -760,33 +753,28 @@ export function showMenuSheet(game: Game): void {
   });
 }
 
-/** 오프라인 창고/물류 (기존 도시 시설 업그레이드) */
+/** 오프라인 수익 업그레이드 (물자 소비, 기획서 수치표 7장) */
 export function showFacilityUpgradeSheet(game: Game): void {
   const s = game.state;
   sheet({
-    title: '창고 / 물류',
-    sub: '자리를 비운 동안 쌓이는 수익을 늘립니다',
+    title: '오프라인 수익',
+    sub: '자리를 비운 동안 쌓이는 수익을 늘립니다 (물자 소비)',
     build: (hd) => {
-      const mk = (
-        label: string,
-        level: number,
-        max: number,
-        cost: number,
-        run: () => boolean,
-        note: string,
-      ) =>
-        h(
+      const mk = (label: string, level: number, note: string, run: () => boolean) => {
+        const cost = offlineUpgradeCost(level);
+        const maxed = level >= 5;
+        return h(
           'div',
           { class: 'card' },
           h(
             'div',
             { class: 'row' },
-            h('div', { class: 'grow' }, h('div', null, `${label} Lv.${level}`), h('div', { class: 'small muted' }, note)),
+            h('div', { class: 'grow' }, h('div', null, `${label} ${level}/5단계`), h('div', { class: 'small muted' }, note)),
             h(
               'button',
               {
-                class: level < max && s.resources.cash >= cost ? 'primary' : '',
-                disabled: level >= max,
+                class: !maxed && s.resources.material >= cost ? 'buy' : 'dim',
+                disabled: maxed,
                 onclick: () => {
                   if (run()) {
                     hd.close();
@@ -794,13 +782,14 @@ export function showFacilityUpgradeSheet(game: Game): void {
                   }
                 },
               },
-              level >= max ? 'MAX' : fmt(s, cost),
+              maxed ? 'MAX' : `📦 ${fmt(s, cost)}`,
             ),
           ),
         );
+      };
       return [
-        mk('📦 창고', s.city.storageLevel, CONFIG.offline.maxStorageLevel, storageCost(s), () => game.buyStorage(), `오프라인 상한 ${formatDuration(offlineCapSeconds(s))}`),
-        mk('🚚 물류', s.city.logisticsLevel, CONFIG.offline.maxLogisticsLevel, logisticsCost(s), () => game.buyLogistics(), `오프라인 효율 ${Math.round(offlineRate(s) * 100)}%`),
+        mk('📦 저장 상한', s.city.capLevel, `최대 ${formatDuration(offlineCapSeconds(s))}`, () => game.buyOfflineCap()),
+        mk('🚚 회수 효율', s.city.effLevel, `효율 ${Math.round(offlineRate(s) * 100)}%`, () => game.buyOfflineEff()),
       ];
     },
   });

@@ -16,8 +16,6 @@ export const CONFIG = {
   /** 현금 획득액 중 도시 세수로 잡히는 비율(= 도시 레벨 경험치) */
   taxRate: 0.1,
 
-  /** 도시 레벨업에 필요한 누적 세수: base * growth^(L-1) */
-  cityLevel: { base: 60, growth: 4.2, max: 50 },
 
   /** 자원 사슬은 이 도시 레벨부터 작동 (초반 3탭은 독립) */
   chainStartLevel: 12,
@@ -27,19 +25,16 @@ export const CONFIG = {
   /** 인구 노동력 배율: 1 + coef * log10(1+pop) */
   laborCoef: 0.1,
 
-  /** 시설(전력/노동력/인구) */
+  /** 시설 게이트 */
   facility: {
-    /** 유닛 수요 포인트 1점당 전력/노동력 */
-    powerPerPoint: 2,
-    laborPerPoint: 1,
-    /** 발전소를 안 지어도 도시 기본 전력망이 이만큼은 준다 */
-    powerBase: 400,
-    /** 주거지를 안 지어도 이만큼은 산다 */
-    popBase: 150,
+    /** 전력이 모자라도 최소 이만큼은 돈다 */
+    gateFloor: 0.15,
     /** 초당 인구 유입 (공원이 배율) */
-    popGrowthBase: 0.35,
-    /** 전력/노동력이 모자라도 최소 이만큼은 돈다 */
-    gateFloor: 0.25,
+    popGrowthBase: 0.6,
+    /** 주거지가 없어도 마을에 이만큼은 산다 */
+    popBase: 50,
+    /** 발전소가 없어도 마을 전력망이 이만큼은 준다 */
+    powerBase: 60,
   },
 
   /** 사업이 생산할 때 건설 물자로 적립되는 비율 (생산 포인트 기준) */
@@ -60,22 +55,35 @@ export const CONFIG = {
     startCityLevel: 6,
   },
 
-  /** 미니게임 */
+  /** 미니게임 (기획서 수치표 6장) */
   minigame: {
     freePlaysPerDay: 3,
+    /** 광고로 추가 가능한 하루 최대 횟수 */
+    maxAdPlaysPerDay: 5,
     durationSeconds: 30,
-    /** 보상 환산초 범위 (성적에 따라 보간) */
-    rewardSecondsMin: 3600,
-    rewardSecondsMax: 14400,
-    /** 성적 배율 범위 */
-    gradeMultMin: 0.5,
-    gradeMultMax: 3.0,
-    /** 성적 배율이 해당 사업에 유지되는 시간(초) */
-    boostSeconds: 600,
+    /** 사업별 환산초 */
+    rewardSeconds: {
+      mine: 3_600,
+      factory: 5_400,
+      fishery: 7_200,
+      park: 10_800,
+      corp: 14_400,
+    } as Record<string, number>,
+    /** 성적배율 = 0.5 + 성공률 x 2.5 */
+    gradeBase: 0.5,
+    gradeSlope: 2.5,
+    /** 일시 배율 지속(초) — 30분 */
+    boostSeconds: 1_800,
   },
 
   offline: {
     baseCapHours: 2,
+    /** 상한 업그레이드 5단계 (시간) */
+    capHours: [4, 6, 8, 10, 12] as const,
+    /** 효율 업그레이드 5단계 */
+    effRates: [0.6, 0.7, 0.8, 0.9, 1.0] as const,
+    /** 업그레이드 비용 (물자) */
+    upgradeCost: [500, 3_000, 20_000, 150_000, 1_200_000] as const,
     /** 창고 레벨당 +1시간 */
     capPerStorage: 1,
     maxStorageLevel: 10,
@@ -91,27 +99,19 @@ export const CONFIG = {
     minReportSeconds: 60,
   },
 
-  /** 유닛 레벨 마일스톤: 도달 시 영구 보너스 */
-  milestones: [
-    { level: 10, type: 'output', factor: 2 },
-    { level: 25, type: 'speed', factor: 2 },
-    { level: 50, type: 'output', factor: 2 },
-    { level: 100, type: 'speed', factor: 2 },
-    { level: 200, type: 'output', factor: 3 },
-    { level: 300, type: 'output', factor: 3 },
-    { level: 400, type: 'output', factor: 4 },
-  ] as const,
+  /** 마일스톤 (기획서 수치표 1장) — 산출 x2 중첩 */
+  milestones: [10, 25, 50, 100, 200, 400, 800, 1600] as const,
+  /** 사이클 x0.5 지점 (누적 최대 1/16) */
+  cycleHalfLevels: [25, 100, 400, 1600] as const,
 
   /** 사이클 시간 하한(초). 너무 짧으면 렌더/체감이 무너짐 */
   minCycleTime: 0.05,
 
   prestige: {
-    /** 재개발 해금 도시 레벨 */
-    unlockCityLevel: 20,
-    /** 설계도 = coef * (누적세수 / divisor)^exponent */
-    coef: 80,
-    divisor: 1e14,
-    exponent: 0.5,
+    /** 설계도 = floor(sqrt(누적세수 / divisor)) */
+    divisor: 1_000_000,
+    /** 최초 재개발 가능: 누적세수 100M (설계도 10개) */
+    minTax: 100_000_000,
     /** 광고 시청 시 설계도 보너스 */
     adBonus: 0.5,
   },

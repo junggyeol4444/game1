@@ -52,7 +52,7 @@ await shot('01-city-empty');
 await goto('mine');
 await page.waitForTimeout(400);
 for (let i = 0; i < 6; i++) {
-  await page.locator('.band.tappable').first().click({ force: true, timeout: 2000 }).catch(() => {});
+  await page.locator('.floor.tappable').first().click({ force: true, timeout: 2000 }).catch(() => {});
   await page.waitForTimeout(150);
 }
 await shot('02-mine');
@@ -72,27 +72,26 @@ await dismiss();
 // 1) 도시 레벨을 먼저 올린다 (해금 조건)
 await page.evaluate(() => {
   const g = window.game;
-  g.state.resources.cash = 1e22;
-  g.state.resources.material = 1e18;
-  g.state.city.taxRun = 5e11;
+  g.state.resources.cash = 1e26;
+  g.state.resources.material = 1e20;
+  g.state.resources.gem = 200;
+  g.state.city.taxRun = 4e15;
 });
 await page.waitForTimeout(900);
 await settle();
 // 2) 해금된 뒤에 사업/시설을 채운다
 await page.evaluate(() => {
   const g = window.game;
-  g.state.resources.cash = 1e22;
-  g.state.resources.material = 1e18;
+  g.state.resources.cash = 1e26;
+  g.state.resources.material = 1e20;
   g.buyMode = 100;
   for (const id of ['mine', 'factory', 'fishery', 'park', 'corp']) {
-    for (let i = 0; i < 6; i++) { g.buyUnit(id, i); g.buyEquip(id, i); g.buyManager(id, i); }
+    for (let i = 0; i < 12; i++) { g.unlockUnit(id, i); g.buyUnit(id, i); g.buyEquip(id, i); g.buyManager(id, i); }
+    for (let k = 0; k < 4; k++) g.buyHoist(id);
   }
   for (const f of ['housing', 'shops', 'power', 'school', 'hospital', 'road', 'green', 'fire', 'police']) {
-    g.buildFacility(f);
-    const def = g.state.facilities[f];
-    if (def) for (const tr of Object.keys(def.tracks)) for (let k = 0; k < 8; k++) g.buyFacilityTrack(f, tr);
+    for (let k = 0; k < 22; k++) g.buyFacility(f);
   }
-  g.state.city.pop = 40000;
   g.emit('structure');
 });
 await page.waitForTimeout(1500);
@@ -101,7 +100,7 @@ await back();
 await page.waitForTimeout(900);
 await shot('04-city-grown');
 
-// 지도 드래그 + 줌아웃
+// 지도 드래그
 await page.mouse.move(300, 400);
 await page.mouse.down();
 await page.mouse.move(80, 400, { steps: 12 });
@@ -139,12 +138,8 @@ await settle(); await menu(1).click(); await page.waitForTimeout(500); await sho
 // 오프라인 복귀
 await page.evaluate(() => {
   const g = window.game;
-  g.persist();
+  g.devSetLastSeen(3 * 3600);
   g.persist = () => {};
-  const key = 'city-idle-save-v1';
-  const s = JSON.parse(localStorage.getItem(key));
-  s.lastSeen = Date.now() - 3 * 3600 * 1000;
-  localStorage.setItem(key, JSON.stringify(s));
 });
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(1100);

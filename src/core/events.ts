@@ -52,23 +52,22 @@ export function tickEvents(state: GameState, now = Date.now()): EventNotice[] {
 
   if (Math.random() < 0.55) {
     // 화재
-    if (Math.random() > cs.fireChanceMult) return notices; // 소방서가 예방
+    if (Math.random() > cs.accidentMult) return notices; // 소방서가 예방
     state.events.push({
       id: `fire-${now}`,
       kind: 'fire',
       target,
-      until: now + C.fireSeconds * 1000 * cs.fireDurationMult,
-      severity: C.fireSeverity * cs.fireDamageMult,
+      until: now + C.fireSeconds * 1000,
+      severity: C.fireSeverity,
     });
     notices.push({ kind: 'fire', target, text: `🔥 ${def.name}에 화재! 소방차 출동` });
   } else {
     // 도난
-    if (Math.random() > cs.theftChanceMult) return notices; // 경찰서가 예방
-    if (Math.random() < cs.theftBlockChance) {
+    if (Math.random() < cs.lossPrevent) {
       notices.push({ kind: 'blocked', target, text: `👮 ${def.name} 도난 시도를 경찰이 차단했습니다` });
       return notices;
     }
-    const loss = totalCashPerSecond(state, now) * C.theftSeconds * cs.theftLossMult;
+    const loss = totalCashPerSecond(state, now) * C.theftSeconds * (1 - cs.lossPrevent);
     const taken = Math.min(state.resources.cash, loss);
     state.resources.cash -= taken;
     state.events.push({

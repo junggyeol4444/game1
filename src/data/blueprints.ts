@@ -1,130 +1,72 @@
-import { formatNumber } from '../core/num';
-import type { BusinessId } from '../core/types';
-
+/**
+ * 재개발(프레스티지) 설계도 사용처 (기획서 수치표 8장).
+ * 비용은 구매할 때마다 x1.5.
+ */
 export interface BlueprintUpgrade {
   id: string;
   name: string;
-  desc: (level: number) => string;
   icon: string;
-  maxLevel: number;
   baseCost: number;
-  costGrowth: number;
-  /** 특정 사업 전용 강화면 지정 */
-  business?: BusinessId;
+  maxLevel: number;
+  desc: (level: number) => string;
 }
-
-const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export const BLUEPRINT_UPGRADES: BlueprintUpgrade[] = [
   {
-    id: 'allOutput',
-    name: '도시 기간산업',
-    icon: '🏗️',
-    desc: (l) => `모든 사업 산출 +${pct(l * 0.25)}`,
-    maxLevel: 50,
-    baseCost: 2,
-    costGrowth: 1.55,
+    id: 'output_bonus',
+    name: '전 사업 산출',
+    icon: '📈',
+    baseCost: 5,
+    maxLevel: 100,
+    desc: (l) => `모든 사업 산출 +${l * 10}%`,
   },
   {
-    id: 'cycleSpeed',
-    name: '물류 자동화',
-    icon: '🚚',
-    desc: (l) => `모든 사이클 시간 -${pct(1 - Math.pow(0.95, l))}`,
-    maxLevel: 12,
-    baseCost: 4,
-    costGrowth: 1.9,
-  },
-  {
-    id: 'startCash',
-    name: '재개발 기금',
+    id: 'start_fund',
+    name: '시작 자금',
     icon: '🏦',
-    desc: (l) => (l === 0 ? '재개발 후 시작 자금 없음' : `재개발 후 자금 ${formatNumber(1000 * Math.pow(9, l - 1))} 로 시작`),
-    maxLevel: 12,
     baseCost: 3,
-    costGrowth: 2.1,
+    maxLevel: 12,
+    desc: (l) => (l === 0 ? '재개발 후 기본 자금' : `재개발 후 시작 자금 x${Math.pow(10, l)}`),
   },
   {
-    id: 'offlineCap',
-    name: '창고 확장 설계',
-    icon: '📦',
-    desc: (l) => `오프라인 수익 상한 +${l * 2}시간`,
-    maxLevel: 6,
-    baseCost: 5,
-    costGrowth: 2.4,
+    id: 'keep_manager',
+    name: '자동화 유지',
+    icon: '🤝',
+    baseCost: 20,
+    maxLevel: 60,
+    desc: (l) => `재개발 후 매니저 ${l}명 유지`,
   },
   {
-    id: 'offlineRate',
-    name: '야간 교대제',
+    id: 'minigame_bonus',
+    name: '미니게임 배율',
+    icon: '🎮',
+    baseCost: 8,
+    maxLevel: 20,
+    desc: (l) => `미니게임 보상 +${l * 25}%`,
+  },
+  {
+    id: 'offline_cap',
+    name: '오프라인 상한',
     icon: '🌙',
-    desc: (l) => `오프라인 수익 효율 +${pct(l * 0.05)}`,
-    maxLevel: 8,
-    baseCost: 5,
-    costGrowth: 2.2,
+    baseCost: 15,
+    maxLevel: 12,
+    desc: (l) => `오프라인 상한 +${l * 2}시간`,
   },
   {
-    id: 'chainFloor',
-    name: '예비 자재 창고',
-    icon: '🔗',
-    desc: (l) => `자원 부족 시 최소 가동률 +${pct(l * 0.05)}`,
-    maxLevel: 10,
-    baseCost: 6,
-    costGrowth: 2.0,
+    id: 'facility_bonus',
+    name: '시설 배율',
+    icon: '🏙️',
+    baseCost: 10,
+    maxLevel: 20,
+    desc: (l) => `전 시설 효과 +${l * 15}%`,
   },
   {
     id: 'overclock',
     name: '초과 가동',
     icon: '⏫',
-    desc: (l) => (l === 0 ? '자동화 효율 100%' : `자동화 효율 ${100 + l * 5}%`),
+    baseCost: 12,
     maxLevel: 20,
-    baseCost: 8,
-    costGrowth: 1.8,
-  },
-  {
-    id: 'keepFacilities',
-    name: '도시 기반 보존',
-    icon: '🏙️',
-    desc: (l) => (l > 0 ? '재개발 후에도 시설이 유지됨' : '재개발 시 시설이 철거됨'),
-    maxLevel: 1,
-    baseCost: 45,
-    costGrowth: 1,
-  },
-  {
-    id: 'keepManagers',
-    name: '평생 고용 계약',
-    icon: '🤝',
-    desc: (l) => (l > 0 ? '재개발 후에도 매니저 유지' : '재개발 시 매니저가 해고됨'),
-    maxLevel: 1,
-    baseCost: 30,
-    costGrowth: 1,
-  },
-  {
-    id: 'startLevel',
-    name: '도시 기본 설계',
-    icon: '🗺️',
-    desc: (l) => `재개발 후 모든 유닛 ${l}레벨에서 시작`,
-    maxLevel: 25,
-    baseCost: 4,
-    costGrowth: 1.7,
-  },
-  {
-    id: 'boostMine', name: '광업 특화', icon: '⛏️', business: 'mine',
-    desc: (l) => `광산 산출 +${pct(l * 0.5)}`, maxLevel: 20, baseCost: 3, costGrowth: 1.6,
-  },
-  {
-    id: 'boostFactory', name: '제조 특화', icon: '🏭', business: 'factory',
-    desc: (l) => `공장 산출 +${pct(l * 0.5)}`, maxLevel: 20, baseCost: 3, costGrowth: 1.6,
-  },
-  {
-    id: 'boostFishery', name: '수산 특화', icon: '🎣', business: 'fishery',
-    desc: (l) => `어항 산출 +${pct(l * 0.5)}`, maxLevel: 20, baseCost: 3, costGrowth: 1.6,
-  },
-  {
-    id: 'boostPark', name: '관광 특화', icon: '🎡', business: 'park',
-    desc: (l) => `놀이공원 산출 +${pct(l * 0.5)}`, maxLevel: 20, baseCost: 3, costGrowth: 1.6,
-  },
-  {
-    id: 'boostCorp', name: '금융 특화', icon: '🏢', business: 'corp',
-    desc: (l) => `기업 산출 +${pct(l * 0.5)}`, maxLevel: 20, baseCost: 3, costGrowth: 1.6,
+    desc: (l) => (l === 0 ? '자동화 효율 100%' : `자동화 효율 ${100 + l * 5}%`),
   },
 ];
 

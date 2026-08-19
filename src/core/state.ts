@@ -11,17 +11,18 @@ import type {
   ResourceId,
 } from './types';
 
-/** 기기 로컬 자정 기준 날짜 키 */
+/** 하루 기준 시각 04:00 (기획서 세이브 3장) */
 export function todayKey(now = Date.now()): string {
-  const d = new Date(now);
+  const d = new Date(now - 4 * 3600 * 1000);
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-function emptyBusiness(def: (typeof BUSINESSES)[number], firstUnitLevel = 0): BusinessState {
+function emptyBusiness(def: (typeof BUSINESSES)[number], firstUnitOpen = false): BusinessState {
   return {
     units: def.units.map((_, i) => ({
-      level: i === 0 ? firstUnitLevel : 0,
+      unlocked: i === 0 && firstUnitOpen,
+      level: i === 0 && firstUnitOpen ? 1 : 0,
       progress: 0,
       running: false,
       equip: false,
@@ -29,35 +30,32 @@ function emptyBusiness(def: (typeof BUSINESSES)[number], firstUnitLevel = 0): Bu
     })),
     boostUntil: 0,
     trialUntil: 0,
+    hoistLevel: 1,
     totalProduced: 0,
   };
 }
 
 export function emptyFacilities(): Record<string, FacilityState> {
   const out: Record<string, FacilityState> = {};
-  for (const f of FACILITIES) {
-    out[f.id] = { built: false, tracks: Object.fromEntries(f.tracks.map((t) => [t.id, 0])) };
-  }
+  for (const f of FACILITIES) out[f.id] = { unlocked: false, level: 0 };
   return out;
 }
 
 export function emptyMinigames(): Record<string, MinigameState> {
   const out: Record<string, MinigameState> = {};
   for (const b of BUSINESSES) {
-    out[b.id] = { day: '', plays: 0, bestScore: 0, boostUntil: 0, boostMult: 1 };
+    out[b.id] = { day: '', plays: 0, adPlays: 0, bestRate: 0, boostUntil: 0, boostMult: 1 };
   }
   return out;
 }
 
 export function emptyCollection(): CollectionState {
-  return { gems: 0, specs: 0, satisfaction: 0, funds: 0, fish: [], seenTiers: {} };
+  return { specs: 0, satisfaction: 0, funds: 0, fish: [], seenTiers: {} };
 }
 
 export function createInitialState(now = Date.now()): GameState {
   const businesses = {} as Record<BusinessId, BusinessState>;
-  for (const def of BUSINESSES) {
-    businesses[def.id] = emptyBusiness(def, def.id === 'mine' ? 1 : 0);
-  }
+  for (const def of BUSINESSES) businesses[def.id] = emptyBusiness(def, def.id === 'mine');
   const resources: Record<ResourceId, number> = {
     cash: CONFIG.startCash,
     material: CONFIG.startMaterial,
@@ -65,6 +63,7 @@ export function createInitialState(now = Date.now()): GameState {
     goods: 0,
     food: 0,
     pop: 0,
+    gem: 0,
     blueprint: 0,
   };
   return {
@@ -76,9 +75,9 @@ export function createInitialState(now = Date.now()): GameState {
     facilities: emptyFacilities(),
     minigames: emptyMinigames(),
     events: [],
-    nextEventAt: now + 10 * 60 * 1000,
+    nextEventAt: now + CONFIG.events.graceSeconds * 1000,
     collection: emptyCollection(),
-    city: { level: 1, taxRun: 0, taxTotal: 0, storageLevel: 0, logisticsLevel: 0, pop: 0 },
+    city: { level: 1, taxRun: 0, taxTotal: 0, capLevel: 0, effLevel: 0, pop: CONFIG.facility.popBase },
     prestige: { blueprints: 0, upgrades: {}, count: 0, lastAt: now },
     missions: { day: '', ids: [], targets: [], progress: [], claimed: [] },
     attendance: { day: '', streak: 0, claimedToday: false },
@@ -98,59 +97,58 @@ export function createInitialState(now = Date.now()): GameState {
 }
 
 /**
- * 재개발(프레스티지) 리셋.
- * 유지: 설계도, 누적 세수, 상점/설정/통계 일부, 도감성 플래그
+ * 재개발 리셋 (기획서 세이브 4장).
+ * 초기화: 자금·물자·도시·사업·시설
+ * 유지  : 보석·설계도·프레스티지·도감·상점·설정·통계·오프라인 업그레이드
  */
-export function applyPrestigeReset(state: GameState, gainedBlueprints: number, now = Date.now()): void {
+export function applyPrestigeReset(state: GameState, gained: number, now = Date.now()): void {
   const up = state.prestige.upgrades;
-  const startLevel = up['startLevel'] ?? 0;
-  const keepManagers = (up['keepManagers'] ?? 0) > 0;
-  const cashLevel = up['startCash'] ?? 0;
-  const prevManagers: Record<string, boolean[]> = {};
+  const keepManagers = up['keep_manager'] ?? 0;
+  const fundLevel = up['start_fund'] ?? 0;
+
+  // 유지할 매니저를 앞에서부터 고른다
+  const kept: { biz: BusinessId; index: number }[] = [];
   for (const def of BUSINESSES) {
-    prevManagers[def.id] = state.businesses[def.id].units.map((u) => u.manager);
+    state.businesses[def.id].units.forEach((u, i) => {
+      if (u.manager) kept.push({ biz: def.id, index: i });
+    });
   }
+  kept.splice(keepManagers);
 
   for (const def of BUSINESSES) {
-    const fresh = emptyBusiness(def, def.id === 'mine' ? Math.max(1, startLevel) : 0);
-    if (def.id === 'mine' && startLevel > 0) {
-      fresh.units = fresh.units.map((u) => ({ ...u, level: Math.max(u.level, startLevel) }));
-    }
-    if (keepManagers) {
-      fresh.units.forEach((u, i) => {
-        u.manager = prevManagers[def.id][i] ?? false;
-      });
-    }
-    state.businesses[def.id] = fresh;
+    state.businesses[def.id] = emptyBusiness(def, def.id === 'mine');
+  }
+  for (const k of kept) {
+    const u = state.businesses[k.biz].units[k.index];
+    if (u) u.manager = true;
   }
 
-  state.resources.cash = cashLevel > 0 ? 1000 * Math.pow(9, cashLevel - 1) : CONFIG.startCash;
+  state.resources.cash = fundLevel > 0 ? CONFIG.startCash * Math.pow(10, fundLevel) : CONFIG.startCash;
   state.resources.material = CONFIG.startMaterial;
   state.resources.ore = 0;
   state.resources.goods = 0;
   state.resources.food = 0;
   state.resources.pop = 0;
-  state.resources.blueprint += gainedBlueprints;
+  state.resources.blueprint += gained;
 
-  const keepFacilities = (up['keepFacilities'] ?? 0) > 0;
-  if (!keepFacilities) state.facilities = emptyFacilities();
+  state.facilities = emptyFacilities();
   state.events = [];
   state.city = {
     level: 1,
     taxRun: 0,
     taxTotal: state.city.taxTotal,
-    storageLevel: 0,
-    logisticsLevel: 0,
-    pop: 0,
+    capLevel: state.city.capLevel,
+    effLevel: state.city.effLevel,
+    pop: CONFIG.facility.popBase,
   };
-  state.prestige.blueprints += gainedBlueprints;
+  state.prestige.blueprints += gained;
   state.prestige.count += 1;
   state.prestige.lastAt = now;
   state.stats.cashEarnedRun = 0;
   state.lastSeen = now;
 }
 
-/** 세이브 마이그레이션. 필드가 늘어나면 여기서 채운다. */
+/** 세이브 마이그레이션 */
 export function migrate(raw: unknown): GameState | null {
   if (!raw || typeof raw !== 'object') return null;
   const base = createInitialState();
@@ -166,43 +164,49 @@ export function migrate(raw: unknown): GameState | null {
     settings: { ...base.settings, ...(loaded.settings ?? {}) },
     shop: { ...base.shop, ...(loaded.shop ?? {}) },
     stats: { ...base.stats, ...(loaded.stats ?? {}) },
-    facilities: { ...base.facilities },
-    minigames: { ...base.minigames },
-    events: loaded.events ?? [],
-    nextEventAt: loaded.nextEventAt ?? Date.now() + 600_000,
-    collection: { ...base.collection, ...(loaded.collection ?? {}) },
     flags: { ...base.flags, ...(loaded.flags ?? {}) },
     adCooldowns: { ...base.adCooldowns, ...(loaded.adCooldowns ?? {}) },
     businesses: { ...base.businesses },
+    facilities: { ...base.facilities },
+    minigames: { ...base.minigames },
+    events: loaded.events ?? [],
+    nextEventAt: loaded.nextEventAt ?? Date.now() + CONFIG.events.graceSeconds * 1000,
+    collection: { ...base.collection, ...(loaded.collection ?? {}) },
   };
-  // 사업/유닛이 추가되어도 기존 세이브가 깨지지 않도록 유닛 배열 길이를 맞춘다
+
   for (const def of BUSINESSES) {
     const saved = loaded.businesses?.[def.id];
-    const fresh = emptyBusiness(def, def.id === 'mine' ? 1 : 0);
-    if (!saved) {
-      merged.businesses[def.id] = fresh;
-      continue;
-    }
+    const fresh = emptyBusiness(def, def.id === 'mine');
     merged.businesses[def.id] = {
-      boostUntil: saved.boostUntil ?? 0,
-      trialUntil: saved.trialUntil ?? 0,
-      totalProduced: saved.totalProduced ?? 0,
-      units: def.units.map((_, i) => saved.units?.[i] ?? fresh.units[i]),
+      boostUntil: saved?.boostUntil ?? 0,
+      trialUntil: saved?.trialUntil ?? 0,
+      hoistLevel: Math.max(1, saved?.hoistLevel ?? 1),
+      totalProduced: saved?.totalProduced ?? 0,
+      units: def.units.map((_, i) => {
+        const su = saved?.units?.[i];
+        if (!su) return fresh.units[i];
+        return {
+          unlocked: su.unlocked ?? su.level > 0,
+          level: su.level ?? 0,
+          progress: su.progress ?? 0,
+          running: su.running ?? false,
+          equip: su.equip ?? false,
+          manager: su.manager ?? false,
+        };
+      }),
     };
   }
   for (const f of FACILITIES) {
     const saved = loaded.facilities?.[f.id];
-    merged.facilities[f.id] = {
-      built: saved?.built ?? false,
-      tracks: Object.fromEntries(f.tracks.map((t) => [t.id, saved?.tracks?.[t.id] ?? 0])),
-    };
+    merged.facilities[f.id] = { unlocked: saved?.unlocked ?? false, level: saved?.level ?? 0 };
   }
   for (const b of BUSINESSES) {
     const saved = loaded.minigames?.[b.id];
     merged.minigames[b.id] = {
       day: saved?.day ?? '',
       plays: saved?.plays ?? 0,
-      bestScore: saved?.bestScore ?? 0,
+      adPlays: saved?.adPlays ?? 0,
+      bestRate: saved?.bestRate ?? 0,
       boostUntil: saved?.boostUntil ?? 0,
       boostMult: saved?.boostMult ?? 1,
     };
