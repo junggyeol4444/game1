@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit",
-    "sim": "tsx tools/balance-sim.ts"
+    "sim": "tsx tools/balance-sim.ts",
+    "art:check": "node tools/art-check.mjs"
   },
   "devDependencies": {
     "playwright": "^1.62.1",

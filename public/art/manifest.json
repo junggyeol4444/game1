@@ -1,0 +1,6 @@
+{
+  "_readme": "아트 팩을 여기에 넣습니다. docs/ART.md 참고. sprites 에 등록된 파일만 화면에 나옵니다. 등록되지 않은 키는 회색 플레이스홀더로 표시됩니다.",
+  "tileWidth": 128,
+  "tileHeight": 64,
+  "sprites": {}
+}

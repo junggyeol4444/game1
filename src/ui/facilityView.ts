@@ -6,7 +6,8 @@ import { formatDuration } from '../core/num';
 import type { Game } from '../core/game';
 import { h, haptic } from './dom';
 import { TH, TW, fit, type Cam } from './scene/iso';
-import { ISO_BUILDINGS } from './scene/isoBuildings';
+import { drawSprite, placeholder } from './art/assets';
+import { buildingKey } from './art/keys';
 import type { View } from './businessView';
 
 export function createFacilityView(game: Game, id: FacilityId): View {
@@ -31,7 +32,7 @@ export function createFacilityView(game: Game, id: FacilityId): View {
 
   const cam: Cam = { x: 0, y: 0, zoom: 1, w: 1, h: 1 };
 
-  function draw(t: number): void {
+  function draw(_t: number): void {
     const w = stage.clientWidth;
     const hh = stage.clientHeight;
     if (w <= 0 || hh <= 0) return;
@@ -41,6 +42,7 @@ export function createFacilityView(game: Game, id: FacilityId): View {
     const tier = facilityTierOf(level);
     const hour = new Date().getHours();
     const night = hour >= 19 || hour < 6;
+    void night;
 
     // 하늘 + 지면
     const g = ctx.createLinearGradient(0, 0, 0, hh);
@@ -54,7 +56,9 @@ export function createFacilityView(game: Game, id: FacilityId): View {
     cam.zoom = Math.min(w / (4.2 * TW), hh / (3.4 * TH + 90));
     cam.x = 0;
     cam.y = 2 * TH + 20;
-    ISO_BUILDINGS[id]({ ctx, cam, gx: -1, gy: -1, w: 2, d: 2, tier, t, night, alert: false });
+    if (tier === 0) return;
+    const key = buildingKey(id, tier);
+    if (!drawSprite(ctx, cam, key, -1, -1, 2, 2)) placeholder(ctx, cam, key, -1, -1, 2, 2, def.name);
   }
 
   function row(label: string, value: string, tone = ''): HTMLElement {

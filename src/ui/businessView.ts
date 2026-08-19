@@ -28,6 +28,7 @@ import type { BusinessId } from '../core/types';
 import { h, haptic } from './dom';
 import { showCashDropSheet } from './modals';
 import { fit } from './scene/iso';
+import { drawSpriteFlat } from './art/assets';
 import { drawFloorStrip } from './scene/floorStrip';
 
 const BUY_MODES: BuyMode[] = [1, 10, 100, 'max'];
@@ -169,8 +170,9 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       if (w <= 0 || hh <= 0) continue;
       const ct = cycleTime(st, def, f.i);
       const p = u.running ? Math.min(1, u.progress / ct) : 0;
+      const fctx = fit(f.canvas, w, hh);
       drawFloorStrip({
-        ctx: fit(f.canvas, w, hh),
+        ctx: fctx,
         w,
         h: hh,
         biz: id,
@@ -183,6 +185,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
         auto: autoFactor(st, id, f.i, now) > 0,
         idle: u.unlocked && f.i >= staff,
         t,
+        sprite: (key, x, y, hgt) => drawSpriteFlat(fctx, key, x, y, hgt),
       });
       f.progFill.style.width = `${p * 100}%`;
     }

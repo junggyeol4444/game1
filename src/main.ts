@@ -3,6 +3,7 @@ import { Game } from './core/game';
 import { WebStubAdProvider, type AdResult } from './core/ads';
 import { StubPurchaseProvider } from './core/iap';
 import { mountApp } from './ui/app';
+import { loadArt, manifestSize } from './ui/art/assets';
 import { h, qs } from './ui/dom';
 
 /**
@@ -63,6 +64,13 @@ const game = new Game(new WebStubAdProvider((sec, placement) => showStubAd(sec, 
 game.purchases = new StubPurchaseProvider(async (sku) => {
   // 개발 빌드: 실제 결제 대신 확인창. 네이티브에서는 스토어 결제 플러그인으로 교체.
   return confirm(`[개발용] ${sku} 결제를 진행할까요?\n실제 결제는 발생하지 않습니다.`);
+});
+
+// 아트 팩을 먼저 불러온다. 없으면 플레이스홀더로 뜬다 (docs/ART.md)
+void loadArt().then(() => {
+  if (manifestSize() === 0) {
+    console.info('[art] public/art/manifest.json 에 등록된 스프라이트가 없습니다 — 플레이스홀더로 표시합니다.');
+  }
 });
 
 mountApp(game, qs('#app'));
