@@ -113,10 +113,13 @@ export function mountApp(game: Game, host: HTMLElement): void {
 
   let last = 0;
   function frame(t: number): void {
-    if (t - last >= 50) {
+    const view = views.get(current);
+    // 장면은 매 프레임, 숫자/버튼은 10Hz
+    view?.draw?.(t / 1000);
+    if (t - last >= 100) {
       last = t;
       updateTop();
-      views.get(current)?.update();
+      view?.update();
     }
     requestAnimationFrame(frame);
   }

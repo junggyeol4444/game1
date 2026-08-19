@@ -57,8 +57,8 @@ await shot('03-mine-built');
 // 도시 성장
 await page.evaluate(() => {
   const g = window.game;
-  g.state.city.taxRun = 5e10;
-  g.state.resources.cash = 1e16;
+  g.state.city.taxRun = 5e11;
+  g.state.resources.cash = 1e20;
   g.emit('structure');
 });
 await page.waitForTimeout(800);
@@ -67,34 +67,58 @@ await tab(0).click();
 await page.waitForTimeout(600);
 await shot('04-city-grown');
 
+// 모든 사업에 유닛/매니저 배치 (장면이 실제로 움직이는지 확인)
+await page.evaluate(() => {
+  const g = window.game;
+  g.state.resources.cash = 1e30;
+  g.buyMode = 10;
+  for (const id of ['factory', 'fishery', 'park', 'corp']) {
+    for (let i = 0; i < 6; i++) { g.buyUnit(id, i); g.buyManager(id, i); }
+  }
+  g.buyMode = 100;
+  g.emit('structure');
+});
+await page.waitForTimeout(1500);
+await dismiss();
+
 // 공장 탭 (자원 사슬 표시 확인)
 await tab(2).click();
 await page.waitForTimeout(500);
 await shot('05-factory');
 
+// 어항 탭
+await tab(3).click();
+await page.waitForTimeout(500);
+await shot('06-fishery');
+
 // 놀이공원 탭
 await tab(4).click();
 await page.waitForTimeout(500);
-await shot('06-park');
+await shot('07-park');
+
+// 기업 탭
+await tab(5).click();
+await page.waitForTimeout(500);
+await shot('08-corp');
 
 // 재개발 시트
 await tab(0).click();
 await page.waitForTimeout(400);
 await page.locator('button:has-text("재개발")').first().click({ timeout: 4000 }).catch(() => {});
 await page.waitForTimeout(500);
-await shot('07-prestige');
+await shot('09-prestige');
 await dismiss();
 
 // 상점
 await page.locator('button:has-text("상점")').first().click({ timeout: 4000 }).catch(() => {});
 await page.waitForTimeout(500);
-await shot('08-shop');
+await shot('10-shop');
 await dismiss();
 
 // 미션
 await page.locator('button:has-text("일일 미션")').first().click({ timeout: 4000 }).catch(() => {});
 await page.waitForTimeout(400);
-await shot('09-missions');
+await shot('11-missions');
 await dismiss();
 
 // 설정 (글자 크게)
@@ -102,11 +126,11 @@ await page.locator('button:has-text("설정")').first().click({ timeout: 4000 })
 await page.waitForTimeout(400);
 await page.locator('.sheet button:has-text("아주 크게")').first().click({ timeout: 2000 }).catch(() => {});
 await page.waitForTimeout(400);
-await shot('10-settings-large');
+await shot('12-settings-large');
 await dismiss();
 await tab(1).click();
 await page.waitForTimeout(400);
-await shot('11-large-text');
+await shot('13-large-text');
 
 // 오프라인 복귀 모달 (세이브 시각을 3시간 전으로 되돌리고 리로드)
 await page.evaluate(() => {
@@ -121,7 +145,7 @@ await page.evaluate(() => {
 });
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(900);
-await shot('12-offline');
+await shot('14-offline');
 
 console.log(errors.length ? 'CONSOLE ERRORS:\n' + errors.join('\n') : 'no console errors');
 await browser.close();

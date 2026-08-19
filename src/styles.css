@@ -156,70 +156,6 @@ button.wide { width: 100%; }
 .seg button { flex: 1; padding: 8px 4px; min-height: calc(38px * var(--scale)); font-size: calc(13px * var(--scale)); }
 .seg button.on { background: var(--accent); border-color: #8fb4ff; }
 
-/* ---------- 유닛 행 ---------- */
-.unit {
-  display: grid;
-  grid-template-columns: min(calc(58px * var(--scale)), 66px) 1fr min(calc(112px * var(--scale)), 126px);
-  gap: 10px;
-  align-items: center;
-  padding: 10px;
-  border-radius: var(--radius);
-  background: var(--card);
-  border: 1px solid var(--line);
-  margin-bottom: 8px;
-}
-.unit.locked { opacity: 0.62; }
-.u-icon {
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 14px;
-  background: var(--card-2);
-  border: 1px solid var(--line);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  font-size: calc(22px * var(--scale));
-  position: relative;
-  overflow: hidden;
-}
-.u-icon .lvl {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(0,0,0,0.55);
-  font-size: calc(11px * var(--scale));
-  font-weight: 800;
-  line-height: 1.5;
-}
-.u-icon.tappable { cursor: pointer; }
-.u-icon.tappable::after {
-  content: '';
-  position: absolute; inset: 0;
-  border: 2px solid var(--gold);
-  border-radius: 14px;
-  animation: pulse 1.6s ease-in-out infinite;
-}
-.reduced .u-icon.tappable::after { animation: none; }
-@keyframes pulse { 0%,100% { opacity: 0.25; } 50% { opacity: 0.9; } }
-
-.u-name { font-weight: 700; font-size: calc(14px * var(--scale)); }
-.u-meta { font-size: calc(11.5px * var(--scale)); color: var(--muted); margin-top: 2px; }
-.u-bar { margin-top: 6px; height: calc(10px * var(--scale)); background: #0b1424; border-radius: 999px; overflow: hidden; border: 1px solid var(--line); position: relative; }
-.u-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #f6b93b, #ffd97a); }
-.u-bar span {
-  position: absolute; inset: 0;
-  font-size: calc(9.5px * var(--scale)); font-weight: 800; line-height: calc(10px * var(--scale));
-  color: #0b111c; text-align: center;
-}
-.u-actions { display: flex; flex-direction: column; gap: 5px; }
-.u-actions button { padding: 6px 6px; min-height: calc(38px * var(--scale)); font-size: calc(12.5px * var(--scale)); }
-
-.chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 8px; border-radius: 999px;
-  background: rgba(255,255,255,0.06);
-  font-size: calc(11px * var(--scale)); font-weight: 700;
-  border: 1px solid var(--line);
-}
-.chip.on { background: rgba(74,222,128,0.16); border-color: var(--good); color: var(--good); }
-.chip.warn { background: rgba(251,146,60,0.16); border-color: var(--warn); color: var(--warn); }
-
 /* ---------- 하단 탭 ---------- */
 .tabbar {
   position: absolute; left: 0; right: 0; bottom: 0;
@@ -248,8 +184,8 @@ button.wide { width: 100%; }
 .tabbar button.locked { opacity: 0.4; }
 .dot { position: absolute; top: 8px; right: 22%; width: 9px; height: 9px; border-radius: 50%; background: var(--bad); border: 1.5px solid var(--bg); }
 
-/* ---------- 스카이라인 ---------- */
-.skyline { width: 100%; height: auto; aspect-ratio: 400 / 180; display: block; background: #0a1120; }
+
+
 
 /* ---------- 모달 ---------- */
 .scrim {
@@ -315,3 +251,139 @@ button.wide { width: 100%; }
   text-align: center; color: var(--muted); padding: 40px 20px; font-size: calc(14px * var(--scale));
 }
 .big-emoji { font-size: 46px; display: block; margin-bottom: 10px; }
+
+/* ═══════════ 도시 전경 (홈 화면의 주인공) ═══════════ */
+.city-hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  margin-bottom: 12px;
+  background: #0a1120;
+}
+.city-art { position: absolute; inset: 0; display: block; }
+.hero-badge {
+  position: absolute; left: 10px; top: 10px;
+  padding: 5px 12px; border-radius: 999px;
+  background: rgba(6,10,20,0.62); backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-weight: 800; font-size: calc(14px * var(--scale));
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+.level-card { padding: 10px 12px; }
+.hero-lv {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  font-size: calc(16px * var(--scale)); font-weight: 800;
+}
+.hero-tax { font-size: calc(11.5px * var(--scale)); color: var(--muted); font-weight: 700; }
+.level-card .bar { margin-top: 7px; }
+.hero-next { margin-top: 6px; font-size: calc(11.5px * var(--scale)); color: var(--muted); }
+.section { margin: 2px 2px 8px; }
+
+/* ═══════════ 도시 화면 사업 요약 ═══════════ */
+.biz-list { margin-bottom: 10px; }
+.biz-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; margin-bottom: 8px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent, var(--line));
+}
+.biz-row.locked { opacity: 0.55; border-left-color: var(--line); }
+.biz-icon {
+  width: calc(38px * var(--scale)); height: calc(38px * var(--scale));
+  border-radius: 11px; background: var(--card-2); border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-size: calc(19px * var(--scale));
+}
+.biz-name { font-weight: 800; font-size: calc(15px * var(--scale)); }
+.biz-meta { font-size: calc(11.5px * var(--scale)); color: var(--muted); margin-top: 2px; }
+.biz-rate { color: var(--gold); font-weight: 800; font-size: calc(14px * var(--scale)); white-space: nowrap; }
+
+/* ═══════════ 사업장 전경 ═══════════ */
+.site {
+  position: relative; width: 100%;
+  aspect-ratio: 16 / 7;
+  min-height: calc(132px * var(--scale));
+  border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--line); margin-bottom: 10px;
+  background: #0a1120;
+}
+.site-art { position: absolute; inset: 0; display: block; }
+.site-top {
+  position: absolute; left: 12px; right: 12px; top: 9px;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.95);
+}
+.site-name { font-weight: 800; font-size: calc(17px * var(--scale)); }
+.site-rate { font-weight: 800; font-size: calc(19px * var(--scale)); color: var(--gold); }
+.site-rate small { font-size: calc(11px * var(--scale)); color: #cbd6ea; font-weight: 700; margin-left: 2px; }
+.site-chips {
+  position: absolute; left: 12px; top: calc(34px * var(--scale));
+  display: flex; gap: 6px; flex-wrap: wrap; max-width: 62%;
+}
+.site-chips .chip { background: rgba(6,10,20,0.72); backdrop-filter: blur(3px); }
+.site-actions { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 6px; }
+.site-actions button { min-height: calc(42px * var(--scale)); padding: 5px 11px; }
+
+.buymode { margin-bottom: 10px; }
+
+/* ═══════════ 유닛 밴드 (실제 장면) ═══════════ */
+.band {
+  position: relative;
+  height: calc(132px * var(--scale));
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  margin-bottom: 8px;
+  background: #0a1120;
+}
+.band-art { position: absolute; inset: 0; display: block; }
+.band-scrim {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(4,8,16,0.66) 0%, rgba(4,8,16,0.04) 40%, rgba(4,8,16,0.34) 100%);
+}
+.band-info {
+  position: absolute; left: 11px; top: 8px;
+  right: calc(min(112px, 106px * var(--scale)) + 18px);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.95);
+  pointer-events: none;
+}
+.band-title { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+.band-name { font-weight: 800; font-size: calc(14.5px * var(--scale)); }
+.band-lv { font-size: calc(12px * var(--scale)); font-weight: 800; color: var(--gold); }
+.band-meta { font-size: calc(11px * var(--scale)); color: #c9d7ef; margin-top: 3px; line-height: 1.35; }
+.band.locked .band-name { color: var(--muted); }
+.band.locked .band-lv { color: var(--muted); }
+
+.band-actions {
+  position: absolute; right: 8px; top: 8px;
+  display: flex; flex-direction: column; gap: 5px;
+  width: min(112px, calc(106px * var(--scale)));
+}
+.band-actions button {
+  min-height: calc(38px * var(--scale)); padding: 5px 6px;
+  font-size: calc(12.5px * var(--scale));
+  background: rgba(20,30,50,0.86); backdrop-filter: blur(3px);
+}
+.band-actions button.primary { background: linear-gradient(180deg, #3f7bf0, #2f5fc4); }
+.band-actions button.gold { background: linear-gradient(180deg, #f6b93b, #e08a1e); color: #2a1c02; }
+.band-mgr.hired { background: rgba(20,30,50,0.6); opacity: 0.9; }
+
+.band-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(0,0,0,0.45); }
+.band-progress > i { display: block; height: 100%; background: linear-gradient(90deg, #f6b93b, #ffd97a); }
+
+.band-hint {
+  position: absolute; left: 11px; bottom: 9px;
+  font-size: calc(12px * var(--scale)); font-weight: 800;
+  color: #2a1c02; background: var(--gold);
+  padding: 3px 11px; border-radius: 999px;
+  animation: bob 1.15s ease-in-out infinite;
+  pointer-events: none;
+}
+.reduced .band-hint { animation: none; }
+@keyframes bob { 50% { transform: translateY(-4px); } }
+.band.tappable { box-shadow: inset 0 0 0 2px rgba(255,204,85,0.7); cursor: pointer; }
