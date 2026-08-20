@@ -104,20 +104,20 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       e.stopPropagation();
       const u = game.state.businesses[id].units[i];
       const count = game.buyMode === 'max' ? unitMaxAffordable(game.state, def, i) : game.buyMode;
-      const cost = u.unlocked ? unitCost(game.state, def, i, Math.max(1, count)) : unitUnlockCost(def, i);
+      const cost = u.unlocked ? unitCost(game.state, def, i, Math.max(1, count)) : unitUnlockCost(game.state, def, i);
       if (game.state.resources.cash < cost) return showCashDropSheet(game);
       if (game.buyUnit(id, i)) haptic(game.state.settings.haptics);
     });
     lockBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (game.state.resources.cash < unitUnlockCost(def, i)) return showCashDropSheet(game);
+      if (game.state.resources.cash < unitUnlockCost(game.state, def, i)) return showCashDropSheet(game);
       game.unlockUnit(id, i);
     });
     autoBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const u = game.state.businesses[id].units[i];
       if (u.manager) return;
-      const cost = u.equip ? managerCost(def, i) : equipCost(def, i);
+      const cost = u.equip ? managerCost(game.state, def, i) : equipCost(game.state, def, i);
       if (game.state.resources.cash < cost) return showCashDropSheet(game);
       if (u.equip) game.buyManager(id, i);
       else game.buyEquip(id, i);
@@ -267,7 +267,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
         f.lockBtn.style.display = '';
         f.buyBtn.style.display = 'none';
         f.autoBtn.style.display = 'none';
-        const cost = unitUnlockCost(def, f.i);
+        const cost = unitUnlockCost(st, def, f.i);
         f.lockBtn.className = `lock-btn ${st.resources.cash >= cost ? 'gold' : ''}`;
         f.lockBtn.innerHTML = '';
         f.lockBtn.append('🔒 해금', h('span', { class: 'btn-sub' }, fmt(cost)));
@@ -302,13 +302,13 @@ export function createBusinessView(game: Game, id: BusinessId): View {
         f.autoBtn.innerHTML = '';
         f.autoBtn.append('👤', h('span', { class: 'btn-sub' }, f.udef.managerName));
       } else if (u.equip) {
-        const mc = managerCost(def, f.i);
+        const mc = managerCost(st, def, f.i);
         f.autoBtn.className = `auto ${st.resources.cash >= mc ? 'gold' : 'dim'}`;
         f.autoBtn.disabled = false;
         f.autoBtn.innerHTML = '';
         f.autoBtn.append('매니저', h('span', { class: 'btn-sub' }, fmt(mc)));
       } else {
-        const ec = equipCost(def, f.i);
+        const ec = equipCost(st, def, f.i);
         f.autoBtn.className = `auto ${st.resources.cash >= ec ? '' : 'dim'}`;
         f.autoBtn.disabled = false;
         f.autoBtn.innerHTML = '';

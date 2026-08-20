@@ -55,8 +55,8 @@ function buyStep(): boolean {
     if (!isUnlocked(state, def)) continue;
     for (let i = 0; i < def.units.length; i++) {
       const u = state.businesses[def.id].units[i];
-      if (!u.unlocked && state.resources.cash >= unitUnlockCost(def, i)) {
-        state.resources.cash -= unitUnlockCost(def, i);
+      if (!u.unlocked && state.resources.cash >= unitUnlockCost(state, def, i)) {
+        state.resources.cash -= unitUnlockCost(state, def, i);
         u.unlocked = true;
         u.level = 1;
         return true;
@@ -68,8 +68,8 @@ function buyStep(): boolean {
     if (!isUnlocked(state, def)) continue;
     for (let i = 0; i < def.units.length; i++) {
       const u = state.businesses[def.id].units[i];
-      if (u.unlocked && !u.manager && state.resources.cash >= managerCost(def, i)) {
-        state.resources.cash -= managerCost(def, i);
+      if (u.unlocked && !u.manager && state.resources.cash >= managerCost(state, def, i)) {
+        state.resources.cash -= managerCost(state, def, i);
         u.manager = true;
         return true;
       }
@@ -152,7 +152,7 @@ function eraStep(): void {
   spendLegacy();
   seen = new Set<number>([1]);
   marks.push(
-    `\n  ══ ${from.name} → ${currentEra(state).name} @ ${formatDuration(t)}  (유산 +${gain}, 누적 ${legacyEarned}, 영구 산출 x${formatNumber(currentEra(state).outputMult)})\n`,
+    `\n  ══ ${from.name} → ${currentEra(state).name} @ ${formatDuration(t)}  (유산 +${gain}, 누적 ${legacyEarned}, 비용 x${formatNumber(currentEra(state).costMult)}, 사이클 x${currentEra(state).cycleMult})\n`,
   );
 }
 
@@ -233,6 +233,6 @@ for (const L of [3, 6, 10, 12, 15]) console.log(`  Lv.${L}: 세수 ${formatNumbe
 console.log(`\n문명 전환 목표 (참고)`);
 for (let i = 0; i < ERAS.length; i++) {
   console.log(
-    `  ${eraDef(i).name.padEnd(8)} 졸업 도시 Lv.${String(ERAS[i].advanceLevel).padStart(2)} (세수 ${formatNumber(cityRequirement(ERAS[i].advanceLevel)).padStart(9)}) · 영구 산출 x${formatNumber(ERAS[i].outputMult)}`,
+    `  ${eraDef(i).name.padEnd(8)} 졸업 도시 Lv.${String(ERAS[i].advanceLevel).padStart(2)} (세수 ${formatNumber(cityRequirement(ERAS[i].advanceLevel)).padStart(9)}) · 비용 x${formatNumber(ERAS[i].costMult)} · 사이클 x${ERAS[i].cycleMult}`,
   );
 }

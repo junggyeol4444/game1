@@ -1,7 +1,7 @@
 import { BUSINESSES, BUSINESS_BY_ID } from '../data/businesses';
 import { CONFIG } from '../data/config';
 import { HOIST_LEVELS } from '../data/units';
-import { eraOutputMult } from './era';
+import { eraCostMult, eraCycleMult } from './era';
 import { cityStats, staffedUnits, type CityStats } from './facilities';
 import { clamp, geometricCost, maxAffordable } from './num';
 import type { BusinessDef, BusinessId, GameState, OfflineReport, ResourceId } from './types';
@@ -73,7 +73,7 @@ export function hoistCost(state: GameState, id: BusinessId): number {
   const def = BUSINESS_BY_ID[id];
   const lv = state.businesses[id].hoistLevel;
   if (lv >= HOIST_LEVELS.length) return Infinity;
-  return HOIST_LEVELS[lv].cost * def.costScale;
+  return HOIST_LEVELS[lv].cost * def.costScale * eraCostMult(state);
 }
 
 export function isBoosted(state: GameState, id: BusinessId, now = Date.now()): boolean {
@@ -105,7 +105,6 @@ const BP_BOOST: Record<BusinessId, string> = {
 export function businessMultiplier(state: GameState, def: BusinessDef, now = Date.now()): number {
   const cs = stats(state);
   let m = 1;
-  m *= eraOutputMult(state); // 문명 시대 영구 배율
   m *= 1 + bpLevel(state, 'output_bonus') * 0.1;
   const own = BP_BOOST[def.id];
   if (own) m *= 1 + bpLevel(state, own) * 0.5;
@@ -129,31 +128,32 @@ export function outputPerCycle(state: GameState, def: BusinessDef, index: number
 export function cycleTime(state: GameState, def: BusinessDef, index: number): number {
   const u = state.businesses[def.id].units[index];
   const ms = milestoneBonus(u.level);
-  return Math.max(CONFIG.minCycleTime, def.units[index].cycleTime / ms.speed);
+  // 문명이 넘어갈수록 한 사이클이 느려진다
+  return Math.max(CONFIG.minCycleTime, (def.units[index].cycleTime * eraCycleMult(state)) / ms.speed);
 }
 
-export function unitUnlockCost(def: BusinessDef, index: number): number {
-  return def.units[index].unlockCost;
+export function unitUnlockCost(state: GameState, def: BusinessDef, index: number): number {
+  return def.units[index].unlockCost * eraCostMult(state);
 }
 
 export function unitCost(state: GameState, def: BusinessDef, index: number, count = 1): number {
   const u = state.businesses[def.id].units[index];
   const d = def.units[index];
-  return geometricCost(d.baseCost, d.costGrowth, Math.max(0, u.level - 1), count);
+  return geometricCost(d.baseCost * eraCostMult(state), d.costGrowth, Math.max(0, u.level - 1), count);
 }
 
 export function unitMaxAffordable(state: GameState, def: BusinessDef, index: number): number {
   const u = state.businesses[def.id].units[index];
   const d = def.units[index];
-  return maxAffordable(d.baseCost, d.costGrowth, Math.max(0, u.level - 1), state.resources.cash);
+  return maxAffordable(d.baseCost * eraCostMult(state), d.costGrowth, Math.max(0, u.level - 1), state.resources.cash);
 }
 
-export function managerCost(def: BusinessDef, index: number): number {
-  return def.units[index].managerCost;
+export function managerCost(state: GameState, def: BusinessDef, index: number): number {
+  return def.units[index].managerCost * eraCostMult(state);
 }
 
-export function equipCost(def: BusinessDef, index: number): number {
-  return def.units[index].managerCost * 0.15;
+export function equipCost(state: GameState, def: BusinessDef, index: number): number {
+  return managerCost(state, def, index) * 0.15;
 }
 
 // ── 자동화 4단계 ────────────────────────────────────────────

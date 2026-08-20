@@ -189,7 +189,7 @@ export class Game {
     const def = this.def(id);
     const u = this.state.businesses[id].units[index];
     if (u.unlocked) return false;
-    const cost = unitUnlockCost(def, index);
+    const cost = unitUnlockCost(this.state, def, index);
     if (this.state.resources.cash < cost) return false;
     this.state.resources.cash -= cost;
     u.unlocked = true;
@@ -225,7 +225,7 @@ export class Game {
     const def = this.def(id);
     const u = this.state.businesses[id].units[index];
     if (u.equip || u.manager || !u.unlocked) return false;
-    const cost = equipCost(def, index);
+    const cost = equipCost(this.state, def, index);
     if (this.state.resources.cash < cost) return false;
     this.state.resources.cash -= cost;
     u.equip = true;
@@ -239,7 +239,7 @@ export class Game {
     const def = this.def(id);
     const u = this.state.businesses[id].units[index];
     if (u.manager || !u.unlocked) return false;
-    const cost = managerCost(def, index);
+    const cost = managerCost(this.state, def, index);
     if (this.state.resources.cash < cost) return false;
     this.state.resources.cash -= cost;
     u.manager = true;

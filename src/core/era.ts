@@ -3,7 +3,9 @@
  *
  * 이 게임의 장기 루프는 "재개발"이 아니라 **문명 전환**이다.
  * 빈 들판 + 움집에서 시작해 목표 세수에 닿으면 도시를 전부 허물고 다음 문명으로 넘어간다.
- * 넘어갈 때마다 전 사업에 붙는 영구 배율(outputMult)과 유산(영구 재화)이 남는다.
+ * 전환은 완전 초기화다 — 시대 자체는 산출 보너스를 주지 않는다.
+ * 오히려 넘어갈수록 비용(costMult)과 사이클(cycleMult)이 올라간다.
+ * 진행을 되돌려 주는 건 유산(영구 재화) 강화뿐이다.
  */
 import { cityRequirement, terrainStage, type FacilityId } from '../data/buildings';
 import { CONFIG } from '../data/config';
@@ -34,9 +36,17 @@ export function eraPalette(state: GameState): EraPalette {
   return currentEra(state).palette;
 }
 
-/** 이 시대에 전 사업에 붙는 영구 배율 */
-export function eraOutputMult(state: GameState): number {
-  return currentEra(state).outputMult;
+/**
+ * 이 시대의 비용 배율. 문명 전환은 완전 초기화라 산출 보너스가 없다 —
+ * 대신 넘어갈수록 모든 게 비싸진다. 진행을 되돌려 주는 건 유산 강화뿐이다.
+ */
+export function eraCostMult(state: GameState): number {
+  return currentEra(state).costMult;
+}
+
+/** 이 시대의 사이클 시간 배율. 넘어갈수록 한 사이클이 느려진다 */
+export function eraCycleMult(state: GameState): number {
+  return currentEra(state).cycleMult;
 }
 
 // ── 이름 ────────────────────────────────────────────────────

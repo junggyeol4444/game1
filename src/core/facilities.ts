@@ -1,4 +1,5 @@
 import { BUSINESSES } from '../data/businesses';
+import { eraCostMult } from './era';
 import { FACILITIES, FACILITY_BY_ID, facilityTierOf, type FacilityId } from '../data/buildings';
 import { CONFIG } from '../data/config';
 import { clamp } from './num';
@@ -25,7 +26,7 @@ export function facilityCost(state: GameState, id: FacilityId): number {
   const def = FACILITY_BY_ID[id];
   const lv = facilityLevel(state, id);
   if (lv >= def.maxLevel) return Infinity;
-  return def.baseCost * Math.pow(def.rate, lv);
+  return def.baseCost * Math.pow(def.rate, lv) * eraCostMult(state);
 }
 
 /** 유산 '시설 배율' 강화 */

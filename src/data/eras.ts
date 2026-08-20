@@ -27,12 +27,17 @@ export interface EraDef {
   leader: string;
   /**
    * 이 시대를 졸업하는 데 필요한 도시 레벨.
-   * 세수 절대값이 아니라 도시 레벨로 적는다 — 도시 레벨 요구량은 레벨당 x78 이라
-   * 시대 영구 배율(x4)로는 거의 줄지 않고, 그래서 시간 눈금으로 안정적이다.
+   * 세수 절대값이 아니라 도시 레벨로 적는다 — 요구 세수는 레벨당 x78 이라
+   * 시간 눈금으로 안정적이다.
    */
   advanceLevel: number;
-  /** 이 시대에 들어가면 전 사업에 붙는 영구 배율 */
-  outputMult: number;
+  /**
+   * 이 시대의 건설·업그레이드 비용 배율.
+   * 문명 전환은 완전 초기화다 — 산출 보너스는 없다. 넘어갈수록 전부 비싸진다.
+   */
+  costMult: number;
+  /** 이 시대의 사이클 시간 배율. 넘어갈수록 한 사이클이 느려진다 */
+  cycleMult: number;
   palette: EraPalette;
   /** 사업 5종의 이 시대 이름 */
   business: Record<BusinessId, { name: string; icon: string; unitLabel: string }>;
@@ -55,8 +60,9 @@ export const ERAS: EraDef[] = [
     short: '석기',
     tagline: '돌을 깨고 불을 피운다',
     leader: '족장',
-    advanceLevel: 5,
-    outputMult: 1,
+    advanceLevel: 7,
+    costMult: 1,
+    cycleMult: 1.0,
     palette: P('#BFD9A8', '#DCEBC8', '#8FAE66', '#A08A63', '#7FC4D9', '#D8C9A3', '#8B6F47', '#FFC845'),
     business: {
       mine: { name: '돌 채취장', icon: '🪨', unitLabel: '채취터' },
@@ -85,8 +91,9 @@ export const ERAS: EraDef[] = [
     short: '청동',
     tagline: '구리를 녹여 도구를 만든다',
     leader: '군장',
-    advanceLevel: 7,
-    outputMult: 4,
+    advanceLevel: 9,
+    costMult: 3,
+    cycleMult: 1.08,
     palette: P('#C9DCEB', '#E2EEF6', '#A8C97F', '#B39A6E', '#6FC3DF', '#E8DCC0', '#B5713F', '#FFC845'),
     business: {
       mine: { name: '구리 광맥', icon: '⛏️', unitLabel: '광맥' },
@@ -115,8 +122,9 @@ export const ERAS: EraDef[] = [
     short: '철기',
     tagline: '철을 두드려 나라를 세운다',
     leader: '성주',
-    advanceLevel: 9,
-    outputMult: 16,
+    advanceLevel: 11,
+    costMult: 9,
+    cycleMult: 1.17,
     palette: P('#B8D0E0', '#D9E9F2', '#9FBE79', '#A89878', '#5FB8D4', '#DCD3BE', '#8C5A3C', '#FFC845'),
     business: {
       mine: { name: '철광산', icon: '⛏️', unitLabel: '갱' },
@@ -145,8 +153,9 @@ export const ERAS: EraDef[] = [
     short: '중세',
     tagline: '성을 쌓고 길드를 연다',
     leader: '영주',
-    advanceLevel: 11,
-    outputMult: 64,
+    advanceLevel: 13,
+    costMult: 27,
+    cycleMult: 1.26,
     palette: P('#AEC6D8', '#D2E4EF', '#93B473', '#9C9086', '#57AECC', '#E4DED0', '#7A4B39', '#FFC845'),
     business: {
       mine: { name: '갱도 광산', icon: '⛏️', unitLabel: '갱도' },
@@ -175,8 +184,9 @@ export const ERAS: EraDef[] = [
     short: '르네',
     tagline: '항해와 은행이 세상을 넓힌다',
     leader: '총독',
-    advanceLevel: 13,
-    outputMult: 256,
+    advanceLevel: 15,
+    costMult: 81,
+    cycleMult: 1.36,
     palette: P('#B4D2E6', '#DCEDF7', '#9CC182', '#B0A894', '#63BEDC', '#F2EADA', '#B5563F', '#FFC845'),
     business: {
       mine: { name: '심층 광산', icon: '⛏️', unitLabel: '갱도' },
@@ -205,8 +215,9 @@ export const ERAS: EraDef[] = [
     short: '산업',
     tagline: '증기가 도시를 뒤덮는다',
     leader: '시장',
-    advanceLevel: 15,
-    outputMult: 1_024,
+    advanceLevel: 17,
+    costMult: 243,
+    cycleMult: 1.47,
     palette: P('#AEB8C0', '#CFD8DE', '#8FA277', '#8E8B86', '#5A9FB8', '#D9D2C6', '#8A4B3A', '#FFC845'),
     business: {
       mine: { name: '탄광', icon: '⛏️', unitLabel: '갱' },
@@ -235,8 +246,9 @@ export const ERAS: EraDef[] = [
     short: '근대',
     tagline: '전기와 자동차의 시대',
     leader: '시장',
-    advanceLevel: 17,
-    outputMult: 4_096,
+    advanceLevel: 19,
+    costMult: 729,
+    cycleMult: 1.59,
     palette: P('#9FD8E8', '#BFE8F2', '#A8C97F', '#B8B8B0', '#6FC3DF', '#F2F2F0', '#E85D4A', '#FFC845'),
     business: {
       mine: { name: '노천광', icon: '⛏️', unitLabel: '채굴장' },
@@ -265,8 +277,9 @@ export const ERAS: EraDef[] = [
     short: '정보',
     tagline: '데이터가 자원이 된다',
     leader: '광역시장',
-    advanceLevel: 19,
-    outputMult: 16_384,
+    advanceLevel: 21,
+    costMult: 2_187,
+    cycleMult: 1.71,
     palette: P('#8FCCE4', '#B4E2F0', '#9FC48C', '#9FB0BC', '#57C0E0', '#EEF4F8', '#4A90D9', '#7EE0FF'),
     business: {
       mine: { name: '자동 채굴 플랜트', icon: '🤖', unitLabel: '플랜트' },
@@ -295,8 +308,9 @@ export const ERAS: EraDef[] = [
     short: '우주',
     tagline: '도시가 궤도로 올라간다',
     leader: '사령관',
-    advanceLevel: 21,
-    outputMult: 65_536,
+    advanceLevel: 23,
+    costMult: 6_561,
+    cycleMult: 1.85,
     palette: P('#2E4A72', '#4A6E9E', '#5E6E86', '#6E7A92', '#3FA8D8', '#DCE6F2', '#8B6DF0', '#7EE0FF'),
     business: {
       mine: { name: '소행성 채굴', icon: '☄️', unitLabel: '채굴선' },
