@@ -31,10 +31,23 @@ import {
   refreshMissions,
   type MissionEvent,
 } from './missions';
-import { applyCityLevelUps, blueprintsOnPrestige, buyBlueprintUpgrade, canPrestige } from './progression';
+import {
+  advanceEra,
+  applyCityLevelUps,
+  buyLegacyUpgrade,
+  canAdvanceEra,
+  currentEra,
+  eraProgress,
+  eraThreshold,
+  isFinalEra,
+  legacyOnAdvance,
+  nextEra,
+} from './progression';
 import { deviceTime, load, now, save, setTimeSource } from './save';
-import { applyPrestigeReset, todayKey } from './state';
+import { todayKey } from './state';
 import type { BusinessDef, BusinessId, GameState, OfflineReport } from './types';
+import type { EraDef } from '../data/eras';
+import { LEGACY, bizName, bizUnitLabel, bizHoistName } from './era';
 import { MINIGAMES, MINIGAME_SPOILS, RARE_FISH } from '../ui/minigames/games';
 import { playMinigame, type MinigameResult } from '../ui/minigames/host';
 
@@ -249,7 +262,9 @@ export class Game {
     bs.hoistLevel += 1;
     this.persist();
     this.emit('structure');
-    this.toast(`${this.def(id).hoistName} Lv.${bs.hoistLevel} — 전 ${this.def(id).unitLabel} 배율 x${HOIST_LEVELS[bs.hoistLevel - 1].mult}`);
+    this.toast(
+      `${bizHoistName(this.state, id)} Lv.${bs.hoistLevel} — 전 ${bizUnitLabel(this.state, id)} 배율 x${HOIST_LEVELS[bs.hoistLevel - 1].mult}`,
+    );
     return true;
   }
 
@@ -313,7 +328,7 @@ export class Game {
     const bs = this.state.businesses[id];
     bs.boostUntil = Math.max(bs.boostUntil, now()) + CONFIG.ads.boostSeconds * 1000;
     this.emit('structure');
-    this.toast(`${this.def(id).name} ${CONFIG.ads.boostFactor}배 가동!`);
+    this.toast(`${bizName(this.state, id)} ${CONFIG.ads.boostFactor}배 가동!`);
     return true;
   }
 
@@ -382,7 +397,7 @@ export class Game {
     } else if (kind === 'blueprint') {
       s.resources.blueprint += amount;
       s.prestige.blueprints += amount;
-      this.toast(`설계도 +${amount}`);
+      this.toast(`${LEGACY.icon} ${LEGACY.name} +${amount}`);
     } else {
       const targets = business ? [business] : BUSINESSES.filter((b) => isUnlocked(s, b)).map((b) => b.id);
       for (const id of targets) {
@@ -504,29 +519,46 @@ export class Game {
     invalidateStats();
   }
 
-  // ── 재개발 ──
-  canPrestige(): boolean {
-    return canPrestige(this.state);
+  // ── 문명 전환 ──
+  era(): EraDef {
+    return currentEra(this.state);
   }
-  prestigeGain(): number {
-    return blueprintsOnPrestige(this.state);
+  nextEra(): EraDef {
+    return nextEra(this.state);
   }
-  async doPrestige(withAd: boolean): Promise<boolean> {
-    if (!this.canPrestige()) return false;
-    let gain = this.prestigeGain();
-    if (gain <= 0) return false;
+  isFinalEra(): boolean {
+    return isFinalEra(this.state);
+  }
+  eraThreshold(): number {
+    return eraThreshold(this.state);
+  }
+  eraProgress(): { current: number; need: number; ratio: number } {
+    return eraProgress(this.state);
+  }
+  canAdvanceEra(): boolean {
+    return canAdvanceEra(this.state);
+  }
+  legacyGain(): number {
+    return legacyOnAdvance(this.state);
+  }
+  /** 도시를 전부 허물고 다음 문명으로. 성공하면 새 시대 정의를 돌려준다 */
+  async doAdvanceEra(withAd: boolean): Promise<EraDef | null> {
+    if (!this.canAdvanceEra()) return null;
+    let gain = this.legacyGain();
+    if (gain <= 0) return null;
     if (withAd && (await this.watchAd('prestigeBonus'))) {
-      gain = Math.floor(gain * (1 + CONFIG.prestige.adBonus));
+      gain = Math.floor(gain * (1 + CONFIG.era.adBonus));
     }
-    applyPrestigeReset(this.state, gain, now());
+    advanceEra(this.state, gain, now());
     invalidateStats();
     this.persist();
     this.emit('structure');
-    this.toast(`재개발 완료. 설계도 ${gain} 획득`);
-    return true;
+    const era = this.era();
+    this.toast(`${era.name} 시작 — 유산 ${gain} 획득`);
+    return era;
   }
-  buyBlueprint(id: string): boolean {
-    const ok = buyBlueprintUpgrade(this.state, id);
+  buyLegacy(id: string): boolean {
+    const ok = buyLegacyUpgrade(this.state, id);
     if (ok) {
       invalidateStats();
       this.persist();
@@ -572,7 +604,7 @@ export class Game {
         s.shop.adFree = true;
         break;
       case 'redevelop':
-        s.resources.blueprint += Math.max(10, Math.floor(this.prestigeGain() * 0.5));
+        s.resources.blueprint += Math.max(10, Math.floor(CONFIG.era.baseGain * 1.5));
         break;
     }
   }

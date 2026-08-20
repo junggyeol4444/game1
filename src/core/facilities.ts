@@ -28,7 +28,7 @@ export function facilityCost(state: GameState, id: FacilityId): number {
   return def.baseCost * Math.pow(def.rate, lv);
 }
 
-/** 설계도 '시설 배율' 강화 */
+/** 유산 '시설 배율' 강화 */
 function facilityBonus(state: GameState): number {
   return 1 + (state.prestige.upgrades['facility_bonus'] ?? 0) * 0.15;
 }

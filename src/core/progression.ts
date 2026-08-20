@@ -1,8 +1,9 @@
-import { BLUEPRINT_BY_ID, BLUEPRINT_UPGRADES } from '../data/blueprints';
+import { LEGACY_BY_ID, LEGACY_UPGRADES } from '../data/legacy';
 import { BUSINESSES } from '../data/businesses';
 import { MAX_CITY_LEVEL, cityRequirement, cityUnlockText } from '../data/buildings';
-import { CONFIG } from '../data/config';
 import type { BusinessDef, GameState } from './types';
+import { MAX_ERA } from '../data/eras';
+import { applyEraReset } from './state';
 
 export { cityRequirement, cityUnlockText };
 
@@ -24,38 +25,45 @@ export function applyCityLevelUps(state: GameState): BusinessDef[] {
   return unlocked;
 }
 
-// ── 재개발 ──────────────────────────────────────────────────
-/** 설계도 = floor( sqrt( 누적세수 / 1,000,000 ) ) */
-export function blueprintsOnPrestige(state: GameState): number {
-  return Math.floor(Math.sqrt(Math.max(0, state.city.taxRun) / CONFIG.prestige.divisor));
-}
+// ── 문명 전환 ──────────────────────────────────────────────
+export {
+  canAdvanceEra,
+  eraProgress,
+  eraThreshold,
+  legacyOnAdvance,
+  isFinalEra,
+  currentEra,
+  nextEra,
+} from './era';
 
-/** 재개발 해금: 도시 Lv.11 도달분의 누적 세수 (기획서 9장 '1주차 첫 재개발') */
-export function prestigeThreshold(): number {
-  return Math.max(CONFIG.prestige.minTax, cityRequirement(11));
-}
-
-export function canPrestige(state: GameState): boolean {
-  return state.city.taxRun >= prestigeThreshold();
+/**
+ * 도시를 전부 허물고 다음 문명으로 넘어간다.
+ * 시대는 마지막(우주)까지만 오르고, 그 뒤로는 같은 시대를 목표를 올려가며 다시 세운다.
+ */
+export function advanceEra(state: GameState, gained: number, now = Date.now()): number {
+  const before = state.era;
+  state.era = Math.min(MAX_ERA, before + 1);
+  applyEraReset(state, gained, now);
+  return state.era;
 }
 
 /** 비용은 구매할 때마다 x1.5 */
-export function blueprintUpgradeCost(state: GameState, id: string): number {
-  const def = BLUEPRINT_BY_ID[id];
+export function legacyUpgradeCost(state: GameState, id: string): number {
+  const def = LEGACY_BY_ID[id];
   if (!def) return Infinity;
   const lv = state.prestige.upgrades[id] ?? 0;
   if (lv >= def.maxLevel) return Infinity;
   return Math.ceil(def.baseCost * Math.pow(1.5, lv));
 }
 
-export function buyBlueprintUpgrade(state: GameState, id: string): boolean {
-  const cost = blueprintUpgradeCost(state, id);
+export function buyLegacyUpgrade(state: GameState, id: string): boolean {
+  const cost = legacyUpgradeCost(state, id);
   if (!isFinite(cost) || state.resources.blueprint < cost) return false;
   state.resources.blueprint -= cost;
   state.prestige.upgrades[id] = (state.prestige.upgrades[id] ?? 0) + 1;
   return true;
 }
 
-export function visibleBlueprintUpgrades(_state: GameState) {
-  return BLUEPRINT_UPGRADES;
+export function legacyUpgradeList(_state: GameState) {
+  return LEGACY_UPGRADES;
 }

@@ -62,7 +62,7 @@ export const BUSINESSES: BusinessDef[] = [
         ['8층 심층 은맥', '안전 관리자 배도윤'],
         ['9층 금맥 갱도', '수직갱 감독 류하경'],
         ['10층 심층 금맥', '설비 팀장 남기훈'],
-        ['11층 결정층', '결정 분석관 서윤后'.replace('后', '아')],
+        ['11층 결정층', '결정 분석관 서윤아'],
         ['12층 심층 결정', '광산 총괄 임세영'],
       ],
       MINE,
@@ -214,5 +214,5 @@ export const RESOURCE_META: Record<string, { name: string; icon: string }> = {
   food: { name: '식재료', icon: '🐟' },
   pop: { name: '관광객', icon: '🧳' },
   gem: { name: '보석', icon: '💎' },
-  blueprint: { name: '설계도', icon: '📐' },
+  blueprint: { name: '유산', icon: '🏺' },
 };

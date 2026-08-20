@@ -62,6 +62,11 @@ body {
   white-space: nowrap;
 }
 .id-chip b { color: var(--text); }
+.era-chip {
+  display: inline-block; background: #6B4FBF; color: #FFF;
+  border-radius: 6px; padding: 1px 6px; margin-right: 2px;
+  font-size: calc(11px * var(--scale)); font-weight: 800;
+}
 .id-chip.back { padding: 5px 15px; font-size: calc(18px * var(--scale)); color: var(--text); }
 .top-title { font-weight: 800; font-size: calc(16px * var(--scale)); white-space: nowrap; }
 .top-res { font-size: calc(13px * var(--scale)); font-weight: 700; color: var(--muted); white-space: nowrap; }
@@ -86,6 +91,16 @@ body {
   min-height: calc(48px * var(--scale));
 }
 .quick.gold { background: var(--gold); border-color: #E5AE2E; color: #4A3A10; }
+.quick.era {
+  background: linear-gradient(135deg, #6B4FBF, #8B6DF0);
+  border-color: #5A3FA8; color: #FFF;
+  animation: era-pulse 1.8s ease-in-out infinite;
+}
+.reduced .quick.era { animation: none; }
+@keyframes era-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 109, 240, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(139, 109, 240, 0); }
+}
 .building-view {
   position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 10px 10px calc(env(safe-area-inset-bottom) + 76px);

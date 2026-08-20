@@ -3,11 +3,22 @@ import { BUSINESSES } from '../data/businesses';
 import { BUSINESS_TIERS, FACILITIES } from '../data/buildings';
 import { buildableFacilities, builtFacilities, cityStats, facilityCost } from '../core/facilities';
 import { RARE_FISH } from './minigames/games';
-import { terrainName } from './cityMap';
+
 import { IAP_PRODUCTS } from '../core/iap';
 import { formatDuration, formatInt, formatNumber } from '../core/num';
 import { totalCashPerSecond, offlineCapSeconds, offlineRate, offlineUpgradeCost, isUnlocked } from '../core/economy';
-import { blueprintUpgradeCost, cityProgress, cityRequirement, visibleBlueprintUpgrades } from '../core/progression';
+import { legacyUpgradeCost, cityProgress, cityRequirement, legacyUpgradeList } from '../core/progression';
+import {
+  LEGACY,
+  bizIcon,
+  bizName,
+  facIcon,
+  facName,
+  leaderTitle,
+  settlementName,
+} from '../core/era';
+import { ERAS, settlementNameOf } from '../data/eras';
+import { terrainStage } from '../data/buildings';
 import { missionComplete, missionDef, missionTarget } from '../core/missions';
 import type { Game } from '../core/game';
 import type { BusinessDef, GameState, OfflineReport } from '../core/types';
@@ -54,18 +65,17 @@ export function showOfflineModal(game: Game, report: OfflineReport): void {
   const s = game.state;
   const capped = report.cappedSeconds < report.seconds;
   sheet({
-    title: '다녀오셨습니까, 시장님',
+    title: `다녀오셨습니까, ${leaderTitle(s)}님`,
     sub: `${formatDuration(report.seconds)} 동안 도시가 돌아갔습니다`,
     dismissible: false,
     build: (hd) => {
       const lines = report.perBusiness
         .filter((p) => p.cash > 0)
         .map((p) => {
-          const def = BUSINESSES.find((b) => b.id === p.id)!;
           return h(
             'div',
             { class: 'row spread small', style: { padding: '4px 0' } },
-            h('span', null, `${def.icon} ${def.name}`),
+            h('span', null, `${bizIcon(s, p.id)} ${bizName(s, p.id)}`),
             h('b', { class: 'gold' }, fmt(s, p.cash)),
           );
         });
@@ -115,12 +125,13 @@ export function showOfflineModal(game: Game, report: OfflineReport): void {
   });
 }
 
-export function showUnlockModal(def: BusinessDef): void {
+export function showUnlockModal(game: Game, def: BusinessDef): void {
+  const s = game.state;
   sheet({
-    title: `${def.name} 해금!`,
+    title: `${bizName(s, def.id)} 해금!`,
     sub: def.subtitle,
     build: (hd) => [
-      h('div', { class: 'card center' }, h('span', { class: 'big-emoji' }, def.icon),
+      h('div', { class: 'card center' }, h('span', { class: 'big-emoji' }, bizIcon(s, def.id)),
         h('div', { class: 'muted small' }, `도시 레벨 ${def.unlockCityLevel} 달성`),
         def.input
           ? h('div', { class: 'small warn', style: { marginTop: '6px' } },
@@ -204,10 +215,10 @@ export function showAttendanceSheet(game: Game): void {
               },
             },
             h('div', { class: 'small muted' }, `${i + 1}일차`),
-            h('div', { style: { fontSize: '22px' } }, r.type === 'blueprint' ? '📐' : r.type === 'boost' ? '⚡' : '💰'),
+            h('div', { style: { fontSize: '22px' } }, r.type === 'blueprint' ? LEGACY.icon : r.type === 'boost' ? '⚡' : '💰'),
             h('div', { class: 'small' },
               r.type === 'cashSeconds' ? `${Math.round(r.amount / 60)}분치` :
-              r.type === 'boost' ? `${Math.round(r.amount / 60)}분 2배` : `설계도 ${r.amount}`),
+              r.type === 'boost' ? `${Math.round(r.amount / 60)}분 2배` : `${LEGACY.name} ${r.amount}`),
           ),
         );
       });
@@ -231,20 +242,54 @@ export function showAttendanceSheet(game: Game): void {
   });
 }
 
-export function showPrestigeSheet(game: Game): void {
+/** 문명 전환 안내 — 도시를 허물고 넘어온 직후 */
+export function showEraArrivalSheet(game: Game, gained: number): void {
   const s = game.state;
-  const gain = game.prestigeGain();
-  const can = game.canPrestige();
+  const era = game.era();
   sheet({
-    title: '재개발',
-    sub: '도시를 갈아엎고 설계도를 얻습니다. 설계도 강화는 영구적입니다.',
+    title: `${era.name}`,
+    sub: era.tagline,
+    dismissible: false,
+    build: (hd) => [
+      h(
+        'div',
+        { class: 'card center' },
+        h('span', { class: 'big-emoji' }, era.business.mine.icon),
+        h('div', { style: { fontWeight: '800', marginTop: '4px' } }, `${settlementNameOf(s.era, 0)}에서 다시 시작합니다`),
+        h('div', { class: 'small muted', style: { marginTop: '4px' } }, `전 사업 영구 산출 x${formatInt(era.outputMult)}`),
+        h('div', { class: 'small gold', style: { marginTop: '2px' } }, `${LEGACY.icon} ${LEGACY.name} +${formatInt(gained)}`),
+      ),
+      h(
+        'div',
+        { class: 'card small muted' },
+        h('div', null, `${era.leader}이 되어 ${era.facility.housing.name}부터 다시 짓습니다.`),
+        h('div', null, `유산 강화는 그대로 남습니다.`),
+      ),
+      h('button', { class: 'primary wide', onclick: () => hd.close() }, '시작하기'),
+    ],
+  });
+}
+
+// ═══════════════ 문명 전환 ═══════════════
+export function showEraSheet(game: Game): void {
+  const s = game.state;
+  const gain = game.legacyGain();
+  const can = game.canAdvanceEra();
+  const era = game.era();
+  const next = game.nextEra();
+  const prog = game.eraProgress();
+  const final = game.isFinalEra();
+
+  sheet({
+    title: '문명 전환',
+    sub: '도시를 전부 허물고 다음 문명에서 다시 시작합니다',
     build: (hd) => {
       const shop = h('div');
       const renderShop = () => {
         clear(shop);
-        for (const up of visibleBlueprintUpgrades(s)) {
+        for (const up of legacyUpgradeList(s)) {
           const lv = s.prestige.upgrades[up.id] ?? 0;
-          const cost = blueprintUpgradeCost(s, up.id);
+          const cost = legacyUpgradeCost(s, up.id);
           const maxed = lv >= up.maxLevel;
           shop.appendChild(
             h(
@@ -267,10 +312,10 @@ export function showPrestigeSheet(game: Game): void {
                     disabled: maxed || s.resources.blueprint < cost,
                     class: !maxed && s.resources.blueprint >= cost ? 'primary' : '',
                     onclick: () => {
-                      if (game.buyBlueprint(up.id)) renderShop();
+                      if (game.buyLegacy(up.id)) renderShop();
                     },
                   },
-                  maxed ? 'MAX' : `📐 ${formatInt(cost)}`,
+                  maxed ? 'MAX' : `${LEGACY.icon} ${formatInt(cost)}`,
                 ),
               ),
             ),
@@ -279,32 +324,52 @@ export function showPrestigeSheet(game: Game): void {
       };
       renderShop();
 
+      const go = async (withAd: boolean) => {
+        const before = game.legacyGain();
+        const arrived = await game.doAdvanceEra(withAd);
+        if (!arrived) return;
+        hd.close();
+        showEraArrivalSheet(game, withAd ? Math.floor(before * (1 + CONFIG.era.adBonus)) : before);
+      };
+
       return [
         h(
           'div',
           { class: 'card center' },
-          h('div', { class: 'muted small' }, '보유 설계도'),
-          h('div', { class: 'cash' }, `📐 ${formatInt(s.resources.blueprint)}`),
+          h(
+            'div',
+            { class: 'row', style: { justifyContent: 'center', gap: '10px' } },
+            h('b', null, era.name),
+            h('span', { class: 'muted' }, '→'),
+            h('b', { class: 'gold' }, final ? '재건' : next.name),
+          ),
+          h('div', { class: 'small muted', style: { marginTop: '4px' } }, final ? '마지막 시대입니다. 같은 시대를 더 크게 다시 세웁니다' : next.tagline),
+          h('div', { class: 'bar', style: { marginTop: '10px' } }, h('i', { style: { width: `${prog.ratio * 100}%` } })),
+          h('div', { class: 'small muted', style: { marginTop: '6px' } }, `누적 세수 ${fmt(s, prog.current)} / ${fmt(s, prog.need)}`),
         ),
         h(
           'div',
           { class: 'card' },
-          h('div', { class: 'row spread' }, h('span', null, '재개발 시 획득'), h('b', { class: 'gold' }, `📐 ${formatInt(gain)}`)),
+          h('div', { class: 'row spread' }, h('span', null, '전환 시 획득'), h('b', { class: 'gold' }, `${LEGACY.icon} ${formatInt(gain)}`)),
           h('div', { class: 'row spread small muted', style: { marginTop: '4px' } },
-            h('span', null, '조건'),
-            h('span', { class: can ? 'good' : 'bad' }, `누적 세수 ${fmt(s, CONFIG.prestige.minTax)} 이상`)),
+            h('span', null, '보유'),
+            h('span', null, `${LEGACY.icon} ${formatInt(s.resources.blueprint)}`)),
+          h('div', { class: 'row spread small muted', style: { marginTop: '4px' } },
+            h('span', null, final ? '영구 산출' : '다음 시대 영구 산출'),
+            h('span', { class: 'good' }, `x${formatInt(final ? era.outputMult : next.outputMult)}`)),
+          h('div', { class: 'small warn', style: { marginTop: '8px' } },
+            '허물어지는 것 — 자금 · 물자 · 도시 레벨 · 사업 · 시설'),
+          h('div', { class: 'small good' }, `남는 것 — ${LEGACY.name} 강화 · 보석 · 도감 · 상점`),
           h(
             'button',
             {
               class: 'gold wide',
               style: { marginTop: '10px' },
               disabled: !can || gain <= 0,
-              onclick: async () => {
-                if (await game.doPrestige(true)) hd.close();
-              },
+              onclick: () => go(true),
             },
-            '광고 보고 재개발 (설계도 +50%)',
-            h('span', { class: 'btn-sub' }, `📐 ${formatInt(Math.floor(gain * 1.5))}`),
+            `광고 보고 전환 (${LEGACY.name} +50%)`,
+            h('span', { class: 'btn-sub' }, `${LEGACY.icon} ${formatInt(Math.floor(gain * (1 + CONFIG.era.adBonus)))}`),
           ),
           h(
             'button',
@@ -312,15 +377,26 @@ export function showPrestigeSheet(game: Game): void {
               class: 'ghost wide',
               style: { marginTop: '6px' },
               disabled: !can || gain <= 0,
-              onclick: async () => {
-                if (await game.doPrestige(false)) hd.close();
-              },
+              onclick: () => go(false),
             },
-            '그냥 재개발',
+            '그냥 전환',
           ),
         ),
-        h('h3', { class: 'muted', style: { margin: '14px 0 8px' } }, '설계도 강화 (영구)'),
+        h('h3', { class: 'muted', style: { margin: '14px 0 8px' } }, `${LEGACY.name} 강화 (영구)`),
         shop,
+        h('h3', { class: 'muted', style: { margin: '14px 0 8px' } }, '문명의 흐름'),
+        h(
+          'div',
+          { class: 'card small' },
+          ...ERAS.map((e, i) =>
+            h(
+              'div',
+              { class: 'row spread', style: { padding: '3px 0', opacity: i <= s.era ? '1' : '0.45' } },
+              h('span', { class: i === s.era ? 'gold' : '' }, `${i <= s.era ? '●' : '○'} ${e.name}`),
+              h('span', { class: 'muted' }, i === s.era ? '지금 여기' : `산출 x${formatInt(e.outputMult)}`),
+            ),
+          ),
+        ),
       ];
     },
   });
@@ -469,7 +545,7 @@ export function showSettingsSheet(game: Game): void {
           { class: 'card small muted' },
           h('div', null, `누적 플레이 ${formatDuration(s.stats.playSeconds)}`),
           h('div', null, `누적 수익 ${fmt(s, s.stats.cashEarnedTotal)}`),
-          h('div', null, `재개발 ${s.prestige.count}회 · 광고 ${s.stats.adsWatched}회`),
+          h('div', null, `문명 전환 ${s.prestige.count}회 · 광고 ${s.stats.adsWatched}회`),
           h('div', null, `다음 도시 레벨까지 세수 ${fmt(s, Math.max(0, cityRequirement(s.city.level + 1) - s.city.taxRun))}`),
         ),
       ];
@@ -524,11 +600,11 @@ export function showBuildSheet(game: Game, onEnter: (id: string) => void): void 
           h(
             'div',
             { class: 'row' },
-            h('span', { style: { fontSize: '26px' } }, f.icon),
+            h('span', { style: { fontSize: '26px' } }, facIcon(s, f.id)),
             h(
               'div',
               { class: 'grow' },
-              h('div', { style: { fontWeight: '800' } }, f.name),
+              h('div', { style: { fontWeight: '800' } }, facName(s, f.id)),
               h('div', { class: 'small muted' }, f.effect),
               state === 'can'
                 ? h('div', { class: 'small', style: { marginTop: '3px' } }, `💰 ${fmt(s, cost)}`)
@@ -583,8 +659,8 @@ export function showCityLevelSheet(game: Game): void {
   const cs = cityStats(s);
   const prog = cityProgress(s);
   sheet({
-    title: terrainName(s.city.level) === '도시' ? `도시 Lv.${s.city.level}` : `${terrainName(s.city.level)} · 도시 Lv.${s.city.level}`,
-    sub: '세수가 쌓이면 도시 레벨이 오르고 새 건물이 열립니다',
+    title: `${settlementName(s)} · Lv.${s.city.level}`,
+    sub: `${game.era().name} — 세수가 쌓이면 도시 레벨이 오르고 새 건물이 열립니다`,
     build: () => {
       const row = (label: string, value: string, tone = '') =>
         h('div', { class: 'row spread', style: { padding: '4px 0' } }, h('span', { class: 'muted' }, label), h('b', { class: tone }, value));
@@ -616,16 +692,16 @@ export function showCityLevelSheet(game: Game): void {
               'div',
               { class: 'card' },
               h('h3', null, '다음 해금'),
-              ...nextBiz.map((b) => row(`${b.icon} ${b.name}`, `Lv.${b.unlockCityLevel}`)),
-              ...nextFac.map((f) => row(`${f.icon} ${f.name}`, `Lv.${f.unlockCityLevel}`)),
+              ...nextBiz.map((b) => row(`${bizIcon(s, b.id)} ${bizName(s, b.id)}`, `Lv.${b.unlockCityLevel}`)),
+              ...nextFac.map((f) => row(`${facIcon(s, f.id)} ${facName(s, f.id)}`, `Lv.${f.unlockCityLevel}`)),
             )
           : null,
         h(
           'div',
           { class: 'card' },
-          h('h3', null, '지형 단계'),
-          ...['들판', '마을', '소도시', '도시', '대도시'].map((name) =>
-            row(name, terrainName(s.city.level) === name ? '지금 여기' : '', terrainName(s.city.level) === name ? 'gold' : 'muted'),
+          h('h3', null, `${game.era().name} 발전 단계`),
+          ...game.era().settlement.map((name, i) =>
+            row(name, terrainStage(s.city.level) === i ? '지금 여기' : '', terrainStage(s.city.level) === i ? 'gold' : 'muted'),
           ),
         ),
       ];
@@ -641,8 +717,8 @@ export function showCollectionSheet(game: Game): void {
     sub: '건물 외형과 미니게임 특산물을 모읍니다',
     build: () => {
       const all = [
-        ...BUSINESSES.map((b) => ({ id: b.id as string, icon: b.icon, name: b.name, tiers: BUSINESS_TIERS[b.id] })),
-        ...FACILITIES.map((f) => ({ id: f.id as string, icon: f.icon, name: f.name, tiers: f.tiers })),
+        ...BUSINESSES.map((b) => ({ id: b.id as string, icon: bizIcon(s, b.id), name: bizName(s, b.id), tiers: BUSINESS_TIERS[b.id] })),
+        ...FACILITIES.map((f) => ({ id: f.id as string, icon: facIcon(s, f.id), name: facName(s, f.id), tiers: f.tiers })),
       ];
       const seen = s.collection.seenTiers;
       const total = all.reduce((a, b) => a + b.tiers.length - 1, 0);
@@ -744,7 +820,15 @@ export function showMenuSheet(game: Game): void {
         );
       return [
         item('📅', '출석 보상', s.attendance.claimedToday ? '내일 다시' : `${s.attendance.streak + 1}일차 수령 가능`, () => showAttendanceSheet(game), !s.attendance.claimedToday),
-        item('🏗️', '재개발', game.canPrestige() ? `설계도 ${formatInt(game.prestigeGain())} 획득` : `누적 세수 ${fmt(s, CONFIG.prestige.minTax)} 필요`, () => showPrestigeSheet(game), game.canPrestige()),
+        item(
+          '🏛️',
+          '문명 전환',
+          game.canAdvanceEra()
+            ? `${game.nextEra().name}로 — ${LEGACY.name} ${formatInt(game.legacyGain())} 획득`
+            : `${game.era().name} · 누적 세수 ${fmt(s, game.eraThreshold())} 필요`,
+          () => showEraSheet(game),
+          game.canAdvanceEra(),
+        ),
         item('🛒', '상점', '스타터 팩 · 저금통 · 광고 제거', () => showShopSheet(game)),
         item('📦', '창고 / 물류', `오프라인 최대 ${formatDuration(offlineCapSeconds(s))}`, () => showFacilityUpgradeSheet(game)),
         item('⚙️', '설정', '글자 크기 · 숫자 표기 · 세이브', () => showSettingsSheet(game)),

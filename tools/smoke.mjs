@@ -23,7 +23,7 @@ async function dismiss() {
   for (let i = 0; i < 10; i++) {
     if (!(await page.locator('.scrim').count())) return;
     const top = page.locator('.scrim').last();
-    const ok = top.locator('button:has-text("확인")');
+    const ok = top.locator('button:has-text("확인"), button:has-text("시작하기")');
     if (await ok.count()) await ok.first().click({ timeout: 2000 }).catch(() => {});
     else await top.click({ position: { x: 10, y: 10 }, timeout: 2000 }).catch(() => {});
     await page.waitForTimeout(250);
@@ -134,6 +134,28 @@ await settle(); await menu(0).click(); await page.waitForTimeout(500); await sho
 await settle(); await menu(2).click(); await page.waitForTimeout(500); await shot('11-level'); await dismiss();
 await settle(); await menu(3).click(); await page.waitForTimeout(500); await shot('12-build'); await dismiss();
 await settle(); await menu(1).click(); await page.waitForTimeout(500); await shot('13-menu'); await dismiss();
+
+// 문명 전환: 시트 -> 전환 -> 새 문명 도시
+await settle();
+await page.locator('.quick.era').click({ timeout: 3000 }).catch(() => {});
+await page.waitForTimeout(500);
+await shot('15-era-sheet');
+await page.locator('button:has-text("그냥 전환")').first().click({ timeout: 3000 }).catch(() => {});
+await page.waitForTimeout(900);
+await shot('16-era-arrival');
+const eraName = await page.locator('.scrim h2').last().textContent().catch(() => '');
+await dismiss();
+await settle();
+await page.waitForTimeout(700);
+await shot('17-city-new-era');
+const afterEra = await page.evaluate(() => ({
+  era: window.game.state.era,
+  level: window.game.state.city.level,
+  cash: window.game.state.resources.cash,
+  legacy: window.game.state.resources.blueprint,
+  mine: window.game.era().business.mine.name,
+}));
+console.log('문명 전환 후:', JSON.stringify(afterEra), '| 도착 시트:', (eraName || '').trim());
 
 // 오프라인 복귀
 await page.evaluate(() => {

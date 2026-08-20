@@ -10,11 +10,13 @@ import type { BusinessDef, BusinessId } from '../core/types';
 import { clear, h } from './dom';
 import { createBusinessView, type View } from './businessView';
 import { createFacilityView } from './facilityView';
-import { createCityMap, buildingAlert, terrainName } from './cityMap';
+import { createCityMap, buildingAlert } from './cityMap';
+import { bizIcon, bizName, facIcon, facName, leaderTitle, settlementName } from '../core/era';
 import {
   showBuildSheet,
   showCityLevelSheet,
   showCollectionSheet,
+  showEraSheet,
   showMenuSheet,
   showMissionSheet,
   showOfflineModal,
@@ -49,7 +51,9 @@ export function mountApp(game: Game, host: HTMLElement): void {
   // ── 지도 위 빠른 액션 ──
   const quickBuild = h('button', { class: 'quick' }, '');
   const quickLevel = h('button', { class: 'quick' }, '');
-  const quickRow = h('div', { class: 'quick-row' }, quickBuild, quickLevel);
+  // 문명 전환이 가능해지면 지도 위에 바로 뜬다 (이 게임의 장기 루프라 숨기지 않는다)
+  const quickEra = h('button', { class: 'quick era', style: { display: 'none' } }, '');
+  const quickRow = h('div', { class: 'quick-row' }, quickBuild, quickLevel, quickEra);
   stage.appendChild(quickRow);
 
   // ── 하단 메뉴바 ──
@@ -79,6 +83,7 @@ export function mountApp(game: Game, host: HTMLElement): void {
   backBtn.addEventListener('click', () => goCity());
   quickBuild.addEventListener('click', () => showBuildSheet(game, (id: string) => enterBuilding(id as BuildingId)));
   quickLevel.addEventListener('click', () => showCityLevelSheet(game));
+  quickEra.addEventListener('click', () => showEraSheet(game));
 
   // ── 화면 전환 ──
   function enterBuilding(id: BuildingId): void {
@@ -128,12 +133,10 @@ export function mountApp(game: Game, host: HTMLElement): void {
     shell.classList.toggle('in-building', inBuilding);
     if (inBuilding && screen.kind === 'building') {
       const id = screen.id;
+      const st = game.state;
       titleEl.textContent = isFacilityId(id)
-        ? `${FACILITY_BY_ID[id].icon} ${FACILITY_BY_ID[id].name}`
-        : (() => {
-            const d = BUSINESSES.find((b) => b.id === id)!;
-            return `${d.icon} ${d.name}`;
-          })();
+        ? `${facIcon(st, id)} ${facName(st, id)}`
+        : `${bizIcon(st, id as BusinessId)} ${bizName(st, id as BusinessId)}`;
     }
   }
 
@@ -142,7 +145,11 @@ export function mountApp(game: Game, host: HTMLElement): void {
     const s = game.state;
     const fmt = (v: number) => formatNumber(v, s.settings.notation);
     idChip.innerHTML = '';
-    idChip.append('👤 ', h('b', null, `시장 Lv.${s.city.level}`));
+    idChip.append(
+      h('span', { class: 'era-chip' }, game.era().short),
+      ' ',
+      h('b', null, `${leaderTitle(s)} Lv.${s.city.level}`),
+    );
     matEl.innerHTML = '';
     matEl.append('📦 ', h('b', null, fmt(s.resources.material)));
     if (s.resources.gem > 0) matEl.append(h('span', { class: 'gem' }, ` 💎 ${formatInt(s.resources.gem)}`));
@@ -159,10 +166,20 @@ export function mountApp(game: Game, host: HTMLElement): void {
     quickBuild.className = `quick ${ready > 0 ? 'gold' : ''}`;
     quickBuild.append('🔨 건설', h('span', { class: 'btn-sub' }, ready > 0 ? `${ready}곳 가능` : `${buildable.length}곳 대기`));
 
+    const eraReady = game.canAdvanceEra();
+    quickEra.style.display = eraReady ? '' : 'none';
+    if (eraReady) {
+      quickEra.innerHTML = '';
+      quickEra.append(
+        `🏛️ ${game.isFinalEra() ? '재건' : game.nextEra().name}`,
+        h('span', { class: 'btn-sub' }, '도시를 허물고 전환'),
+      );
+    }
+
     const prog = cityProgress(s);
     quickLevel.innerHTML = '';
     quickLevel.append(
-      `🏙️ ${terrainName(s.city.level)} Lv.${s.city.level}`,
+      `🏙️ ${settlementName(s)} Lv.${s.city.level}`,
       h('span', { class: 'btn-sub' }, `${Math.round(prog.ratio * 100)}%`),
     );
   }
@@ -173,7 +190,7 @@ export function mountApp(game: Game, host: HTMLElement): void {
     menuDots.get('mission')!.style.display = missionReady ? '' : 'none';
     const buildReady = buildableFacilities(s).some((f) => s.resources.cash >= facilityCost(s, f.id));
     menuDots.get('build')!.style.display = buildReady ? '' : 'none';
-    const menuReady = !s.attendance.claimedToday || game.canPrestige();
+    const menuReady = !s.attendance.claimedToday || game.canAdvanceEra();
     menuDots.get('menu')!.style.display = menuReady ? '' : 'none';
     const cs = stats(s);
     menuDots.get('level')!.style.display = cs.powerEff < 1 || cs.laborSupply < cs.popDemand ? '' : 'none';
@@ -218,7 +235,7 @@ export function mountApp(game: Game, host: HTMLElement): void {
       updateDots();
     }
   });
-  game.on('unlock', (def) => showUnlockModal(def as BusinessDef));
+  game.on('unlock', (def) => showUnlockModal(game, def as BusinessDef));
   // 재화 획득 연출: 코인이 상단바로 날아간다 (아트 스타일 9장)
   game.on('coin', () => {
     if (game.state.settings.reducedMotion) return;

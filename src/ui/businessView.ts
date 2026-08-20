@@ -30,6 +30,7 @@ import { showCashDropSheet } from './modals';
 import { fit } from './scene/iso';
 import { drawSpriteFlat } from './art/assets';
 import { drawFloorStrip } from './scene/floorStrip';
+import { bizHoistName, bizIcon, bizName, bizUnitLabel, unitDisplayName } from '../core/era';
 
 const BUY_MODES: BuyMode[] = [1, 10, 100, 'max'];
 const STAGE_LABEL = ['', '수동', '반자동 50%', '자동 100%', '고효율'];
@@ -48,6 +49,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
   const rateEl = h('b', { class: 'surface-rate' }, '');
   const stockEl = h('span', { class: 'chip' }, '');
   const boostChip = h('span', { class: 'chip on', style: { display: 'none' } }, '');
+  const nameEl = h('div', { class: 'surface-name' }, '');
   const hoistTitle = h('div', { class: 'hoist-title' }, '');
   const hoistDesc = h('div', { class: 'small muted' }, '');
   const hoistBtn = h('button', { class: 'buy' }, '');
@@ -74,7 +76,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
     h(
       'div',
       { class: 'row spread' },
-      h('div', null, h('div', { class: 'surface-name' }, `${def.icon} ${def.name}`), h('div', { class: 'small muted' }, def.subtitle)),
+      h('div', null, nameEl, h('div', { class: 'small muted' }, def.subtitle)),
       h('div', { class: 'center' }, rateEl, h('div', { class: 'small muted' }, '초당')),
     ),
     h('div', { class: 'row', style: { marginTop: '8px', flexWrap: 'wrap', gap: '6px' } }, stockEl, boostChip),
@@ -90,7 +92,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
   // ── 층 ──
   const floors = def.units.map((udef, i) => {
     const canvas = h('canvas', { class: 'floor-art' });
-    const nameEl = h('b', { class: 'floor-name' }, udef.name);
+    const floorName = h('b', { class: 'floor-name' }, udef.name);
     const lvEl = h('span', { class: 'floor-lv' }, '');
     const metaEl = h('div', { class: 'floor-meta' }, '');
     const progFill = h('i', { style: { width: '0%' } });
@@ -131,12 +133,12 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       },
       canvas,
       h('div', { class: 'floor-scrim' }),
-      h('div', { class: 'floor-info' }, h('div', { class: 'floor-title' }, nameEl, lvEl), metaEl),
+      h('div', { class: 'floor-info' }, h('div', { class: 'floor-title' }, floorName, lvEl), metaEl),
       h('div', { class: 'floor-actions' }, buyBtn, autoBtn),
       lockBtn,
       h('div', { class: 'floor-progress' }, progFill),
     );
-    return { row, canvas, nameEl, lvEl, metaEl, progFill, buyBtn, autoBtn, lockBtn, udef, i };
+    return { row, canvas, floorName, lvEl, metaEl, progFill, buyBtn, autoBtn, lockBtn, udef, i };
   });
 
   // ── 구매 단위 ──
@@ -226,11 +228,12 @@ export function createBusinessView(game: Game, id: BusinessId): View {
 
     // 엘리베이터
     const hl = bs.hoistLevel;
-    hoistTitle.textContent = `${def.hoistIcon} ${def.hoistName} Lv.${hl}`;
+    nameEl.textContent = `${bizIcon(st, id)} ${bizName(st, id)}`;
+    hoistTitle.textContent = `${def.hoistIcon} ${bizHoistName(st, id)} Lv.${hl}`;
     const maxed = hl >= HOIST_LEVELS.length;
     hoistDesc.textContent = maxed
-      ? `전 ${def.unitLabel} 산출 x${hoistMult(st, id)} (최대)`
-      : `전 ${def.unitLabel} 산출 x${hoistMult(st, id)} → x${HOIST_LEVELS[hl].mult}`;
+      ? `전 ${bizUnitLabel(st, id)} 산출 x${hoistMult(st, id)} (최대)`
+      : `전 ${bizUnitLabel(st, id)} 산출 x${hoistMult(st, id)} → x${HOIST_LEVELS[hl].mult}`;
     const hc = hoistCost(st, id);
     const hg = hoistGemCost(st, id);
     hoistBtn.disabled = maxed;
@@ -253,6 +256,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
 
     for (const f of floors) {
       const u = bs.units[f.i];
+      f.floorName.textContent = unitDisplayName(st, id, f.i, f.udef.name);
       f.row.classList.toggle('locked', !u.unlocked);
       const auto = autoFactor(st, id, f.i, now) > 0;
       const idle = u.unlocked && f.i >= staff;

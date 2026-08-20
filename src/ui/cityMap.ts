@@ -4,7 +4,6 @@ import {
   FACILITY_IDS,
   GRID,
   LOTS,
-  STAGE_NAMES,
   businessTierOf,
   facilityTierOf,
   isFacilityId,
@@ -14,7 +13,7 @@ import {
   type BuildingId,
 } from '../data/buildings';
 import { CONFIG } from '../data/config';
-import { PAL, alpha, shade } from '../data/palette';
+import { alpha, shade } from '../data/palette';
 import { chainActive, isUnlocked, projectedEfficiency, staffed, stats } from '../core/economy';
 import { facilityCost, facilityLevel, facilityUnlocked, isBuilt } from '../core/facilities';
 import { activeEvent } from '../core/events';
@@ -24,9 +23,11 @@ import type { BusinessId, GameState } from '../core/types';
 import { h } from './dom';
 import { TH, TW, fit, project, type Cam } from './scene/iso';
 import { drawSprite, drawTileSprite, hasSprite, placeholder } from './art/assets';
-import { buildingKey } from './art/keys';
+import { buildingKeysFor, tileKeysFor } from './art/keys';
+import { bizName, currentEra, eraPalette, facName, settlementName } from '../core/era';
 
-export const terrainName = (level: number) => STAGE_NAMES[terrainStage(level)];
+/** 도시 규모 이름은 시대마다 다르다 (석기 '큰 부족' ~ 우주 '성간 도시') */
+export const terrainName = (state: GameState) => settlementName(state);
 
 export interface MapView {
   root: HTMLElement;
@@ -100,8 +101,8 @@ export function buildingAlert(state: GameState, id: BuildingId, now = Date.now()
 
 const ALL_IDS: BuildingId[] = [...BUSINESSES.map((b) => b.id), ...FACILITY_IDS];
 
-function buildingName(id: BuildingId): string {
-  return isFacilityId(id) ? FACILITY_BY_ID[id].name : BUSINESSES.find((b) => b.id === id)!.name;
+function buildingName(state: GameState, id: BuildingId): string {
+  return isFacilityId(id) ? facName(state, id) : bizName(state, id as BusinessId);
 }
 function buildingUnlocked(state: GameState, id: BuildingId): boolean {
   return isFacilityId(id)
@@ -114,8 +115,10 @@ function unlockLevel(id: BuildingId): number {
     : BUSINESSES.find((b) => b.id === id)!.unlockCityLevel;
 }
 
-/** 지형 단계별 지면색 */
-const GRASS = ['#A8C97F', '#A5C87C', '#9FC079', '#96B473', '#8FAC6F'];
+/** 지형 단계별 지면색 — 시대 팔레트의 ground 를 단계마다 조금씩 눌러 쓴다 */
+function grassOf(state: GameState, stage: number): string {
+  return shade(eraPalette(state).ground, 1 - stage * 0.035);
+}
 
 export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): MapView {
   const canvas = h('canvas', { class: 'map-art' });
@@ -275,8 +278,10 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     clampCam();
 
     // 하늘
-    const skyTop = night ? '#2E4A66' : PAL.skyTop;
-    const skyBot = night ? '#4E6C88' : PAL.sky;
+    const pal = eraPalette(st);
+    const eraId = currentEra(st).id;
+    const skyTop = night ? shade(pal.skyTop, 0.5) : pal.skyTop;
+    const skyBot = night ? shade(pal.sky, 0.62) : pal.sky;
     const g = ctx.createLinearGradient(0, 0, 0, vh);
     g.addColorStop(0, skyTop);
     g.addColorStop(1, skyBot);
@@ -285,16 +290,16 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
 
     // 주변 들판 (도시 밖까지 채워 화면이 비지 않게)
     const OUT = 12;
-    const grassOut = night ? shade(GRASS[stage], 0.66) : shade(GRASS[stage], 0.94);
+    const grassOut = night ? shade(grassOf(st, stage), 0.66) : shade(grassOf(st, stage), 0.94);
     for (let gy = -OUT; gy < GRID.rows + OUT; gy++) {
       for (let gx = -OUT; gx < GRID.cols + OUT; gx++) {
         if (gx >= 0 && gx < GRID.cols && gy >= 0 && gy < GRID.rows) continue;
         const water = gy >= GRID.rows - 1;
         const wob = water ? Math.sin(gx * 0.7 + gy * 0.5 + t * 1.2) * 0.5 + 0.5 : 0;
         const col = water
-          ? shade(night ? shade(PAL.water, 0.6) : PAL.water, 0.93 + wob * 0.1)
+          ? shade(night ? shade(pal.water, 0.6) : pal.water, 0.93 + wob * 0.1)
           : shade(grassOut, (gx + gy) % 2 === 0 ? 1 : 0.97);
-        tileAt(ctx, gx, gy, col, water ? 'ground/water' : 'ground/grass');
+        tileAt(ctx, eraId, gx, gy, col, water ? 'ground/water' : 'ground/grass');
       }
     }
     // 바깥 나무
@@ -305,27 +310,27 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
       const gx = -OUT + rx * (GRID.cols + OUT * 2);
       const gy = -OUT + ry * (GRID.rows - 1 + OUT);
       if (gx > -1.5 && gx < GRID.cols + 0.5 && gy > -1.5 && gy < GRID.rows + 0.5) continue;
-      drawSprite(ctx, cam, 'props/tree', gx - 0.5, gy - 0.5, 1, 1);
+      drawAny(ctx, tileKeysFor(eraId, 'props/tree'), gx - 0.5, gy - 0.5, 1, 1);
     }
 
     // 도시 부지 타일
-    const grass = night ? shade(GRASS[stage], 0.72) : GRASS[stage];
-    const roadCol = night ? shade(PAL.road, 0.68) : PAL.road;
+    const grass = night ? shade(grassOf(st, stage), 0.72) : grassOf(st, stage);
+    const roadCol = night ? shade(pal.road, 0.68) : pal.road;
     const roadTier = buildingTier(st, 'road');
     for (let gy = 0; gy < GRID.rows; gy++) {
       for (let gx = 0; gx < GRID.cols; gx++) {
         if (isWaterTile(gx, gy)) continue;
         const isRoad = isRoadTile(gx, gy);
-        let col = isRoad ? (roadTier === 0 ? '#B79E77' : roadCol) : grass;
+        let col = isRoad ? (roadTier === 0 ? shade(pal.road, 1.08) : roadCol) : grass;
         if (!isRoad && (gx + gy) % 2 === 0) col = shade(col, 0.97);
-        tileAt(ctx, gx, gy, col, isRoad ? (roadTier === 0 ? 'ground/dirt' : 'ground/road') : (gx + gy) % 2 === 0 ? 'ground/grass' : 'ground/grass_alt');
+        tileAt(ctx, eraId, gx, gy, col, isRoad ? (roadTier === 0 ? 'ground/dirt' : 'ground/road') : (gx + gy) % 2 === 0 ? 'ground/grass' : 'ground/grass_alt');
       }
     }
     // 물
     for (let gy = GRID.rows - 1; gy < GRID.rows + 3; gy++) {
       for (let gx = -2; gx < GRID.cols + 2; gx++) {
         const wobble = Math.sin(gx * 0.8 + gy * 0.6 + t * 1.4) * 0.5 + 0.5;
-        tileAt(ctx, gx, gy, shade(night ? shade(PAL.water, 0.6) : PAL.water, 0.94 + wobble * 0.1), 'ground/water');
+        tileAt(ctx, eraId, gx, gy, shade(night ? shade(pal.water, 0.6) : pal.water, 0.94 + wobble * 0.1), 'ground/water');
       }
     }
     // 차선
@@ -366,13 +371,13 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
       ctx.save();
       if (!unlocked) ctx.globalAlpha = 0.45;
       if (tier === 0) {
-        if (!drawTileLot(ctx, lot.gx, lot.gy, lot.w, lot.h, 'ground/empty')) {
-          emptyLotFill(ctx, lot.gx, lot.gy, lot.w, lot.h);
+        if (!drawTileLot(ctx, eraId, lot.gx, lot.gy, lot.w, lot.h, 'ground/empty')) {
+          emptyLotFill(ctx, eraId, lot.gx, lot.gy, lot.w, lot.h);
         }
       } else {
-        const key = buildingKey(id, tier);
-        if (!drawSprite(ctx, cam, key, lot.gx, lot.gy, lot.w, lot.h)) {
-          placeholder(ctx, cam, key, lot.gx, lot.gy, lot.w, lot.h, buildingName(id));
+        const keys = buildingKeysFor(eraId, id, tier);
+        if (!drawAny(ctx, keys, lot.gx, lot.gy, lot.w, lot.h)) {
+          placeholder(ctx, cam, keys[0], lot.gx, lot.gy, lot.w, lot.h, buildingName(st, id));
         }
       }
       ctx.restore();
@@ -398,19 +403,19 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     for (let i = 0; i < cars; i++) {
       const lane = (i % 4) * 3;
       const q = ((t * 0.16 + i * 0.31) % 1) * GRID.cols;
-      drawSprite(ctx, cam, 'props/car_a', q - 0.4, lane + 0.1, 0.8, 0.8);
+      drawAny(ctx, tileKeysFor(eraId, 'props/car_a'), q - 0.4, lane + 0.1, 0.8, 0.8);
     }
     const citizens = clamp(Math.round(2 + Math.log10(1 + st.city.pop) * 3), 2, 18);
     for (let i = 0; i < citizens; i++) {
       const row = (i % 5) * 3;
       const q = ((t * 0.05 + i * 0.17) % 1) * GRID.cols;
-      drawSprite(ctx, cam, 'props/citizen', q - 0.3, row + 0.2, 0.6, 0.6);
+      drawAny(ctx, tileKeysFor(eraId, 'props/citizen'), q - 0.3, row + 0.2, 0.6, 0.6);
     }
 
     // 라벨 · 경고 (화면 좌표)
     ctx.textAlign = 'center';
     for (const l of labels) {
-      const name = l.unlocked ? buildingName(l.id) : cam.zoom < 0.75 ? '🔒' : `🔒 Lv.${unlockLevel(l.id)}`;
+      const name = l.unlocked ? buildingName(st, l.id) : cam.zoom < 0.75 ? '🔒' : `🔒 Lv.${unlockLevel(l.id)}`;
       const fs = clamp(11 * cam.zoom, 9, 13);
       ctx.font = `700 ${fs}px system-ui, sans-serif`;
       const tw = ctx.measureText(name).width;
@@ -443,19 +448,28 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     void CONFIG;
   }
 
+  /** 시대 전용 스프라이트를 먼저 시도하고, 없으면 시대 공통으로 떨어진다 */
+  function drawAny(ctx: CanvasRenderingContext2D, keys: string[], gx: number, gy: number, w: number, d: number): boolean {
+    for (const k of keys) if (drawSprite(ctx, cam, k, gx, gy, w, d)) return true;
+    return false;
+  }
+
   /** 부지 전체를 한 종류 타일로 */
-  function drawTileLot(ctx: CanvasRenderingContext2D, gx: number, gy: number, w: number, d: number, key: string): boolean {
-    if (!hasSprite(key)) return false;
-    for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) drawTileSprite(ctx, cam, key, gx + x, gy + y);
+  function drawTileLot(ctx: CanvasRenderingContext2D, eraId: string, gx: number, gy: number, w: number, d: number, key: string): boolean {
+    const use = tileKeysFor(eraId, key).find((k) => hasSprite(k));
+    if (!use) return false;
+    for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) drawTileSprite(ctx, cam, use, gx + x, gy + y);
     return true;
   }
 
-  function emptyLotFill(ctx: CanvasRenderingContext2D, gx: number, gy: number, w: number, d: number): void {
-    for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) tileAt(ctx, gx + x, gy + y, '#C4B191');
+  function emptyLotFill(ctx: CanvasRenderingContext2D, eraId: string, gx: number, gy: number, w: number, d: number): void {
+    for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) tileAt(ctx, eraId, gx + x, gy + y, '#C4B191');
   }
 
-  function tileAt(ctx: CanvasRenderingContext2D, gx: number, gy: number, color: string, key?: string): void {
-    if (key && drawTileSprite(ctx, cam, key, gx, gy)) return;
+  function tileAt(ctx: CanvasRenderingContext2D, eraId: string, gx: number, gy: number, color: string, key?: string): void {
+    if (key) {
+      for (const k of tileKeysFor(eraId, key)) if (drawTileSprite(ctx, cam, k, gx, gy)) return;
+    }
     const a = project(gx, gy, 0, cam);
     const b = project(gx + 1, gy, 0, cam);
     const c = project(gx + 1, gy + 1, 0, cam);

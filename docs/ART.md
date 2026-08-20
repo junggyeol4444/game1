@@ -104,6 +104,26 @@ CC0(Kenney)이면 저작권 표기 없이 상업적 사용이 된다. 1단계 �
 **우선순위**: 1단계 프로토타입은 광산만 검증하므로
 `buildings/mine_1..6` + `ground/*` + `props/*` 17개만 있으면 화면이 완성된다.
 
+### 5-1. 시대 전용 변형 (선택)
+
+문명이 바뀌면 같은 부지에 완전히 다른 건물이 선다. 그리는 쪽은 **시대 전용 키를 먼저 찾고,
+없으면 시대 공통 키로 떨어진다** (`src/ui/art/keys.ts` `buildingKeysFor`).
+
+```
+buildings/stone/mine_3      ← 있으면 석기 시대에서 이걸 쓴다
+buildings/mine_3            ← 없으면 이걸 쓴다 (시대 공통 · 필수)
+ground/stone/grass          ← 타일·소품도 같은 규칙
+```
+
+시대 id: `stone bronze iron medieval renaissance industrial modern information space`
+(`src/data/eras.ts`).
+
+- **필수는 시대 공통 78개뿐이다.** 이것만 있으면 9개 문명 전부 돌아간다.
+- 시대 전용은 702개(9 × 78)까지 열려 있지만 전부 그릴 필요는 없다.
+  체감이 큰 것부터 — `buildings/<시대>/{mine,housing,power}_*` 와 `ground/<시대>/grass` 정도면
+  문명이 바뀐 느낌이 난다. 나머지는 공통본이 받아준다.
+- 목록: `npm run art:check --all`, 외주용 CSV 는 `npm run art:check -- --csv`.
+
 ---
 
 ## 6. 넣고 확인하기

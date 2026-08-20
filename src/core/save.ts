@@ -1,6 +1,7 @@
 import { BUSINESSES } from '../data/businesses';
 import { FACILITIES } from '../data/buildings';
 import { CONFIG } from '../data/config';
+import { MAX_ERA, eraDef } from '../data/eras';
 import { createInitialState, migrate } from './state';
 import type { GameState } from './types';
 
@@ -77,6 +78,8 @@ export function serialize(state: GameState): Record<string, unknown> {
       blueprint: state.resources.blueprint,
     },
     city: {
+      era: state.era,
+      era_id: eraDef(state.era).id,
       level: state.city.level,
       total_tax: big(state.city.taxTotal),
       run_tax: big(state.city.taxRun),
@@ -213,6 +216,7 @@ export function deserialize(raw: Record<string, unknown>): GameState {
   s.resources.food = num(g(res, 'food', 0));
   s.resources.pop = num(g(res, 'pop', 0));
 
+  s.era = Math.max(0, Math.min(MAX_ERA, num(g(city, 'era', 0))));
   s.city.level = g(city, 'level', 1);
   s.city.taxTotal = num(g(city, 'total_tax', 0));
   s.city.taxRun = num(g(city, 'run_tax', 0));

@@ -1,6 +1,7 @@
 import { BUSINESSES, BUSINESS_BY_ID } from '../data/businesses';
 import { CONFIG } from '../data/config';
 import { HOIST_LEVELS } from '../data/units';
+import { eraOutputMult } from './era';
 import { cityStats, staffedUnits, type CityStats } from './facilities';
 import { clamp, geometricCost, maxAffordable } from './num';
 import type { BusinessDef, BusinessId, GameState, OfflineReport, ResourceId } from './types';
@@ -104,6 +105,7 @@ const BP_BOOST: Record<BusinessId, string> = {
 export function businessMultiplier(state: GameState, def: BusinessDef, now = Date.now()): number {
   const cs = stats(state);
   let m = 1;
+  m *= eraOutputMult(state); // 문명 시대 영구 배율
   m *= 1 + bpLevel(state, 'output_bonus') * 0.1;
   const own = BP_BOOST[def.id];
   if (own) m *= 1 + bpLevel(state, own) * 0.5;

@@ -1,6 +1,7 @@
 import { BUSINESSES } from '../data/businesses';
 import { FACILITIES } from '../data/buildings';
 import { CONFIG } from '../data/config';
+import { MAX_ERA } from '../data/eras';
 import type {
   BusinessId,
   BusinessState,
@@ -68,6 +69,7 @@ export function createInitialState(now = Date.now()): GameState {
   };
   return {
     version: CONFIG.saveVersion,
+    era: 0,
     lastSeen: now,
     timeSkew: 0,
     resources,
@@ -97,11 +99,12 @@ export function createInitialState(now = Date.now()): GameState {
 }
 
 /**
- * 재개발 리셋 (기획서 세이브 4장).
+ * 문명 전환 리셋 (기획서 세이브 4장의 재개발 리셋을 대체).
+ * 도시를 전부 허물고 다음 문명의 빈 들판에서 다시 시작한다.
  * 초기화: 자금·물자·도시·사업·시설
- * 유지  : 보석·설계도·프레스티지·도감·상점·설정·통계·오프라인 업그레이드
+ * 유지  : 시대·보석·유산·영구 강화·도감·상점·설정·통계·오프라인 업그레이드
  */
-export function applyPrestigeReset(state: GameState, gained: number, now = Date.now()): void {
+export function applyEraReset(state: GameState, gained: number, now = Date.now()): void {
   const up = state.prestige.upgrades;
   const keepManagers = up['keep_manager'] ?? 0;
   const fundLevel = up['start_fund'] ?? 0;
@@ -156,6 +159,7 @@ export function migrate(raw: unknown): GameState | null {
   const merged: GameState = {
     ...base,
     ...loaded,
+    era: Math.max(0, Math.min(MAX_ERA, loaded.era ?? 0)),
     resources: { ...base.resources, ...(loaded.resources ?? {}) },
     city: { ...base.city, ...(loaded.city ?? {}) },
     prestige: { ...base.prestige, ...(loaded.prestige ?? {}) },

@@ -1,8 +1,8 @@
 /**
- * 재개발(프레스티지) 설계도 사용처 (기획서 수치표 8장).
- * 비용은 구매할 때마다 x1.5.
+ * 유산 사용처 — 문명 전환으로 넘어온 영구 강화 (기획서 수치표 8장의 설계도 강화를 대체).
+ * 도시를 허물어도 남는다. 비용은 구매할 때마다 x1.5.
  */
-export interface BlueprintUpgrade {
+export interface LegacyUpgrade {
   id: string;
   name: string;
   icon: string;
@@ -11,7 +11,7 @@ export interface BlueprintUpgrade {
   desc: (level: number) => string;
 }
 
-export const BLUEPRINT_UPGRADES: BlueprintUpgrade[] = [
+export const LEGACY_UPGRADES: LegacyUpgrade[] = [
   {
     id: 'output_bonus',
     name: '전 사업 산출',
@@ -26,7 +26,7 @@ export const BLUEPRINT_UPGRADES: BlueprintUpgrade[] = [
     icon: '🏦',
     baseCost: 3,
     maxLevel: 12,
-    desc: (l) => (l === 0 ? '재개발 후 기본 자금' : `재개발 후 시작 자금 x${Math.pow(10, l)}`),
+    desc: (l) => (l === 0 ? '새 문명 시작 자금 기본' : `새 문명 시작 자금 x${Math.pow(10, l)}`),
   },
   {
     id: 'keep_manager',
@@ -34,7 +34,7 @@ export const BLUEPRINT_UPGRADES: BlueprintUpgrade[] = [
     icon: '🤝',
     baseCost: 20,
     maxLevel: 60,
-    desc: (l) => `재개발 후 매니저 ${l}명 유지`,
+    desc: (l) => `문명 전환 후 매니저 ${l}명 유지`,
   },
   {
     id: 'minigame_bonus',
@@ -70,6 +70,6 @@ export const BLUEPRINT_UPGRADES: BlueprintUpgrade[] = [
   },
 ];
 
-export const BLUEPRINT_BY_ID = Object.fromEntries(
-  BLUEPRINT_UPGRADES.map((u) => [u.id, u]),
-) as Record<string, BlueprintUpgrade>;
+export const LEGACY_BY_ID = Object.fromEntries(
+  LEGACY_UPGRADES.map((u) => [u.id, u]),
+) as Record<string, LegacyUpgrade>;

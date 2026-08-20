@@ -7,7 +7,8 @@ import type { Game } from '../core/game';
 import { h, haptic } from './dom';
 import { TH, TW, fit, type Cam } from './scene/iso';
 import { drawSprite, placeholder } from './art/assets';
-import { buildingKey } from './art/keys';
+import { buildingKeysFor } from './art/keys';
+import { currentEra, eraPalette, facIcon, facName } from '../core/era';
 import type { View } from './businessView';
 
 export function createFacilityView(game: Game, id: FacilityId): View {
@@ -45,9 +46,10 @@ export function createFacilityView(game: Game, id: FacilityId): View {
     void night;
 
     // 하늘 + 지면
+    const pal = eraPalette(st);
     const g = ctx.createLinearGradient(0, 0, 0, hh);
-    g.addColorStop(0, night ? '#2E4A66' : '#BFE8F2');
-    g.addColorStop(1, night ? '#4E6C88' : '#9FD8E8');
+    g.addColorStop(0, night ? '#2E4A66' : pal.skyTop);
+    g.addColorStop(1, night ? '#4E6C88' : pal.sky);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, hh);
 
@@ -57,8 +59,10 @@ export function createFacilityView(game: Game, id: FacilityId): View {
     cam.x = 0;
     cam.y = 2 * TH + 20;
     if (tier === 0) return;
-    const key = buildingKey(id, tier);
-    if (!drawSprite(ctx, cam, key, -1, -1, 2, 2)) placeholder(ctx, cam, key, -1, -1, 2, 2, def.name);
+    const keys = buildingKeysFor(currentEra(st).id, id, tier);
+    if (!keys.some((k) => drawSprite(ctx, cam, k, -1, -1, 2, 2))) {
+      placeholder(ctx, cam, keys[0], -1, -1, 2, 2, facName(st, id));
+    }
   }
 
   function row(label: string, value: string, tone = ''): HTMLElement {
@@ -78,7 +82,7 @@ export function createFacilityView(game: Game, id: FacilityId): View {
     const cost = facilityCost(st, id);
     const maxed = level >= def.maxLevel;
 
-    tierEl.textContent = `${def.icon} ${def.name} · ${def.tiers[tier]}`;
+    tierEl.textContent = `${facIcon(st, id)} ${facName(st, id)} · ${def.tiers[tier]}`;
     lvEl.innerHTML = '';
     lvEl.append(h('b', null, level > 0 ? `Lv.${formatInt(level)}` : '미건설'), h('span', { class: 'small muted' }, ` / ${def.effect}`));
     effNow.textContent = def.effectText(level);

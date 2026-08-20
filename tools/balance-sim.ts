@@ -21,7 +21,19 @@ import {
   unitUnlockCost,
 } from '../src/core/economy';
 import { cityStats, facilityCost, facilityLevel, facilityUnlocked, buyFacility } from '../src/core/facilities';
-import { applyCityLevelUps, blueprintsOnPrestige, cityRequirement } from '../src/core/progression';
+import {
+  advanceEra,
+  applyCityLevelUps,
+  canAdvanceEra,
+  cityRequirement,
+  eraThreshold,
+  legacyOnAdvance,
+  legacyUpgradeCost,
+  legacyUpgradeList,
+  buyLegacyUpgrade,
+} from '../src/core/progression';
+import { ERAS, eraDef } from '../src/data/eras';
+import { bizName, currentEra, settlementName } from '../src/core/era';
 import { computeOffline } from '../src/core/economy';
 import { createInitialState } from '../src/core/state';
 import { formatDuration, formatNumber } from '../src/core/num';
@@ -34,7 +46,8 @@ const state = createInitialState(0);
 let t = 0;
 const dt = 2;
 const marks: string[] = [];
-const seen = new Set<number>([1]);
+let seen = new Set<number>([1]);
+let legacyEarned = 0;
 
 function buyStep(): boolean {
   // 1) 해금 가능한 유닛
@@ -115,6 +128,34 @@ function facilityStep(): void {
   }
 }
 
+/** 유산은 전환 직후 전부 쓴다 — 살 수 있는 것 중 제일 싼 것부터 */
+function spendLegacy(): void {
+  for (;;) {
+    let best: { id: string; cost: number } | null = null;
+    for (const up of legacyUpgradeList(state)) {
+      const cost = legacyUpgradeCost(state, up.id);
+      if (!isFinite(cost) || cost > state.resources.blueprint) continue;
+      if (!best || cost < best.cost) best = { id: up.id, cost };
+    }
+    if (!best) return;
+    if (!buyLegacyUpgrade(state, best.id)) return;
+  }
+}
+
+/** 목표 세수에 닿으면 바로 문명을 갈아탄다 */
+function eraStep(): void {
+  if (!canAdvanceEra(state)) return;
+  const from = currentEra(state);
+  const gain = legacyOnAdvance(state);
+  legacyEarned += gain;
+  advanceEra(state, gain, 0);
+  spendLegacy();
+  seen = new Set<number>([1]);
+  marks.push(
+    `\n  ══ ${from.name} → ${currentEra(state).name} @ ${formatDuration(t)}  (유산 +${gain}, 누적 ${legacyEarned}, 영구 산출 x${formatNumber(currentEra(state).outputMult)})\n`,
+  );
+}
+
 /**
  * 세션 모델 — 기획서 9장: 세션 길이 3~7분, 하루 3~5회.
  * 세션 사이에는 오프라인 수익만 쌓인다(상한 적용). 이래야 실제 플레이를 예측한다.
@@ -127,11 +168,12 @@ const dtActive = 1;
 let lastOnline = 0;
 
 function mark(): void {
-  for (const def of applyCityLevelUps(state)) marks.push(`  ${def.icon} ${def.name.padEnd(5)} 해금 @ ${formatDuration(t)}`);
+  for (const def of applyCityLevelUps(state))
+    marks.push(`  ${bizName(state, def.id).padEnd(9)} 해금 @ ${formatDuration(t)}`);
   if (!seen.has(state.city.level)) {
     seen.add(state.city.level);
     marks.push(
-      `  도시 Lv.${String(state.city.level).padStart(2)} @ ${formatDuration(t).padEnd(12)} 초당 ${formatNumber(totalCashPerSecond(state, 0))}  — ${cityUnlockText(state.city.level)}`,
+      `  ${currentEra(state).short} Lv.${String(state.city.level).padStart(2)} @ ${formatDuration(t).padEnd(12)} 초당 ${formatNumber(totalCashPerSecond(state, 0))}  — ${cityUnlockText(state.city.level)}`,
     );
   }
 }
@@ -153,6 +195,7 @@ for (let day = 0; day < days; day++) {
       tickBusinesses(state, dtActive, 0);
       if (s2 % 10 === 0) for (let k = 0; k < 20; k++) if (!buyStep()) break;
       if (s2 % 30 === 0) facilityStep();
+      if (s2 % 20 === 0) eraStep();
       t += dtActive;
       mark();
     }
@@ -166,12 +209,14 @@ console.log(marks.join('\n'));
 console.log(`\n누적 세수  : ${formatNumber(state.city.taxRun)}`);
 console.log(`초당 수익  : ${formatNumber(totalCashPerSecond(state, 0))}`);
 console.log(`물자       : ${formatNumber(state.resources.material)}`);
-console.log(`재개발 설계도: ${blueprintsOnPrestige(state)}  (가능 ${state.city.taxRun >= CONFIG.prestige.minTax})`);
+console.log(`문명       : ${currentEra(state).name} (${settlementName(state)}) · 전환 ${state.prestige.count}회`);
+console.log(`전환 목표  : ${formatNumber(state.city.taxRun)} / ${formatNumber(eraThreshold(state))}`);
+console.log(`유산       : 누적 ${legacyEarned} · 보유 ${state.resources.blueprint}`);
 console.log(`\n도시`);
 console.log(`  인구 ${formatNumber(state.city.pop)} / 상한 ${formatNumber(cs.popCap)}  · 필요 ${formatNumber(cs.popDemand)}`);
 console.log(`  전력 ${formatNumber(cs.powerSupply)} / ${formatNumber(cs.powerDemand)} (${Math.round(cs.powerEff * 100)}%)`);
 console.log(`  세수 x${cs.taxMult.toFixed(2)} · 산출 x${cs.outputMult.toFixed(2)} · 운반 ${cs.transferDelay.toFixed(0)}초`);
-console.log(`  시설: ${FACILITIES.filter((f) => facilityLevel(state, f.id) > 0).map((f) => `${f.name}${facilityLevel(state, f.id)}`).join(' ') || '없음'}`);
+console.log(`  시설: ${FACILITIES.filter((f) => facilityLevel(state, f.id) > 0).map((f) => `${currentEra(state).facility[f.id].name}${facilityLevel(state, f.id)}`).join(' ') || '없음'}`);
 console.log(`\n사업`);
 for (const def of BUSINESSES) {
   if (!isUnlocked(state, def)) continue;
@@ -179,9 +224,15 @@ for (const def of BUSINESSES) {
   const eff = projectedEfficiency(state, def, 0);
   const lv = state.businesses[def.id].units.map((u) => (u.unlocked ? u.level : '-')).join('/');
   console.log(
-    `  ${def.icon} ${def.name.padEnd(5)} ${formatNumber(r.cash * eff).padStart(10)}/s  가동 ${staffed(state, def.id)}/${state.businesses[def.id].units.filter((u) => u.unlocked).length}  엘리베이터 Lv.${state.businesses[def.id].hoistLevel}`,
+    `  ${bizName(state, def.id).padEnd(9)} ${formatNumber(r.cash * eff).padStart(10)}/s  가동 ${staffed(state, def.id)}/${state.businesses[def.id].units.filter((u) => u.unlocked).length}  엘리베이터 Lv.${state.businesses[def.id].hoistLevel}`,
   );
   console.log(`      레벨 ${lv}`);
 }
 console.log(`\n도시 레벨 요구 (참고)`);
 for (const L of [3, 6, 10, 12, 15]) console.log(`  Lv.${L}: 세수 ${formatNumber(cityRequirement(L))}`);
+console.log(`\n문명 전환 목표 (참고)`);
+for (let i = 0; i < ERAS.length; i++) {
+  console.log(
+    `  ${eraDef(i).name.padEnd(8)} 졸업 도시 Lv.${String(ERAS[i].advanceLevel).padStart(2)} (세수 ${formatNumber(cityRequirement(ERAS[i].advanceLevel)).padStart(9)}) · 영구 산출 x${formatNumber(ERAS[i].outputMult)}`,
+  );
+}

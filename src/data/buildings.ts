@@ -238,7 +238,7 @@ export const MAX_CITY_LEVEL = 60;
  *
  * 수치표의 배수 x8 을 그대로 쓰면 수입 곡선이 훨씬 빨라서 16레벨이 1시간에 전부 소모된다
  * (시뮬레이터 측정). 수치표가 "측정 후 조정" 전제이므로, 같은 문서 9장의 밸런싱 목표치
- * (1일차 Lv5~6 · 3일차 Lv8~9 · 1주차 첫 재개발)에 맞도록 Lv.3 이후 배수를 올렸다.
+ * (1일차 Lv5~6 · 3일차 Lv8~9)에 맞도록 Lv.3 이후 배수를 올렸다.
  */
 export const CITY_REQ_GROWTH = 78;
 
@@ -254,8 +254,10 @@ export function cityUnlockText(level: number): string {
   return i < CITY_LEVELS.length ? CITY_LEVELS[i].unlocks : '신규 구역';
 }
 
-/** 도시 발전 단계 (아트 스타일 7장) */
-export const STAGE_NAMES = ['들판', '마을', '소도시', '도시', '대도시'];
+/**
+ * 도시 발전 단계 (아트 스타일 7장).
+ * 단계 이름은 문명 시대마다 다르다 — data/eras.ts 의 settlement 를 쓴다.
+ */
 export function terrainStage(level: number): number {
   if (level >= 13) return 4;
   if (level >= 10) return 3;

@@ -123,7 +123,7 @@ export interface CityState {
 
 export interface PrestigeState {
   blueprints: number;
-  /** 설계도 업그레이드 id -> 레벨 */
+  /** 유산 강화 id -> 레벨 */
   upgrades: Record<string, number>;
   count: number;
   lastAt: number;
@@ -171,6 +171,8 @@ export interface StatsState {
 export interface GameState {
   version: number;
   lastSeen: number;
+  /** 현재 문명 시대 (0 = 석기 시대) */
+  era: number;
   /** 기기 시간 조작 감지 누적 보정치(초) */
   timeSkew: number;
   resources: Record<ResourceId, number>;
