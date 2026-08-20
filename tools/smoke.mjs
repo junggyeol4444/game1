@@ -48,6 +48,44 @@ await page.goto(url, { waitUntil: 'load' });
 await page.waitForTimeout(800);
 await shot('01-city-empty');
 
+// ── 튜토리얼: 지시대로만 눌러서 끝까지 간다 ──
+async function tutStep() {
+  return page.evaluate(() => window.game.state.tutorial);
+}
+await shot('01b-tutorial-start');
+const tutSeen = [];
+for (let guard = 0; guard < 60; guard++) {
+  const step = await tutStep();
+  if (step < 0) break;
+  if (tutSeen[tutSeen.length - 1] !== step) {
+    tutSeen.push(step);
+    await shot(`01c-tut-${step}`);
+  }
+  if (step === 0) {
+    // 지도 건물은 캔버스라 DOM 타깃이 없다. 튜토리얼 링 한가운데를 누른다
+    const r = await page.evaluate(() => {
+      const el = document.querySelector('.tut-ring');
+      if (!el) return null;
+      const b = el.getBoundingClientRect();
+      return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+    });
+    if (r) await page.mouse.click(r.x, r.y);
+  }
+  else if (step === 1) for (let k = 0; k < 4; k++) { await page.locator('.floor[data-unit="0"]').click({ force: true }).catch(() => {}); await page.waitForTimeout(700); }
+  else if (step === 2) for (let k = 0; k < 3; k++) { await page.locator('.floor[data-unit="0"] .buy').click({ force: true }).catch(() => {}); await page.waitForTimeout(400); }
+  else if (step === 3 || step === 4) await page.locator('.floor[data-unit="0"] .auto').click({ force: true }).catch(() => {});
+  else if (step === 5) await page.locator('.id-chip.back').click().catch(() => {});
+  else if (step === 6) {
+    await page.locator('[data-tut="build"]').click().catch(() => {});
+    await page.waitForTimeout(400);
+    await page.locator('.scrim button:has-text("건설")').first().click().catch(() => {});
+    await dismiss();
+  }
+  await page.waitForTimeout(600);
+}
+console.log('튜토리얼 단계 진행:', tutSeen.join(' -> '), '| 최종', await tutStep());
+await settle();
+
 // 광산 진입 후 수동 가동
 await goto('mine');
 await page.waitForTimeout(400);

@@ -30,7 +30,7 @@ import { showCashDropSheet } from './modals';
 import { fit } from './scene/iso';
 import { drawSpriteFlat } from './art/assets';
 import { drawFloorStrip } from './scene/floorStrip';
-import { bizHoistName, bizIcon, bizName, bizUnitLabel, unitDisplayName } from '../core/era';
+import { bizHoistName, bizIcon, bizName, bizUnitLabel, unitDisplayName, unitManagerName } from '../core/era';
 
 const BUY_MODES: BuyMode[] = [1, 10, 100, 'max'];
 const STAGE_LABEL = ['', '수동', '반자동 50%', '자동 100%', '고효율'];
@@ -127,6 +127,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       'div',
       {
         class: 'floor',
+        'data-unit': String(i),
         onclick: () => {
           if (game.tapUnit(id, i)) haptic(game.state.settings.haptics);
         },
@@ -300,7 +301,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
         f.autoBtn.className = 'auto hired';
         f.autoBtn.disabled = true;
         f.autoBtn.innerHTML = '';
-        f.autoBtn.append('👤', h('span', { class: 'btn-sub' }, f.udef.managerName));
+        f.autoBtn.append('👤', h('span', { class: 'btn-sub' }, unitManagerName(st, id, f.i, f.udef.managerName)));
       } else if (u.equip) {
         const mc = managerCost(st, def, f.i);
         f.autoBtn.className = `auto ${st.resources.cash >= mc ? 'gold' : 'dim'}`;

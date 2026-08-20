@@ -74,6 +74,12 @@ export function unitDisplayName(state: GameState, id: BusinessId, index: number,
   return `${index + 1}번 ${bizUnitLabel(state, id)}`;
 }
 
+/** 매니저 이름도 같은 이유로 근대 이전에는 시대에 맞는 호칭으로 부른다 */
+export function unitManagerName(state: GameState, id: BusinessId, index: number, written: string): string {
+  if (eraIndex(state) >= NAMED_FROM_ERA) return written;
+  return `${index + 1}번 ${bizUnitLabel(state, id)} 일꾼`;
+}
+
 export function facName(state: GameState, id: FacilityId): string {
   return currentEra(state).facility[id].name;
 }

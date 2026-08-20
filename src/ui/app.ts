@@ -11,6 +11,7 @@ import { clear, h } from './dom';
 import { createBusinessView, type View } from './businessView';
 import { createFacilityView } from './facilityView';
 import { createCityMap, buildingAlert } from './cityMap';
+import { createTutorial } from './tutorial';
 import { bizIcon, bizName, facIcon, facName, leaderTitle, settlementName } from '../core/era';
 import {
   showBuildSheet,
@@ -49,7 +50,7 @@ export function mountApp(game: Game, host: HTMLElement): void {
   stage.appendChild(buildingHost);
 
   // ── 지도 위 빠른 액션 ──
-  const quickBuild = h('button', { class: 'quick' }, '');
+  const quickBuild = h('button', { class: 'quick', 'data-tut': 'build' }, '');
   const quickLevel = h('button', { class: 'quick' }, '');
   // 문명 전환이 가능해지면 지도 위에 바로 뜬다 (이 게임의 장기 루프라 숨기지 않는다)
   const quickEra = h('button', { class: 'quick era', style: { display: 'none' } }, '');
@@ -74,8 +75,14 @@ export function mountApp(game: Game, host: HTMLElement): void {
     );
   }
 
+  // 첫 60초 튜토리얼 — 조작 하나씩 짚어 준다
+  const tutorial = createTutorial(game, {
+    screen: () => (screen.kind === 'city' ? 'city' : screen.id),
+    mapRect: (id) => (screen.kind === 'city' ? map.rectOf(id) : null),
+  });
+
   const toasts = h('div', { class: 'toasts' });
-  const shell = h('div', { class: 'shell' }, topbar, stage, toasts, menubar);
+  const shell = h('div', { class: 'shell' }, topbar, stage, toasts, menubar, tutorial.root);
   clear(host);
   host.appendChild(shell);
 
@@ -207,6 +214,7 @@ export function mountApp(game: Game, host: HTMLElement): void {
     const secs = t / 1000;
     if (screen.kind === 'city') map.draw(secs);
     else buildingViews.get(screen.id)?.draw?.(secs);
+    tutorial.update();
     if (t - last >= 100) {
       last = t;
       updateTop();

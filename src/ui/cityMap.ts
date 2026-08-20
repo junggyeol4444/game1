@@ -34,6 +34,8 @@ export interface MapView {
   update: () => void;
   draw: (t: number) => void;
   focus: (id: BuildingId) => void;
+  /** 건물이 지금 화면 어디에 그려졌는지 (튜토리얼 하이라이트용) */
+  rectOf: (id: BuildingId) => DOMRect | null;
 }
 
 export interface BuildingAlert {
@@ -495,5 +497,12 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     ctx.closePath();
   }
 
-  return { root, update: () => {}, draw, focus };
+  function rectOf(id: BuildingId): DOMRect | null {
+    const r = hitRects.get(id);
+    if (!r) return null;
+    const c = canvas.getBoundingClientRect();
+    return new DOMRect(c.left + r[0], c.top + r[1], r[2] - r[0], r[3] - r[1]);
+  }
+
+  return { root, update: () => {}, draw, focus, rectOf };
 }

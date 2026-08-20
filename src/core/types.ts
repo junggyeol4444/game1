@@ -173,6 +173,8 @@ export interface GameState {
   lastSeen: number;
   /** 현재 문명 시대 (0 = 석기 시대) */
   era: number;
+  /** 튜토리얼 단계. -1 이면 끝났거나 건너뛴 것 */
+  tutorial: number;
   /** 기기 시간 조작 감지 누적 보정치(초) */
   timeSkew: number;
   resources: Record<ResourceId, number>;

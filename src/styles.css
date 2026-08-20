@@ -319,3 +319,36 @@ button.wide { width: 100%; }
   text-shadow: 0 3px 12px rgba(0,0,0,.45); pointer-events: none;
 }
 .mg-howto { color: var(--muted); font-size: calc(12px * var(--scale)); margin-top: 8px; text-align: center; }
+
+
+/* ── 튜토리얼 ──────────────────────────────────────────────
+   화면을 막지 않는다. 눌러야 할 곳만 링으로 표시하고,
+   지시문은 조작을 가리지 않는 쪽 끝에 붙인다. */
+.tut { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+.tut-ring {
+  position: fixed; border-radius: 16px;
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 9999px rgba(16, 26, 40, 0.42), 0 0 18px 4px rgba(240, 180, 40, 0.55);
+  animation: tut-pulse 1.4s ease-in-out infinite;
+  transition: left 0.16s ease, top 0.16s ease, width 0.16s ease, height 0.16s ease;
+}
+.reduced .tut-ring { animation: none; }
+@keyframes tut-pulse {
+  0%, 100% { border-color: var(--gold); }
+  50% { border-color: #FFF3D0; }
+}
+.tut-card {
+  position: fixed; left: 12px; right: 12px; bottom: calc(var(--tabbar-h) + 76px);
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--line-2); border-radius: 16px;
+  padding: 12px 14px; pointer-events: auto;
+  box-shadow: 0 8px 28px rgba(16, 26, 40, 0.28);
+}
+.tut-card.top { bottom: auto; top: calc(env(safe-area-inset-top) + 66px); }
+.tut-text { font-weight: 800; font-size: calc(15px * var(--scale)); }
+.tut-why { font-size: calc(12px * var(--scale)); color: var(--muted); margin-top: 2px; }
+.tut-skip {
+  flex: 0 0 auto; background: transparent; border: 0;
+  color: var(--muted); font-size: calc(12px * var(--scale)); text-decoration: underline;
+  min-height: 32px; padding: 0 4px;
+}

@@ -70,6 +70,7 @@ export function serialize(state: GameState): Record<string, unknown> {
       last_save_at: now(),
       last_online_at: state.lastSeen,
       play_seconds: Math.round(state.stats.playSeconds),
+      tutorial_step: state.tutorial,
     },
     currency: {
       money: big(state.resources.cash),
@@ -206,6 +207,7 @@ export function deserialize(raw: Record<string, unknown>): GameState {
   s.stats.startedAt = g(player, 'created_at', s.stats.startedAt);
   s.lastSeen = g(player, 'last_save_at', s.lastSeen);
   s.stats.playSeconds = g(player, 'play_seconds', 0);
+  s.tutorial = num(g(player, 'tutorial_step', -1), -1);
 
   s.resources.cash = num(g(cur, 'money', 0), CONFIG.startCash);
   s.resources.material = num(g(cur, 'material', 0));

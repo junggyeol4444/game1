@@ -47,7 +47,7 @@ import { deviceTime, load, now, save, setTimeSource } from './save';
 import { todayKey } from './state';
 import type { BusinessDef, BusinessId, GameState, OfflineReport } from './types';
 import type { EraDef } from '../data/eras';
-import { LEGACY, bizName, bizUnitLabel, bizHoistName } from './era';
+import { LEGACY, bizName, bizUnitLabel, bizHoistName, unitManagerName } from './era';
 import { MINIGAMES, MINIGAME_SPOILS, RARE_FISH } from '../ui/minigames/games';
 import { playMinigame, type MinigameResult } from '../ui/minigames/host';
 
@@ -246,7 +246,7 @@ export class Game {
     this.state.shop.piggyValue += 2;
     this.persist();
     this.emit('structure');
-    this.toast(`${def.units[index].managerName} 고용 완료`);
+    this.toast(`${unitManagerName(this.state, id, index, def.units[index].managerName)} 배치 완료`);
     return true;
   }
 

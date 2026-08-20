@@ -12,6 +12,9 @@ import type {
   ResourceId,
 } from './types';
 
+/** 튜토리얼이 끝났거나 건너뛴 상태 */
+export const TUTORIAL_DONE = -1;
+
 /** 하루 기준 시각 04:00 (기획서 세이브 3장) */
 export function todayKey(now = Date.now()): string {
   const d = new Date(now - 4 * 3600 * 1000);
@@ -70,6 +73,7 @@ export function createInitialState(now = Date.now()): GameState {
   return {
     version: CONFIG.saveVersion,
     era: 0,
+    tutorial: 0,
     lastSeen: now,
     timeSkew: 0,
     resources,
@@ -160,6 +164,8 @@ export function migrate(raw: unknown): GameState | null {
     ...base,
     ...loaded,
     era: Math.max(0, Math.min(MAX_ERA, loaded.era ?? 0)),
+    // 튜토리얼 필드가 없는 세이브 = 튜토리얼 도입 전에 이미 하던 유저. 다시 띄우지 않는다
+    tutorial: loaded.tutorial ?? TUTORIAL_DONE,
     resources: { ...base.resources, ...(loaded.resources ?? {}) },
     city: { ...base.city, ...(loaded.city ?? {}) },
     prestige: { ...base.prestige, ...(loaded.prestige ?? {}) },
