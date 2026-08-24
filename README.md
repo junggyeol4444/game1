@@ -16,12 +16,18 @@ npm run dev        # http://localhost:5173 (--host 로 같은 와이파이의 �
 npm run build      # 타입체크 + 프로덕션 빌드 -> dist/
 npm run preview    # 빌드 결과 확인
 npm run sim        # 밸런스 시뮬레이터 (npm run sim -- --days 30)
+npm run art:check  # 스프라이트 발주서 / 누락 현황
+
+npm run android:open   # 빌드 + cap sync + Android Studio 열기
+npm run android:sync   # 빌드 + cap sync 만
 ```
 
 폰에서 테스트하려면 `npm run dev` 후 터미널에 찍히는 `http://<PC IP>:5173` 을 폰 브라우저로 연다.
 홈 화면에 추가하면 PWA(전체화면)로 실행된다.
 
-네이티브 앱(Android/iOS) 빌드는 [docs/NATIVE.md](docs/NATIVE.md) 참고.
+Capacitor 안드로이드 프로젝트는 붙어 있다. `android/`, `ios/` 는 전부 생성물이라
+커밋하지 않는다 — 저장소를 처음 받았으면 `npx cap add android` 한 번.
+자세한 건 [docs/NATIVE.md](docs/NATIVE.md).
 
 ---
 
@@ -344,6 +350,8 @@ x1.00  x1.08   x1.17  x1.26   x1.36     x1.47     x1.59   x1.71    x1.85   ← �
 AudioContext 는 브라우저 정책 때문에 첫 입력에서 한 번만 만든다.
 
 화면 흔들림은 `src/ui/fx.ts` 3단계 (탭 1.5px / 해금·사고 3px / 문명 전환 5px 0.9초).
+순간 연출은 `src/ui/scene/burst.ts` — 건물 단계가 바뀌면 0.8초 먼지가 교체를 가리고,
+유닛이 마일스톤을 넘으면 링이 퍼진다. 문명 전환은 전 건물이 동시에 무너져서 도시 전체가 먼지다.
 `설정 > 소리`, `설정 > 애니메이션 > 줄이기` 로 각각 끌 수 있다.
 
 ## 아직 없는 것

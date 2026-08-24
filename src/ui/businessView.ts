@@ -30,6 +30,7 @@ import { showCashDropSheet } from './modals';
 import { fit } from './scene/iso';
 import { drawSpriteFlat } from './art/assets';
 import { drawFloorStrip } from './scene/floorStrip';
+import { milestoneRing } from './scene/burst';
 import { bizHoistName, bizIcon, bizName, bizUnitLabel, unitDisplayName, unitManagerName } from '../core/era';
 import { sfx } from '../core/audio';
 import { shake } from './fx';
@@ -157,6 +158,11 @@ export function createBusinessView(game: Game, id: BusinessId): View {
 
   /** 사이클 완료를 잡기 위한 직전 진행도 */
   const lastProgress: number[] = def.units.map(() => 0);
+  /** 마일스톤 확산 연출: 유닛별 시작 시각(초). 0 이면 없음 */
+  const ringAt: number[] = def.units.map(() => 0);
+  /** 마일스톤 통과 감지를 위한 직전 레벨 */
+  const lastLevel: number[] = def.units.map(() => -1);
+  const RING_SECONDS = 0.9;
 
   // ── 구매 단위 ──
   const segButtons = BUY_MODES.map((m) =>
@@ -206,7 +212,25 @@ export function createBusinessView(game: Game, id: BusinessId): View {
         t,
         sprite: (key, x, y, hgt) => drawSpriteFlat(fctx, key, x, y, hgt),
       });
+      // 마일스톤 원형 확산 (아트 문서 9장)
+      if (ringAt[f.i] > 0 && !st.settings.reducedMotion) {
+        const age = (t - ringAt[f.i]) / RING_SECONDS;
+        if (age >= 1) ringAt[f.i] = 0;
+        else milestoneRing(fctx, w * 0.5, hh * 0.5, Math.max(w, hh) * 0.55, age, def.color);
+      }
       f.progFill.style.width = `${p * 100}%`;
+    }
+  }
+
+  /** 레벨이 마일스톤을 넘었으면 확산 연출을 예약한다 */
+  function checkMilestones(): void {
+    const bs = game.state.businesses[id];
+    for (const f of floors) {
+      const lv = bs.units[f.i].level;
+      const prev = lastLevel[f.i];
+      lastLevel[f.i] = lv;
+      if (prev < 0 || lv <= prev) continue; // 첫 진입이거나 안 올랐다
+      if (CONFIG.milestones.some((m) => prev < m && lv >= m)) ringAt[f.i] = performance.now() / 1000;
     }
   }
 
@@ -214,6 +238,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
     const st = game.state;
     const now = Date.now();
     const bs = st.businesses[id];
+    checkMilestones();
     const eff = projectedEfficiency(st, def, now);
     const rate = businessRatePerSecond(st, def, now);
     const staff = staffed(st, id);

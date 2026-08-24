@@ -2,20 +2,33 @@
 
 웹 코어를 Capacitor로 감싸 스토어에 올린다. 게임 로직은 그대로 두고 광고·결제·저장만 네이티브로 바꾼다.
 
-## 1. Capacitor 설치
+## 1. Capacitor
+
+의존성과 `capacitor.config.ts` 는 이미 저장소에 있다. **네이티브 프로젝트(`android/`, `ios/`)는
+커밋하지 않는다** — 전부 생성물이고 명령 한 줄로 다시 만들어진다. `.gitignore` 에 들어 있다.
 
 ```bash
-npm i @capacitor/core @capacitor/cli @capacitor/android @capacitor/ios
-npx cap init      # capacitor.config.ts 가 이미 있으므로 값만 확인
-npm run build
-npx cap add android
-npx cap add ios
-npx cap sync
-npx cap open android   # Android Studio
-npx cap open ios       # Xcode (macOS 필요)
+npm run android:open     # build + cap sync + Android Studio 열기
+npm run android:sync     # build + cap sync 만 (스튜디오가 이미 열려 있을 때)
 ```
 
-`capacitor.config.ts` 의 `appId` 를 실제 패키지명으로 바꾼다 (`com.example.cityidle` → 본인 도메인 역순).
+처음 받은 저장소라 `android/` 가 없으면 한 번만:
+
+```bash
+npm i
+npx cap add android
+npx cap add ios          # macOS + Xcode 필요
+```
+
+`capacitor.config.ts` 의 `appId` 를 실제 패키지명으로 바꾼다
+(`com.example.cityidle` → 본인 도메인 역순). 스토어 등록 후에는 못 바꾸니 먼저 정할 것.
+
+### APK 는 이 저장소를 만든 컨테이너에서 못 뽑는다
+
+Gradle 과 JDK 는 있지만 **Android SDK 가 없다** (`ANDROID_HOME` 미설정).
+`npx cap add android` 로 Gradle 프로젝트를 만드는 데까지는 되고, 실제 빌드는
+Android Studio 가 있는 로컬에서 해야 한다. 밸런스 수치가 전부 시뮬레이터 값이라
+**첫 실기기 세션 측정이 남은 작업 2번**이다.
 
 ## 2. 광고 연동
 

@@ -180,7 +180,9 @@ await page.locator('.quick.era').click({ timeout: 3000 }).catch(() => {});
 await page.waitForTimeout(500);
 await shot('15-era-sheet');
 await page.locator('button:has-text("그냥 전환")').first().click({ timeout: 3000 }).catch(() => {});
-await page.waitForTimeout(900);
+await page.waitForTimeout(250);
+await shot('16a-era-dust');   // 전 건물이 동시에 허물어지는 순간 (0.8초 먼지)
+await page.waitForTimeout(700);
 await shot('16-era-arrival');
 const eraName = await page.locator('.scrim h2').last().textContent().catch(() => '');
 await dismiss();

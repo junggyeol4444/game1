@@ -24,6 +24,7 @@ import { h } from './dom';
 import { TH, TW, fit, project, type Cam } from './scene/iso';
 import { drawSprite, drawTileSprite, hasSprite, placeholder } from './art/assets';
 import { buildingKeysFor, tileKeysFor } from './art/keys';
+import { dustPuff } from './scene/burst';
 import { bizName, currentEra, eraPalette, facName, settlementName } from '../core/era';
 
 /** 도시 규모 이름은 시대마다 다르다 (석기 '큰 부족' ~ 우주 '성간 도시') */
@@ -129,6 +130,11 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
   const cam: Cam = { x: 0, y: 0, zoom: 1, w: 1, h: 1 };
   let started = false;
   const hitRects = new Map<BuildingId, [number, number, number, number]>();
+  /** 지금 화면에 그려진 외형 단계. 이게 바뀌면 먼지가 인다 (아트 문서 6장) */
+  const shownTier = new Map<BuildingId, number>();
+  /** 교체 연출 시작 시각(초) */
+  const swapAt = new Map<BuildingId, number>();
+  const SWAP_SECONDS = 0.8;
 
   const pointers = new Map<number, { x: number; y: number }>();
   let dragging = false;
@@ -370,6 +376,15 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
       const unlocked = buildingUnlocked(st, id);
       const alert = buildingAlert(st, id, now);
 
+      // 외형 단계가 바뀌면 0.8초 먼지로 교체를 가린다.
+      // 첫 프레임에는 연출하지 않는다 — 세이브 불러오기가 폭죽이 되면 안 된다
+      const prevTier = shownTier.get(id);
+      if (prevTier === undefined) shownTier.set(id, tier);
+      else if (prevTier !== tier) {
+        shownTier.set(id, tier);
+        if (!st.settings.reducedMotion) swapAt.set(id, t);
+      }
+
       ctx.save();
       if (!unlocked) ctx.globalAlpha = 0.45;
       if (tier === 0) {
@@ -380,6 +395,15 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
         const keys = buildingKeysFor(eraId, id, tier);
         if (!drawAny(ctx, keys, lot.gx, lot.gy, lot.w, lot.h)) {
           placeholder(ctx, cam, keys[0], lot.gx, lot.gy, lot.w, lot.h, buildingName(st, id));
+        }
+      }
+      const swap = swapAt.get(id);
+      if (swap !== undefined) {
+        const age = (t - swap) / SWAP_SECONDS;
+        if (age >= 1) swapAt.delete(id);
+        else {
+          const [dx, dy] = project(lot.gx + lot.w / 2, lot.gy + lot.h / 2, 0, cam);
+          dustPuff(ctx, dx, dy, TW * lot.w * cam.zoom, age);
         }
       }
       ctx.restore();
