@@ -1,4 +1,5 @@
 import { CONFIG } from '../../data/config';
+import { setComboStep, sfx } from '../../core/audio';
 import type { BusinessId } from '../../core/types';
 import { fitCanvas } from '../scene/gfx';
 import { h } from '../dom';
@@ -31,12 +32,26 @@ export interface MinigameInstance {
   status?: string;
 }
 
+/**
+ * 미니게임이 손맛을 요청하는 통로.
+ * 판정할 때마다 게임이 이걸 부르면 호스트가 소리 · 튀는 글자 · 화면 흔들림을 붙인다.
+ * 게임 쪽은 연출을 몰라도 된다.
+ */
+export interface MinigameFx {
+  /**
+   * @param kind  perfect = 정타, good = 근접, miss = 빗나감
+   * @param label 화면에 튀울 문구 (없으면 기본값)
+   * @param combo 지금 콤보 수. 넘기면 콤보음이 반음씩 올라간다
+   */
+  hit(kind: 'perfect' | 'good' | 'miss', label?: string, combo?: number): void;
+}
+
 export interface MinigameDef {
   id: BusinessId;
   title: string;
   howto: string;
   duration?: number;
-  create(w: number, h: number): MinigameInstance;
+  create(w: number, h: number, fx: MinigameFx): MinigameInstance;
 }
 
 export type Grade = 'F' | 'C' | 'B' | 'A' | 'S';
@@ -51,6 +66,10 @@ export interface MinigameResult {
   mult: number;
   /** 미니게임 특산물 획득 수 */
   bonusItems: number;
+  /** 지급된 현금. Game 이 보상을 계산한 뒤 채운다 */
+  reward?: number;
+  /** 특산물 안내 문구. Game 이 채운다 */
+  spoilText?: string;
 }
 
 function gradeOf(ratio: number): Grade {
@@ -63,8 +82,9 @@ function gradeOf(ratio: number): Grade {
 
 
 /** 미니게임 1판. 결과를 돌려준다 (보상 적용은 Game 쪽) */
-export function playMinigame(def: MinigameDef): Promise<MinigameResult | null> {
+export function playMinigame(def: MinigameDef, opts: { reducedMotion?: boolean } = {}): Promise<MinigameResult | null> {
   return new Promise((resolve) => {
+    const reducedMotion = Boolean(opts.reducedMotion);
     const C = CONFIG.minigame;
     const duration = def.duration ?? C.durationSeconds;
 
@@ -93,9 +113,69 @@ export function playMinigame(def: MinigameDef): Promise<MinigameResult | null> {
     );
     document.body.appendChild(overlay);
 
+    // 판정 문구는 캔버스 위에 떠서 올라갔다 사라진다
+    const pops: { text: string; kind: string; born: number }[] = [];
+    const fx: MinigameFx = {
+      hit(kind, label, combo) {
+        const text = label ?? (kind === 'perfect' ? '정타!' : kind === 'good' ? '근접' : '빗나감');
+        pops.push({ text, kind, born: performance.now() / 1000 });
+        if (pops.length > 4) pops.shift();
+        if (kind === 'perfect') {
+          if (combo && combo > 1) {
+            setComboStep(combo - 1);
+            sfx('mgCombo');
+          } else {
+            setComboStep(0);
+          }
+          sfx('mgPerfect');
+          shakeStage('tap');
+        } else if (kind === 'good') {
+          sfx('mgGood');
+        } else {
+          setComboStep(0);
+          sfx('mgMiss');
+          shakeStage('hit');
+        }
+      },
+    };
+
+    function shakeStage(level: 'tap' | 'hit'): void {
+      if (reducedMotion) return;
+      const cls = level === 'tap' ? 'sh-tap' : 'sh-hit';
+      stage.classList.remove(cls);
+      void stage.offsetWidth;
+      stage.classList.add(cls);
+      window.setTimeout(() => stage.classList.remove(cls), level === 'tap' ? 90 : 220);
+    }
+
+    /** 판정 문구를 캔버스 위에 그린다 (0.7초 동안 떠오르며 사라진다) */
+    function drawPops(ctx: CanvasRenderingContext2D, w: number, hh: number, nowSec: number): void {
+      for (let i = pops.length - 1; i >= 0; i--) {
+        const age = (nowSec - pops[i].born) / 0.7;
+        if (age >= 1) {
+          pops.splice(i, 1);
+          continue;
+        }
+        const p = pops[i];
+        ctx.save();
+        ctx.globalAlpha = 1 - age * age;
+        ctx.textAlign = 'center';
+        const size = (p.kind === 'perfect' ? 30 : 22) * (1 + (1 - Math.pow(1 - age, 3)) * 0.25);
+        ctx.font = `900 ${size}px system-ui, sans-serif`;
+        ctx.fillStyle = p.kind === 'perfect' ? '#FFC845' : p.kind === 'good' ? '#8FD3A8' : '#E85D4A';
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(20,28,40,0.55)';
+        const y = hh * 0.42 - age * hh * 0.16 - i * 4;
+        ctx.strokeText(p.text, w * 0.5, y);
+        ctx.fillText(p.text, w * 0.5, y);
+        ctx.restore();
+      }
+    }
+
     let inst: MinigameInstance | null = null;
     let phase: 'count' | 'play' | 'done' = 'count';
     let countdown = 3;
+    let lastTick = 4;
     let elapsed = 0;
     let last = performance.now();
     let raf = 0;
@@ -132,6 +212,8 @@ export function playMinigame(def: MinigameDef): Promise<MinigameResult | null> {
       const score = Math.max(0, Math.round(inst?.score ?? 0));
       const target = Math.max(1, inst?.target ?? 1);
       const rate = Math.max(0, Math.min(1, inst?.successRate ? inst.successRate() : score / target));
+      sfx('mgEnd');
+      setComboStep(0);
       const result: MinigameResult = {
         score,
         target,
@@ -151,18 +233,35 @@ export function playMinigame(def: MinigameDef): Promise<MinigameResult | null> {
       const hh = stage.clientHeight;
       if (w > 0 && hh > 0) {
         const ctx = fitCanvas(canvas, w, hh);
-        if (!inst) inst = def.create(w, hh);
+        if (!inst) inst = def.create(w, hh, fx);
         if (phase === 'count') {
           countdown -= dt;
           inst.draw({ ctx, w, h: hh, t: 0, dt: 0, remain: duration });
-          bigEl.textContent = countdown > 0 ? String(Math.ceil(countdown)) : '시작!';
+          const n = Math.ceil(countdown);
+          if (countdown > 0 && n < lastTick) {
+            lastTick = n;
+            sfx('mgTick');
+          }
+          bigEl.textContent = countdown > 0 ? String(n) : '시작!';
+          if (countdown <= 0 && lastTick > 0) {
+            lastTick = 0;
+            sfx('mgStart');
+          }
           if (countdown < -0.4) {
             phase = 'play';
             bigEl.textContent = '';
+            lastTick = 6; // 종료 초읽기용으로 다시 쓴다
           }
         } else if (phase === 'play') {
           elapsed += dt;
           inst.draw({ ctx, w, h: hh, t: elapsed, dt, remain: Math.max(0, duration - elapsed) });
+          drawPops(ctx, w, hh, now / 1000);
+          // 남은 5초부터 초읽기
+          const left = Math.ceil(Math.max(0, duration - elapsed));
+          if (left <= 5 && left < lastTick) {
+            lastTick = left;
+            sfx('mgTick');
+          }
           scoreEl.textContent = String(Math.round(inst.score));
           timeEl.textContent = String(Math.ceil(Math.max(0, duration - elapsed)));
           statusEl.textContent = inst.status ?? '';

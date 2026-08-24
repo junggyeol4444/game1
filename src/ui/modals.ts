@@ -21,7 +21,8 @@ import { ERAS, settlementNameOf } from '../data/eras';
 import { terrainStage } from '../data/buildings';
 import { missionComplete, missionDef, missionTarget } from '../core/missions';
 import type { Game } from '../core/game';
-import type { BusinessDef, GameState, OfflineReport } from '../core/types';
+import type { BusinessDef, BusinessId, GameState, OfflineReport } from '../core/types';
+import type { MinigameResult } from './minigames/host';
 import { append, clear, h } from './dom';
 import { exportSave, importSave, wipe } from '../core/save';
 import { setSoundEnabled } from '../core/audio';
@@ -587,6 +588,67 @@ export function showCashDropSheet(game: Game): void {
 
 export function unlockedBusinesses(state: GameState): BusinessDef[] {
   return BUSINESSES.filter((b) => isUnlocked(state, b));
+}
+
+// ═══════════════ 미니게임 결과 ═══════════════
+const GRADE_TEXT: Record<string, { color: string; line: string }> = {
+  S: { color: '#FFC845', line: '완벽했습니다' },
+  A: { color: '#8FD3A8', line: '좋습니다' },
+  B: { color: '#8FB8E8', line: '나쁘지 않습니다' },
+  C: { color: '#C4B191', line: '감이 필요합니다' },
+  F: { color: '#E85D4A', line: '다음엔 됩니다' },
+};
+
+/** 판 끝나고 뜨는 성적표. 토스트로는 배율·특산물이 안 보인다 */
+export function showMinigameResult(game: Game, id: BusinessId, r: MinigameResult): void {
+  const s = game.state;
+  const g = GRADE_TEXT[r.grade] ?? GRADE_TEXT.C;
+  const left = game.minigamePlaysLeft(id);
+  const adLeft = game.minigameAdPlaysLeft(id);
+  sheet({
+    title: `${bizName(s, id)} 미니게임`,
+    build: (hd) => [
+      h(
+        'div',
+        { class: 'card center' },
+        h('div', { class: 'mg-grade', style: { color: g.color } }, r.grade),
+        h('div', { class: 'muted small' }, g.line),
+      ),
+      h(
+        'div',
+        { class: 'card' },
+        h('div', { class: 'row spread', style: { padding: '3px 0' } },
+          h('span', { class: 'muted' }, '성공률'), h('b', null, `${Math.round(r.rate * 100)}%`)),
+        h('div', { class: 'row spread', style: { padding: '3px 0' } },
+          h('span', { class: 'muted' }, '점수'), h('b', null, `${formatInt(r.score)} / ${formatInt(r.target)}`)),
+        h('div', { class: 'row spread', style: { padding: '3px 0' } },
+          h('span', { class: 'muted' }, '성적 배율'), h('b', { class: 'good' }, `x${r.mult.toFixed(2)}`)),
+        h('div', { class: 'row spread', style: { padding: '3px 0' } },
+          h('span', { class: 'muted' }, '보상'), h('b', { class: 'gold' }, `💰 ${fmt(s, r.reward ?? 0)}`)),
+        r.spoilText ? h('div', { class: 'row spread', style: { padding: '3px 0' } },
+          h('span', { class: 'muted' }, '특산물'), h('b', { class: 'gold' }, r.spoilText)) : null,
+        r.rate >= 0.8
+          ? h('div', { class: 'small good', style: { marginTop: '6px' } },
+              `${r.rate >= 0.95 ? 3 : 2}배 가동 ${Math.round(CONFIG.minigame.boostSeconds / 60)}분 적용`)
+          : h('div', { class: 'small muted', style: { marginTop: '6px' } }, '성공률 80% 이상이면 30분간 2배로 돕니다'),
+      ),
+      h(
+        'button',
+        {
+          class: left > 0 || adLeft > 0 ? 'primary wide' : 'wide',
+          disabled: left <= 0 && adLeft <= 0,
+          onclick: async () => {
+            hd.close();
+            const again = await game.playMinigame(id);
+            if (again) showMinigameResult(game, id, again);
+          },
+        },
+        '한 판 더',
+        h('span', { class: 'btn-sub' }, left > 0 ? `무료 ${left}회` : adLeft > 0 ? `광고 +1 (${adLeft})` : '내일 다시'),
+      ),
+      h('button', { class: 'ghost wide', style: { marginTop: '6px' }, onclick: () => hd.close() }, '닫기'),
+    ],
+  });
 }
 
 // ═══════════════ 건설 ═══════════════

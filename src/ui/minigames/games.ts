@@ -1,5 +1,5 @@
 import { fillRR, person, vGradient } from '../scene/gfx';
-import type { MgCtx, MinigameDef, MinigameInstance } from './host';
+import type { MgCtx, MinigameDef, MinigameFx, MinigameInstance } from './host';
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 
@@ -8,7 +8,7 @@ const mineGame: MinigameDef = {
   id: 'mine',
   title: '광맥 캐기',
   howto: '커서가 안전 구간에 들어왔을 때 탭. 정타를 연속하면 배율이 올라갑니다.',
-  create(w, h) {
+  create(w, h, fx: MinigameFx) {
     const HIT = 0.08;   // 정타 ±8%
     const NEAR = 0.2;   // 근접 ±20%
     const SPAWN = 1.2;  // 광석 출현 간격(초)
@@ -48,13 +48,16 @@ const mineGame: MinigameDef = {
         combo += 1;
         flashKind = 'hit';
         if (isGem) gems += 1;
+        fx.hit('perfect', isGem ? '💎 보석!' : combo >= 3 ? `정타 ${combo}연속!` : '정타!', combo);
       } else if (d <= NEAR) {
         mult = 0.5;
         combo = 0;
         flashKind = 'near';
+        fx.hit('good', '근접');
       } else {
         combo = 0;
         flashKind = 'miss';
+        fx.hit('miss', '빗나감');
       }
       inst.score += 40 * mult * comboMult();
       flash = 0.25;
@@ -103,6 +106,7 @@ const mineGame: MinigameDef = {
           spawnT = SPAWN;
           flash = 0.2;
           flashKind = 'miss';
+          fx.hit('miss', '놓침');
         }
 
         inst.bonusItems = gems;
@@ -185,13 +189,14 @@ const factoryGame: MinigameDef = {
   id: 'factory',
   title: '분류 라인',
   howto: '내려오는 제품을 색에 맞는 통으로. 화면 왼쪽/오른쪽을 탭하세요.',
-  create(w, h) {
+  create(w, h, fx: MinigameFx) {
     interface Item { x: number; y: number; type: 0 | 1; v: number }
     const items: Item[] = [];
     let spawn = 0;
     let rate = 1.15;
     let flash = 0;
     let flashOk = false;
+    let fcombo = 0;
     const COL = ['#5b8def', '#f6b93b'];
     const binY = () => h * 0.8;
 
@@ -207,9 +212,13 @@ const factoryGame: MinigameDef = {
         if (best.type === side) {
           inst.score += 16;
           flashOk = true;
+          fcombo += 1;
+          fx.hit('perfect', fcombo >= 3 ? `${fcombo}연속!` : '정확!', fcombo);
         } else {
           inst.score = Math.max(0, inst.score - 10);
           flashOk = false;
+          fcombo = 0;
+          fx.hit('miss', '잘못 분류');
         }
         flash = 0.22;
         items.splice(items.indexOf(best), 1);
@@ -277,7 +286,7 @@ const fisheryGame: MinigameDef = {
   id: 'fishery',
   title: '릴링',
   howto: '화면을 누르면 초록 막대가 올라갑니다. 물고기를 막대 안에 계속 두세요.',
-  create(w, h) {
+  create(w, h, fx: MinigameFx) {
     let barPos = 0.5;
     let barV = 0;
     const barH = 0.26;
@@ -315,6 +324,7 @@ const fisheryGame: MinigameDef = {
           diff = Math.min(2.4, diff + 0.22);
           fish = 0.5;
           flash = 0.4;
+          fx.hit('perfect', `${caught}마리째!`, caught);
         }
         inst.status = `잡은 물고기 ${caught}마리 · ${inZone ? '물고 있다!' : '놓치는 중'}`;
 
@@ -377,7 +387,7 @@ const parkGame: MinigameDef = {
   id: 'park',
   title: '손님 안내',
   howto: '대기 중인 손님을 같은 색 어트랙션으로 끌어다 놓으세요.',
-  create(w, h) {
+  create(w, h, fx: MinigameFx) {
     const COL = ['#f4978e', '#7ee0ff', '#ffd166', '#b8f2a0'];
     interface Guest { x: number; y: number; c: number; patience: number; held: boolean }
     const rides = [0, 1, 2, 3].map((i) => ({
@@ -391,6 +401,7 @@ const parkGame: MinigameDef = {
     let drag: Guest | null = null;
     let flash = 0;
     let flashOk = false;
+    let pcombo = 0;
 
     const inst: MinigameInstance = {
       score: 0,
@@ -423,9 +434,13 @@ const parkGame: MinigameDef = {
               inst.score += 22;
               r.busy = 1.5;
               flashOk = true;
+              pcombo += 1;
+              fx.hit('perfect', pcombo >= 3 ? `${pcombo}연속!` : '탑승!', pcombo);
             } else {
               inst.score = Math.max(0, inst.score - 10);
               flashOk = false;
+              pcombo = 0;
+              fx.hit('miss', '색이 다르다');
             }
             flash = 0.22;
             guests.splice(guests.indexOf(g), 1);
@@ -528,7 +543,7 @@ const corpGame: MinigameDef = {
   id: 'corp',
   title: '거래',
   howto: '싸게 사서 비싸게 파세요. 아래 버튼을 탭합니다.',
-  create(w, h) {
+  create(w, h, fx: MinigameFx) {
     const hist: number[] = [];
     let price = 100;
     let vel = 0;
@@ -550,6 +565,7 @@ const corpGame: MinigameDef = {
           entry = price;
           flash = 0.2;
           flashOk = true;
+          fx.hit('good', '매수');
         } else {
           const profit = (price - entry) * 2.2;
           inst.score = Math.max(0, inst.score + profit);
@@ -557,6 +573,9 @@ const corpGame: MinigameDef = {
           trades += 1;
           flash = 0.25;
           flashOk = profit >= 0;
+          if (profit >= 30) fx.hit('perfect', `+${Math.round(profit)}`);
+          else if (profit >= 0) fx.hit('good', `+${Math.round(profit)}`);
+          else fx.hit('miss', `${Math.round(profit)}`);
         }
       },
       draw({ ctx, t, dt }: MgCtx) {

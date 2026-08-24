@@ -26,7 +26,7 @@ import { formatClock, formatInt, formatNumber } from '../core/num';
 import type { Game, BuyMode } from '../core/game';
 import type { BusinessId } from '../core/types';
 import { h, haptic } from './dom';
-import { showCashDropSheet } from './modals';
+import { showCashDropSheet, showMinigameResult } from './modals';
 import { fit } from './scene/iso';
 import { drawSpriteFlat } from './art/assets';
 import { drawFloorStrip } from './scene/floorStrip';
@@ -65,7 +65,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
   mgBtn.addEventListener('click', async () => {
     haptic(game.state.settings.haptics);
     const r = await game.playMinigame(id);
-    if (r) game.toast(`성공률 ${Math.round(r.rate * 100)}% · 배율 x${r.mult.toFixed(2)}`);
+    if (r) showMinigameResult(game, id, r);
   });
   const boostBtn = h('button', { class: 'ad grow' }, '');
   boostBtn.addEventListener('click', async () => {

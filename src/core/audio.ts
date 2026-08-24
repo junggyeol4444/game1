@@ -24,7 +24,14 @@ export type Sfx =
   | 'coin'       // 현금 획득
   | 'reward'     // 보상 수령 · 광고 완료
   | 'era'        // 문명 전환
-  | 'deny';      // 자금 부족
+  | 'deny'       // 자금 부족
+  | 'mgTick'     // 미니게임 카운트다운
+  | 'mgStart'    // 미니게임 시작
+  | 'mgPerfect'  // 정타
+  | 'mgGood'     // 근접
+  | 'mgMiss'     // 빗나감
+  | 'mgCombo'    // 콤보 단계 상승
+  | 'mgEnd';     // 미니게임 종료
 
 interface Cue {
   /** 초당 최대 재생 횟수. 자동화 폭주를 막는다 */
@@ -109,6 +116,14 @@ function noise(
   lp.connect(g);
   g.connect(out);
   src.start(at);
+}
+
+/** 콤보 음을 반음씩 올리기 위한 현재 주파수 */
+let comboFreq = 523;
+
+/** 콤보 단계(1부터)를 주면 그만큼 음이 올라간다. 0 이면 기본으로 되돌린다 */
+export function setComboStep(step: number): void {
+  comboFreq = 523 * Math.pow(2, Math.max(0, Math.min(24, step)) / 12);
 }
 
 const CUES: Record<Sfx, Cue> = {
@@ -201,6 +216,42 @@ const CUES: Record<Sfx, Cue> = {
       tone(c, o, t, { freq: 160, to: 55, dur: 0.9, type: 'sawtooth', gain: 0.2 });
       [262, 330, 392, 523].forEach((f, i) =>
         tone(c, o, t, { freq: f, dur: 1.1, type: 'triangle', gain: 0.15, delay: 0.85 + i * 0.09 }),
+      );
+    },
+  },
+  // ── 미니게임 ──
+  mgTick: { limit: 4, gain: 1, play: (c, o, t) => tone(c, o, t, { freq: 660, dur: 0.09, type: 'square', gain: 0.12 }) },
+  mgStart: {
+    limit: 2,
+    gain: 1,
+    play: (c, o, t) => {
+      tone(c, o, t, { freq: 880, dur: 0.16, type: 'square', gain: 0.16 });
+      tone(c, o, t, { freq: 1320, dur: 0.2, type: 'square', gain: 0.13, delay: 0.08 });
+    },
+  },
+  // 정타는 짧고 높고 확실하게. 이게 이 게임의 손맛이다
+  mgPerfect: {
+    limit: 20,
+    gain: 1,
+    play: (c, o, t) => {
+      tone(c, o, t, { freq: 1046, to: 1568, dur: 0.09, type: 'square', gain: 0.16 });
+      noise(c, o, t, { dur: 0.05, gain: 0.14, cutoff: 5000 });
+    },
+  },
+  mgGood: { limit: 20, gain: 1, play: (c, o, t) => tone(c, o, t, { freq: 740, dur: 0.08, type: 'triangle', gain: 0.13 }) },
+  mgMiss: { limit: 20, gain: 1, play: (c, o, t) => tone(c, o, t, { freq: 300, to: 170, dur: 0.14, type: 'sawtooth', gain: 0.11 }) },
+  // 콤보가 오를 때마다 반음씩 올라간다 — 연속 정타가 소리로 쌓인다
+  mgCombo: {
+    limit: 12,
+    gain: 1,
+    play: (c, o, t) => tone(c, o, t, { freq: comboFreq, dur: 0.12, type: 'sine', gain: 0.15 }),
+  },
+  mgEnd: {
+    limit: 2,
+    gain: 1,
+    play: (c, o, t) => {
+      [523, 659, 784, 1047, 1319].forEach((f, i) =>
+        tone(c, o, t, { freq: f, dur: 0.3, type: 'triangle', gain: 0.15, delay: i * 0.07 }),
       );
     },
   },

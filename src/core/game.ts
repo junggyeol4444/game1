@@ -483,7 +483,7 @@ export class Game {
     }
     const def = MINIGAMES[id];
     if (!def) return null;
-    const result = await playMinigame(def);
+    const result = await playMinigame(def, { reducedMotion: this.state.settings.reducedMotion });
     if (result) this.applyMinigameResult(id, result);
     this.persist();
     this.emit('structure');
@@ -498,6 +498,7 @@ export class Game {
     const seconds = CONFIG.minigame.rewardSeconds[id] ?? 3600;
     const bonus = 1 + (s.prestige.upgrades['minigame_bonus'] ?? 0) * 0.25;
     const reward = Math.max(200, rate * seconds * r.mult * bonus);
+    r.reward = reward;
     this.grantCash(reward);
 
     const m = s.minigames[id];
@@ -515,16 +516,18 @@ export class Game {
     const spoil = MINIGAME_SPOILS[id];
     if (spoil.key === 'gem') {
       s.resources.gem += r.bonusItems;
-      if (r.bonusItems > 0) this.toast(`💎 보석 +${r.bonusItems}`);
+      if (r.bonusItems > 0) r.spoilText = `💎 보석 +${r.bonusItems}`;
     } else if (spoil.key === 'fish') {
       const idx = Math.min(RARE_FISH.length - 1, Math.floor(r.rate * RARE_FISH.length));
       const name = RARE_FISH[idx];
       if (!s.collection.fish.includes(name)) {
         s.collection.fish.push(name);
-        this.toast(`🐠 새 어종 발견: ${name}`);
+        r.spoilText = `🐠 새 어종 발견: ${name}`;
       }
     } else {
-      s.collection[spoil.key] += Math.max(1, Math.round(r.rate * 5));
+      const got = Math.max(1, Math.round(r.rate * 5));
+      s.collection[spoil.key] += got;
+      r.spoilText = `${spoil.icon ?? '📦'} ${spoil.label ?? '특산물'} +${got}`;
     }
     s.shop.piggyValue += 4;
     this.bump('minigamePlayed', 1);

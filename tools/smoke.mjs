@@ -104,7 +104,11 @@ for (let i = 0; i < 24; i++) {
   await page.locator('.mg-canvas').click({ position: { x: 180, y: 260 }, timeout: 1500 }).catch(() => {});
   await page.waitForTimeout(280);
 }
-await page.waitForTimeout(2500);
+// 미니게임은 30초짜리다. 판이 끝나 오버레이가 사라질 때까지 기다린다
+await page.locator('.mg').waitFor({ state: 'detached', timeout: 60000 }).catch(() => {});
+await page.waitForTimeout(600);
+await shot('03b-minigame-result');
+console.log('미니게임 성적표:', (await page.locator('.mg-grade').first().textContent().catch(() => '없음')) || '없음');
 await dismiss();
 
 // 자금/진행 치트로 도시를 키운다

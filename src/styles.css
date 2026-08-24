@@ -379,3 +379,5 @@ button.wide { width: 100%; }
   78% { transform: translate(2px, -1px); }
   90% { transform: translate(-1px, 1px); }
 }
+
+.mg-grade { font-size: calc(64px * var(--scale)); font-weight: 900; line-height: 1.05; }
