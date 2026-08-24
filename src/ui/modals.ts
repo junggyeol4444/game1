@@ -24,6 +24,7 @@ import type { Game } from '../core/game';
 import type { BusinessDef, GameState, OfflineReport } from '../core/types';
 import { append, clear, h } from './dom';
 import { exportSave, importSave, wipe } from '../core/save';
+import { setSoundEnabled } from '../core/audio';
 
 const fmt = (state: GameState, v: number) => formatNumber(v, state.settings.notation);
 
@@ -507,6 +508,10 @@ export function showSettingsSheet(game: Game): void {
         seg('애니메이션', [
           ['켜기', () => !s.settings.reducedMotion, () => (s.settings.reducedMotion = false)],
           ['줄이기', () => s.settings.reducedMotion, () => (s.settings.reducedMotion = true)],
+        ]),
+        seg('소리', [
+          ['켜기', () => s.settings.sound, () => { s.settings.sound = true; setSoundEnabled(true); }],
+          ['끄기', () => !s.settings.sound, () => { s.settings.sound = false; setSoundEnabled(false); }],
         ]),
         seg('진동', [
           ['켜기', () => s.settings.haptics, () => (s.settings.haptics = true)],

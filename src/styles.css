@@ -352,3 +352,30 @@ button.wide { width: 100%; }
   color: var(--muted); font-size: calc(12px * var(--scale)); text-decoration: underline;
   min-height: 32px; padding: 0 4px;
 }
+
+
+/* ── 타격감 ── */
+.sh-tap { animation: sh-tap 90ms ease-out; }
+.sh-hit { animation: sh-hit 220ms ease-out; }
+.sh-quake { animation: sh-quake 900ms ease-in-out; }
+.reduced .sh-tap, .reduced .sh-hit, .reduced .sh-quake { animation: none; }
+@keyframes sh-tap {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(0, 1.5px); }
+}
+@keyframes sh-hit {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 2px); }
+  45% { transform: translate(3px, -2px); }
+  70% { transform: translate(-2px, 1px); }
+}
+@keyframes sh-quake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5px, 3px); }
+  22% { transform: translate(5px, -3px); }
+  34% { transform: translate(-4px, 2px); }
+  48% { transform: translate(4px, -2px); }
+  62% { transform: translate(-3px, 2px); }
+  78% { transform: translate(2px, -1px); }
+  90% { transform: translate(-1px, 1px); }
+}

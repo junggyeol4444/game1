@@ -31,6 +31,8 @@ import { fit } from './scene/iso';
 import { drawSpriteFlat } from './art/assets';
 import { drawFloorStrip } from './scene/floorStrip';
 import { bizHoistName, bizIcon, bizName, bizUnitLabel, unitDisplayName, unitManagerName } from '../core/era';
+import { sfx } from '../core/audio';
+import { shake } from './fx';
 
 const BUY_MODES: BuyMode[] = [1, 10, 100, 'max'];
 const STAGE_LABEL = ['', '수동', '반자동 50%', '자동 100%', '고효율'];
@@ -105,12 +107,18 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       const u = game.state.businesses[id].units[i];
       const count = game.buyMode === 'max' ? unitMaxAffordable(game.state, def, i) : game.buyMode;
       const cost = u.unlocked ? unitCost(game.state, def, i, Math.max(1, count)) : unitUnlockCost(game.state, def, i);
-      if (game.state.resources.cash < cost) return showCashDropSheet(game);
+      if (game.state.resources.cash < cost) {
+        sfx('deny');
+        return showCashDropSheet(game);
+      }
       if (game.buyUnit(id, i)) haptic(game.state.settings.haptics);
     });
     lockBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (game.state.resources.cash < unitUnlockCost(game.state, def, i)) return showCashDropSheet(game);
+      if (game.state.resources.cash < unitUnlockCost(game.state, def, i)) {
+        sfx('deny');
+        return showCashDropSheet(game);
+      }
       game.unlockUnit(id, i);
     });
     autoBtn.addEventListener('click', (e) => {
@@ -118,7 +126,10 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       const u = game.state.businesses[id].units[i];
       if (u.manager) return;
       const cost = u.equip ? managerCost(game.state, def, i) : equipCost(game.state, def, i);
-      if (game.state.resources.cash < cost) return showCashDropSheet(game);
+      if (game.state.resources.cash < cost) {
+        sfx('deny');
+        return showCashDropSheet(game);
+      }
       if (u.equip) game.buyManager(id, i);
       else game.buyEquip(id, i);
     });
@@ -129,7 +140,9 @@ export function createBusinessView(game: Game, id: BusinessId): View {
         class: 'floor',
         'data-unit': String(i),
         onclick: () => {
-          if (game.tapUnit(id, i)) haptic(game.state.settings.haptics);
+          if (!game.tapUnit(id, i)) return;
+          haptic(game.state.settings.haptics);
+          shake(canvas, 'tap', game.state.settings.reducedMotion);
         },
       },
       canvas,
@@ -141,6 +154,9 @@ export function createBusinessView(game: Game, id: BusinessId): View {
     );
     return { row, canvas, floorName, lvEl, metaEl, progFill, buyBtn, autoBtn, lockBtn, udef, i };
   });
+
+  /** 사이클 완료를 잡기 위한 직전 진행도 */
+  const lastProgress: number[] = def.units.map(() => 0);
 
   // ── 구매 단위 ──
   const segButtons = BUY_MODES.map((m) =>
@@ -257,6 +273,10 @@ export function createBusinessView(game: Game, id: BusinessId): View {
 
     for (const f of floors) {
       const u = bs.units[f.i];
+      // 진행도가 되감겼다 = 한 사이클이 끝났다 (자동/수동 공통). 초당 횟수는 audio 가 제한한다
+      const prev = lastProgress[f.i] ?? 0;
+      if (u.unlocked && u.level > 0 && u.progress < prev - 0.001) sfx('cycle');
+      lastProgress[f.i] = u.progress;
       f.floorName.textContent = unitDisplayName(st, id, f.i, f.udef.name);
       f.row.classList.toggle('locked', !u.unlocked);
       const auto = autoFactor(st, id, f.i, now) > 0;

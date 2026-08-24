@@ -84,6 +84,7 @@ for (let guard = 0; guard < 60; guard++) {
   await page.waitForTimeout(600);
 }
 console.log('튜토리얼 단계 진행:', tutSeen.join(' -> '), '| 최종', await tutStep());
+console.log('오디오 컨텍스트:', await page.evaluate(() => window.audioReady()));
 await settle();
 
 // 광산 진입 후 수동 가동

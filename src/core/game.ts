@@ -3,6 +3,7 @@ import { CONFIG } from '../data/config';
 import { HOIST_LEVELS } from '../data/units';
 import type { FacilityId } from '../data/buildings';
 import { AdService, type AdPlacement, type AdProvider } from './ads';
+import { setSoundEnabled, sfx } from './audio';
 import {
   businessRatePerSecond,
   computeOffline,
@@ -51,7 +52,7 @@ import { LEGACY, bizName, bizUnitLabel, bizHoistName, unitManagerName } from './
 import { MINIGAMES, MINIGAME_SPOILS, RARE_FISH } from '../ui/minigames/games';
 import { playMinigame, type MinigameResult } from '../ui/minigames/host';
 
-type GameEvent = 'structure' | 'toast' | 'unlock' | 'cityEvent' | 'coin' | 'offline';
+type GameEvent = 'structure' | 'toast' | 'unlock' | 'cityEvent' | 'coin' | 'offline' | 'quake';
 type Listener = (payload?: unknown) => void;
 export type BuyMode = 1 | 10 | 100 | 'max';
 
@@ -73,6 +74,7 @@ export class Game {
     this.state = loaded.state;
     this.ads = new AdService(adProvider, () => this.state);
 
+    setSoundEnabled(this.state.settings.sound);
     refreshMissions(this.state, now());
     this.refreshAttendance();
 
@@ -179,6 +181,7 @@ export class Game {
     if (!u.unlocked || u.level <= 0 || u.running) return false;
     u.running = true;
     u.progress = 0;
+    sfx('tap');
     this.state.stats.taps += 1;
     this.bump('manualCycle', 1);
     return true;
@@ -194,6 +197,7 @@ export class Game {
     this.state.resources.cash -= cost;
     u.unlocked = true;
     u.level = 1;
+    sfx('unlock');
     this.state.shop.piggyValue += 3;
     invalidateStats();
     this.persist();
@@ -211,7 +215,9 @@ export class Game {
     const cost = unitCost(this.state, def, index, count);
     if (this.state.resources.cash < cost) return false;
     this.state.resources.cash -= cost;
+    const before = u.level;
     u.level += count;
+    sfx(CONFIG.milestones.some((m) => before < m && u.level >= m) ? 'milestone' : 'buy');
     this.state.shop.piggyValue += 1;
     this.state.stats.taps += 0;
     this.bump('levelBought', count);
@@ -229,6 +235,7 @@ export class Game {
     if (this.state.resources.cash < cost) return false;
     this.state.resources.cash -= cost;
     u.equip = true;
+    sfx('equip');
     this.persist();
     this.emit('structure');
     this.toast(`${def.units[index].name} 설비 배치 (효율 50%)`);
@@ -243,6 +250,7 @@ export class Game {
     if (this.state.resources.cash < cost) return false;
     this.state.resources.cash -= cost;
     u.manager = true;
+    sfx('manager');
     this.state.shop.piggyValue += 2;
     this.persist();
     this.emit('structure');
@@ -260,6 +268,7 @@ export class Game {
     this.state.resources.cash -= cost;
     this.state.resources.gem -= gems;
     bs.hoistLevel += 1;
+    sfx('milestone');
     this.persist();
     this.emit('structure');
     this.toast(
@@ -272,6 +281,7 @@ export class Game {
   buyFacility(id: FacilityId): boolean {
     const ok = doBuyFacility(this.state, id);
     if (ok) {
+      sfx('build');
       invalidateStats();
       this.state.shop.piggyValue += 1;
       this.bump('levelBought', 1);
@@ -350,6 +360,7 @@ export class Game {
   }
 
   grantCash(amount: number): void {
+    sfx('coin');
     this.state.resources.cash += amount;
     this.state.stats.cashEarnedRun += amount;
     this.state.stats.cashEarnedTotal += amount;
@@ -382,6 +393,7 @@ export class Game {
     const reward = def.reward(s);
     this.grantReward(reward.kind, reward.amount, reward.business);
     s.missions.claimed[index] = true;
+    sfx('reward');
     s.shop.piggyValue += 3;
     if (allMissionsClaimed(s)) this.toast('오늘 미션 전부 완료!');
     this.persist();
@@ -550,6 +562,8 @@ export class Game {
       gain = Math.floor(gain * (1 + CONFIG.era.adBonus));
     }
     advanceEra(this.state, gain, now());
+    sfx('era');
+    this.emit('quake');
     invalidateStats();
     this.persist();
     this.emit('structure');

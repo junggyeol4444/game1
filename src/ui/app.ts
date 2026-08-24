@@ -12,6 +12,8 @@ import { createBusinessView, type View } from './businessView';
 import { createFacilityView } from './facilityView';
 import { createCityMap, buildingAlert } from './cityMap';
 import { createTutorial } from './tutorial';
+import { shake } from './fx';
+import { audioReady, setSoundEnabled, sfx, unlockAudio } from '../core/audio';
 import { bizIcon, bizName, facIcon, facName, leaderTitle, settlementName } from '../core/era';
 import {
   showBuildSheet,
@@ -207,6 +209,7 @@ export function mountApp(game: Game, host: HTMLElement): void {
     const s = game.state.settings;
     document.documentElement.style.setProperty('--scale', String(s.textScale));
     document.body.classList.toggle('reduced', s.reducedMotion);
+    setSoundEnabled(s.sound);
   }
 
   let last = 0;
@@ -243,7 +246,15 @@ export function mountApp(game: Game, host: HTMLElement): void {
       updateDots();
     }
   });
-  game.on('unlock', (def) => showUnlockModal(game, def as BusinessDef));
+  game.on('unlock', (def) => {
+    shake(stage, 'hit', game.state.settings.reducedMotion);
+    showUnlockModal(game, def as BusinessDef);
+  });
+  game.on('quake', () => shake(stage, 'quake', game.state.settings.reducedMotion));
+  game.on('cityEvent', () => {
+    sfx('deny');
+    shake(stage, 'hit', game.state.settings.reducedMotion);
+  });
   // 재화 획득 연출: 코인이 상단바로 날아간다 (아트 스타일 9장)
   game.on('coin', () => {
     if (game.state.settings.reducedMotion) return;
@@ -271,6 +282,9 @@ export function mountApp(game: Game, host: HTMLElement): void {
     if (notice.target && screen.kind === 'city') map.focus(notice.target as BuildingId);
   });
 
+  // 브라우저 자동재생 정책: 오디오는 첫 입력 이후에만 만들 수 있다
+  window.addEventListener('pointerdown', () => unlockAudio(), { once: true });
+
   applySettings();
   applyScreen();
   requestAnimationFrame(frame);
@@ -279,5 +293,6 @@ export function mountApp(game: Game, host: HTMLElement): void {
 
   // 병목이 생긴 건물로 바로 이동하는 헬퍼 (도시 화면 롱프레스 대체)
   (window as unknown as Record<string, unknown>).goto = (id: string) => enterBuilding(id as BuildingId);
+  (window as unknown as Record<string, unknown>).audioReady = () => audioReady();
   void buildingAlert;
 }

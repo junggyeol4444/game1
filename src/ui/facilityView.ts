@@ -9,6 +9,7 @@ import { TH, TW, fit, type Cam } from './scene/iso';
 import { drawSprite, placeholder } from './art/assets';
 import { buildingKeysFor } from './art/keys';
 import { currentEra, eraPalette, facIcon, facName } from '../core/era';
+import { sfx } from '../core/audio';
 import type { View } from './businessView';
 
 export function createFacilityView(game: Game, id: FacilityId): View {
@@ -25,6 +26,7 @@ export function createFacilityView(game: Game, id: FacilityId): View {
   const upBtn = h('button', { class: 'buy wide' }, '');
   upBtn.addEventListener('click', () => {
     if (game.buyFacility(id)) haptic(game.state.settings.haptics);
+    else sfx('deny');
   });
   const upCard = h('div', { class: 'card' }, lvEl, effNow, effNext, upBtn);
 
