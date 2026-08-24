@@ -34,10 +34,13 @@ export function formatNumber(v: number, mode: NotationMode = 'short', decimals =
   } else if (n < 1000) {
     out = trimZeros(n.toFixed(n < 10 ? decimals : n < 100 ? 1 : 0));
   } else {
-    const tier = Math.floor(Math.log10(n) / 3);
-    const scaled = n / Math.pow(1000, tier);
-    // 부동소수 오차로 999.999 -> 1000 이 되는 경우 방지
-    if (scaled >= 1000) return formatNumber(neg ? -n * 1.0000001 : n * 1.0000001, mode, decimals);
+    let tier = Math.floor(Math.log10(n) / 3);
+    let scaled = Number((n / Math.pow(1000, tier)).toFixed(decimals));
+    // 반올림 자리 넘김: 999,999 는 '1000K' 가 아니라 '1M' 이다
+    if (scaled >= 1000) {
+      tier += 1;
+      scaled = Number((n / Math.pow(1000, tier)).toFixed(decimals));
+    }
     out = `${trimZeros(scaled.toFixed(decimals))}${suffixFor(tier)}`;
   }
   return neg ? `-${out}` : out;

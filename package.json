@@ -6,13 +6,15 @@
   "description": "도시 발전 방치형 게임 - 코어 프로토타입",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && npm test && vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit",
     "sim": "tsx tools/balance-sim.ts",
     "art:check": "node tools/art-check.mjs",
     "android:sync": "npm run build && cap sync android",
-    "android:open": "npm run build && cap sync android && cap open android"
+    "android:open": "npm run build && cap sync android && cap open android",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "tsc --noEmit && npm test"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.0",

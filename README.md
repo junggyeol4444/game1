@@ -15,6 +15,8 @@ npm install
 npm run dev        # http://localhost:5173 (--host 로 같은 와이파이의 폰에서도 접속 가능)
 npm run build      # 타입체크 + 프로덕션 빌드 -> dist/
 npm run preview    # 빌드 결과 확인
+npm test           # 유닛 테스트 (세이브 · 문명 전환 · 경제 · 표기)
+npm run check      # 타입체크 + 테스트
 npm run sim        # 밸런스 시뮬레이터 (npm run sim -- --days 30)
 npm run art:check  # 스프라이트 발주서 / 누락 현황
 
@@ -283,17 +285,39 @@ npm run sim -- --days 10
 ## 테스트
 
 ```bash
+npm test           # 유닛 테스트 46개. npm run build 에 묶여 있다
+```
+
+`tests/` — 외부 의존성 없이 `node:test` + `tsx` 로 돈다.
+
+| 파일 | 지키는 것 |
+|---|---|
+| `save.test.ts` | 직렬화 왕복 · 큰 수 정밀도 · 내보내기/가져오기 · 마이그레이션 기본값 |
+| `era.test.ts` | 문명 전환이 **날릴 것만 날리는가**. 유산·보석·도감·영구 강화가 살아남는지 |
+| `economy.test.ts` | 등비 비용 합 · 최대 구매 개수 · 마일스톤 상한 · 오프라인 상한과 음수 시간 |
+| `city.test.ts` | 시작 데드락 방지(기본 인구/전력) · 시설 게이트 · 숫자 표기 경계 |
+
+여기서 실제로 버그 하나를 잡았다 — `formatNumber(999999)` 가 **`1000K`** 로 나왔다.
+반올림 자리 넘김 처리가 없어서다. 지금은 `1M`.
+
+### 스모크 (실기기 해상도)
+
+```bash
 npm run build
 npm run preview &
 node tools/smoke.mjs http://localhost:4173/
 ```
-Playwright로 실기기 해상도(390×844)에서 주요 화면을 눌러 보고 콘솔 에러를 잡는다.
+
+Playwright로 390×844에서 실제로 눌러 본다 — 튜토리얼 7단계를 지시대로 완주하고,
+미니게임을 한 판 돌려 성적표를 확인하고, 문명 전환까지 하고, 콘솔 에러를 잡는다.
+단계마다 `/tmp/shots/*.png` 를 남긴다.
 
 디버그 콘솔:
 ```js
 game.devGrant(1e12)          // 자금 지급
 game.state.city.taxRun = 1e9 // 도시 레벨 밀어올리기
 game.buyMode = 'max'
+game.state.tutorial = 0      // 튜토리얼 다시 보기
 ```
 
 ---
