@@ -12,6 +12,7 @@ import {
   LEGACY,
   bizIcon,
   bizName,
+  bizSubtitle,
   facIcon,
   facName,
   leaderTitle,
@@ -133,7 +134,7 @@ export function showUnlockModal(game: Game, def: BusinessDef): void {
   const s = game.state;
   sheet({
     title: `${bizName(s, def.id)} 해금!`,
-    sub: def.subtitle,
+    sub: bizSubtitle(s, def.id),
     build: (hd) => [
       h('div', { class: 'card center' }, h('span', { class: 'big-emoji' }, bizIcon(s, def.id)),
         h('div', { class: 'muted small' }, `도시 레벨 ${def.unlockCityLevel} 달성`),
@@ -166,7 +167,7 @@ export function showMissionSheet(game: Game): void {
           h(
             'div',
             { class: 'row' },
-            h('span', { style: { fontSize: '22px' } }, def.icon),
+            h('span', { style: { fontSize: '22px' } }, def.requires ? bizIcon(s, def.requires) : def.icon),
             h(
               'div',
               { class: 'grow' },

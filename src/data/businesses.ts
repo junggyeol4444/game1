@@ -39,7 +39,7 @@ export const BUSINESSES: BusinessDef[] = [
   {
     id: 'mine',
     name: '광산',
-    subtitle: '원석을 캔다',
+    subtitle: '{ore|을} 캔다',
     icon: '⛏️',
     color: BIZ_COLOR.mine,
     unlockCityLevel: 1,
@@ -71,7 +71,7 @@ export const BUSINESSES: BusinessDef[] = [
   {
     id: 'factory',
     name: '공장',
-    subtitle: '원석을 제품으로',
+    subtitle: '{ore|을} {goods|으로}',
     icon: '🏭',
     color: BIZ_COLOR.factory,
     unlockCityLevel: 3,
@@ -104,7 +104,7 @@ export const BUSINESSES: BusinessDef[] = [
   {
     id: 'fishery',
     name: '어항',
-    subtitle: '식재료를 잡는다',
+    subtitle: '{food|을} 거둔다',
     icon: '🎣',
     color: BIZ_COLOR.fishery,
     unlockCityLevel: 6,
@@ -136,7 +136,7 @@ export const BUSINESSES: BusinessDef[] = [
   {
     id: 'park',
     name: '놀이공원',
-    subtitle: '관광객을 인구로',
+    subtitle: '{pop|을} 불러 모은다',
     icon: '🎡',
     color: BIZ_COLOR.park,
     unlockCityLevel: 10,
@@ -169,7 +169,7 @@ export const BUSINESSES: BusinessDef[] = [
   {
     id: 'corp',
     name: '기업',
-    subtitle: '제품을 매출로',
+    subtitle: '{goods|을} 돈으로',
     icon: '🏢',
     color: BIZ_COLOR.corp,
     unlockCityLevel: 15,

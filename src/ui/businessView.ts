@@ -31,7 +31,7 @@ import { fit } from './scene/iso';
 import { drawSpriteFlat } from './art/assets';
 import { drawFloorStrip } from './scene/floorStrip';
 import { milestoneRing } from './scene/burst';
-import { bizHoistName, bizIcon, bizName, bizUnitLabel, unitDisplayName, unitManagerName } from '../core/era';
+import { bizHoistName, bizIcon, bizName, bizSubtitle, bizUnitLabel, resourceName, unitDisplayName, unitManagerName } from '../core/era';
 import { sfx } from '../core/audio';
 import { shake } from './fx';
 
@@ -53,6 +53,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
   const stockEl = h('span', { class: 'chip' }, '');
   const boostChip = h('span', { class: 'chip on', style: { display: 'none' } }, '');
   const nameEl = h('div', { class: 'surface-name' }, '');
+  const subEl = h('div', { class: 'small muted' }, '');
   const hoistTitle = h('div', { class: 'hoist-title' }, '');
   const hoistDesc = h('div', { class: 'small muted' }, '');
   const hoistBtn = h('button', { class: 'buy' }, '');
@@ -79,7 +80,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
     h(
       'div',
       { class: 'row spread' },
-      h('div', null, nameEl, h('div', { class: 'small muted' }, def.subtitle)),
+      h('div', null, nameEl, subEl),
       h('div', { class: 'center' }, rateEl, h('div', { class: 'small muted' }, '초당')),
     ),
     h('div', { class: 'row', style: { marginTop: '8px', flexWrap: 'wrap', gap: '6px' } }, stockEl, boostChip),
@@ -252,7 +253,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       stockEl.textContent = `가동률 ${pct}% · ${inMeta.icon} ${fmt(st.resources[def.input.resource])}`;
       stockEl.className = `chip ${pct >= 95 ? 'on' : 'warn'}`;
     } else if (def.output !== 'cash') {
-      stockEl.textContent = `${meta.icon} ${meta.name} ${fmt(st.resources[def.output])}`;
+      stockEl.textContent = `${meta.icon} ${resourceName(st, def.output)} ${fmt(st.resources[def.output])}`;
       stockEl.className = 'chip';
     } else {
       stockEl.textContent = `누적 매출 ${fmt(bs.totalProduced)}`;
@@ -271,6 +272,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
     // 엘리베이터
     const hl = bs.hoistLevel;
     nameEl.textContent = `${bizIcon(st, id)} ${bizName(st, id)}`;
+    subEl.textContent = bizSubtitle(st, id);
     hoistTitle.textContent = `${def.hoistIcon} ${bizHoistName(st, id)} Lv.${hl}`;
     const maxed = hl >= HOIST_LEVELS.length;
     hoistDesc.textContent = maxed

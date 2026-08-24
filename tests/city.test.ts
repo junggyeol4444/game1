@@ -9,8 +9,9 @@ import { invalidateStats, staffed } from '../src/core/economy';
 import { createInitialState } from '../src/core/state';
 import { CONFIG } from '../src/data/config';
 import { FACILITIES } from '../src/data/buildings';
+import { ERAS } from '../src/data/eras';
 import { formatDuration, formatInt, formatNumber } from '../src/core/num';
-import { seenKey, tierLabelOf } from '../src/core/era';
+import { resourceName, seenKey, tierLabelOf } from '../src/core/era';
 import { deserialize, serialize } from '../src/core/save';
 import { RARE_FISH, RARE_RIDES } from '../src/ui/minigames/games';
 
@@ -207,4 +208,37 @@ test('시대 이름에 크기 말이 붙어 있어도 겹치지 않는다', () =
   }
   assert.equal(names[1], '모닥불');
   assert.equal(names[2], '큰 모닥불', '시대 이름이 사다리 한가운데 자연스럽게 놓여야 한다');
+});
+
+test('자원 이름도 시대를 탄다', () => {
+  const s = createInitialState(0);
+  const stone = resourceName(s, 'pop');
+  s.era = 6; // 근대
+  const modern = resourceName(s, 'pop');
+  assert.notEqual(stone, modern, '석기 시대에 관광객이 오면 안 된다');
+  assert.equal(modern, '관광객');
+  // 모든 시대가 4종을 다 갖고 있어야 한다
+  for (let i = 0; i < ERAS.length; i++) {
+    s.era = i;
+    for (const r of ['ore', 'goods', 'food', 'pop']) {
+      const n = resourceName(s, r);
+      assert.ok(n && n.length > 0, `${ERAS[i].name} 의 ${r} 이름이 비었다`);
+    }
+  }
+});
+
+test('시대 이름표가 빠진 곳이 없다', () => {
+  for (const e of ERAS) {
+    assert.ok(e.name && e.short && e.tagline && e.leader, `${e.id} 기본 정보 누락`);
+    assert.equal(e.settlement.length, 5, `${e.id} 도시 규모 5단계가 아니다`);
+    for (const b of ['mine', 'factory', 'fishery', 'park', 'corp'] as const) {
+      assert.ok(e.business[b]?.name, `${e.id}.${b} 이름 누락`);
+      assert.ok(e.business[b]?.icon, `${e.id}.${b} 아이콘 누락`);
+      assert.ok(e.hoist[b], `${e.id}.${b} 배율 장치 이름 누락`);
+    }
+    for (const f of FACILITIES) {
+      assert.ok(e.facility[f.id]?.name, `${e.id}.${f.id} 시설 이름 누락`);
+      assert.ok(e.facility[f.id]?.icon, `${e.id}.${f.id} 시설 아이콘 누락`);
+    }
+  }
 });

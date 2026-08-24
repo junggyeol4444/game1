@@ -11,6 +11,8 @@ import { cityRequirement, terrainStage, type FacilityId } from '../data/building
 import { CONFIG } from '../data/config';
 import { ERAS, MAX_ERA, eraDef, settlementNameOf, type EraDef, type EraPalette } from '../data/eras';
 import type { BusinessId, GameState } from './types';
+import { BUSINESS_BY_ID, RESOURCE_META } from '../data/businesses';
+import { fill } from './ko';
 
 export { LEGACY } from '../data/eras';
 export { MAX_ERA } from '../data/eras';
@@ -107,6 +109,17 @@ export function tierLabelOf(era: number, name: string, tier: number, written: st
   const ladder = facility ? FAC_LADDER : BIZ_LADDER;
   const pat = ladder[Math.min(tier, ladder.length) - 1];
   return pat.replace(/%s/g, baseName(name));
+}
+
+/** 자원 이름도 시대를 탄다 — 석기 시대에 '관광객'이 오지는 않는다 */
+export function resourceName(state: GameState, id: string): string {
+  const r = currentEra(state).resource as Record<string, string | undefined>;
+  return r[id] ?? RESOURCE_META[id]?.name ?? id;
+}
+
+/** `{ore|을} 캔다` 같은 자막을 이 시대 자원 이름으로 채운다 */
+export function bizSubtitle(state: GameState, id: BusinessId): string {
+  return fill(BUSINESS_BY_ID[id].subtitle, (key) => resourceName(state, key));
 }
 
 export function facName(state: GameState, id: FacilityId): string {

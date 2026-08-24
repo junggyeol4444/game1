@@ -43,6 +43,8 @@ export interface EraDef {
   business: Record<BusinessId, { name: string; icon: string; unitLabel: string }>;
   /** 사업별 공통 배율 장치(광산의 엘리베이터)의 이 시대 이름 */
   hoist: Record<BusinessId, string>;
+  /** 사업이 뽑아내는 자원의 이 시대 이름 (ore/goods/food/pop 순) */
+  resource: { ore: string; goods: string; food: string; pop: string };
   /** 시설 9종의 이 시대 이름 */
   facility: Record<FacilityId, { name: string; icon: string }>;
   /** 도시 규모 이름 (도시 레벨 5단계) */
@@ -72,6 +74,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '부족 회의', icon: '🏕️', unitLabel: '회의' },
     },
     hoist: { mine: '지게길', factory: '돌 화덕', fishery: '통발', park: '장작더미', corp: '이야기꾼' },
+    resource: { ore: '돌', goods: '석기', food: '물고기', pop: '무리' },
     facility: {
       housing: { name: '움집', icon: '🛖' },
       shops: { name: '물물교환터', icon: '🤝' },
@@ -103,6 +106,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '족장 회당', icon: '🏛️', unitLabel: '회당' },
     },
     hoist: { mine: '두레박', factory: '용광로', fishery: '나루 창고', park: '제단 계단', corp: '전령' },
+    resource: { ore: '구리', goods: '청동기', food: '물고기', pop: '부족민' },
     facility: {
       housing: { name: '초가집', icon: '🏠' },
       shops: { name: '장터', icon: '🧺' },
@@ -134,6 +138,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '관청', icon: '🏯', unitLabel: '부서' },
     },
     hoist: { mine: '도르래', factory: '대장 화덕', fishery: '부두', park: '관중석', corp: '파발' },
+    resource: { ore: '철광석', goods: '철기', food: '생선', pop: '군중' },
     facility: {
       housing: { name: '목조 가옥', icon: '🏘️' },
       shops: { name: '시장', icon: '🏪' },
@@ -165,6 +170,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '상단 본부', icon: '🏛️', unitLabel: '상단' },
     },
     hoist: { mine: '권양기', factory: '공방장', fishery: '부두 크레인', park: '무대 장치', corp: '상단 장부' },
+    resource: { ore: '광석', goods: '공산품', food: '생선', pop: '순례객' },
     facility: {
       housing: { name: '석조 주택', icon: '🏠' },
       shops: { name: '상가', icon: '🏪' },
@@ -196,6 +202,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '은행 본점', icon: '🏦', unitLabel: '부서' },
     },
     hoist: { mine: '양수기', factory: '작업 배치도', fishery: '항해도', park: '무대 기계', corp: '복식부기' },
+    resource: { ore: '광석', goods: '제품', food: '수산물', pop: '관람객' },
     facility: {
       housing: { name: '연립 주택', icon: '🏘️' },
       shops: { name: '상점가', icon: '🛍️' },
@@ -227,6 +234,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '주식회사', icon: '🏢', unitLabel: '부서' },
     },
     hoist: { mine: '증기 권양기', factory: '증기 기관', fishery: '증기 윈치', park: '관람차 축', corp: '전신망' },
+    resource: { ore: '석탄', goods: '공산품', food: '수산물', pop: '관람객' },
     facility: {
       housing: { name: '연립 사택', icon: '🏘️' },
       shops: { name: '백화점', icon: '🏬' },
@@ -258,6 +266,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '대기업 사옥', icon: '🏢', unitLabel: '부서' },
     },
     hoist: { mine: '엘리베이터', factory: '중앙 제어실', fishery: '부두 크레인', park: '정문 · 셔틀', corp: '본사 전산' },
+    resource: { ore: '원석', goods: '제품', food: '식재료', pop: '관광객' },
     facility: {
       housing: { name: '아파트', icon: '🏢' },
       shops: { name: '쇼핑몰', icon: '🏬' },
@@ -289,6 +298,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '글로벌 본사', icon: '🏙️', unitLabel: '본부' },
     },
     hoist: { mine: '자동 리프트', factory: '생산 관제 AI', fishery: '항만 자동화', park: '파크 관제실', corp: '데이터센터' },
+    resource: { ore: '희토류', goods: '부품', food: '양식 수산물', pop: '방문객' },
     facility: {
       housing: { name: '고층 아파트', icon: '🏙️' },
       shops: { name: '복합몰', icon: '🏬' },
@@ -320,6 +330,7 @@ export const ERAS: EraDef[] = [
       corp: { name: '성간 상사', icon: '🚀', unitLabel: '함대' },
     },
     hoist: { mine: '궤도 엘리베이터', factory: '도크 제어', fishery: '돔 순환계', park: '중력 제어', corp: '양자 통신망' },
+    resource: { ore: '광물', goods: '모듈', food: '배양 단백질', pop: '이주민' },
     facility: {
       housing: { name: '거주 모듈', icon: '🛰️' },
       shops: { name: '상업 스테이션', icon: '🛒' },

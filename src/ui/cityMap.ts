@@ -25,7 +25,7 @@ import { TH, TW, fit, project, type Cam } from './scene/iso';
 import { drawSprite, drawTileSprite, hasSprite, placeholder } from './art/assets';
 import { buildingKeysFor, tileKeysFor } from './art/keys';
 import { dustPuff } from './scene/burst';
-import { bizName, currentEra, eraPalette, facName, seenKey, settlementName } from '../core/era';
+import { bizName, currentEra, eraPalette, facName, resourceName, seenKey, settlementName } from '../core/era';
 
 /** 도시 규모 이름은 시대마다 다르다 (석기 '큰 부족' ~ 우주 '성간 도시') */
 export const terrainName = (state: GameState) => settlementName(state);
@@ -53,7 +53,7 @@ export function buildingTier(state: GameState, id: BuildingId): number {
   return businessTierOf(sum);
 }
 
-const RES_LABEL: Record<string, string> = { ore: '원석', goods: '제품', food: '식재료', pop: '관광객' };
+
 
 export function buildingAlert(state: GameState, id: BuildingId, now = Date.now()): BuildingAlert | null {
   const ev = activeEvent(state, id, now);
@@ -91,7 +91,7 @@ export function buildingAlert(state: GameState, id: BuildingId, now = Date.now()
     if (eff < 0.9) {
       return {
         icon: '⚠️',
-        text: `${RES_LABEL[def.input.resource] ?? '자원'} 부족 — 가동률 ${Math.round(eff * 100)}%`,
+        text: `${resourceName(state, def.input.resource)} 부족 — 가동률 ${Math.round(eff * 100)}%`,
         tone: 'warn',
       };
     }

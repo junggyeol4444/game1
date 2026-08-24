@@ -1,6 +1,7 @@
 import { BUSINESSES } from '../data/businesses';
 import { CONFIG } from '../data/config';
 import { formatNumber } from './num';
+import { bizName } from './era';
 import { totalCashPerSecond } from './economy';
 import { todayKey } from './state';
 import type { BusinessId, GameState } from './types';
@@ -83,7 +84,7 @@ export const MISSION_DEFS: MissionDef[] = [
       const rate = totalCashPerSecond(s) || 1;
       return Math.max(10, rate * 300);
     },
-    label: (t) => `${def.name}에서 ${formatNumber(t)} 생산`,
+    label: (t, s) => `${bizName(s, def.id)}에서 ${formatNumber(t)} 생산`,
     reward: () => ({ kind: 'boost', amount: 300, business: def.id }),
   })),
 ];
