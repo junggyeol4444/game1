@@ -25,7 +25,7 @@ import { TH, TW, fit, project, type Cam } from './scene/iso';
 import { drawSprite, drawTileSprite, hasSprite, placeholder } from './art/assets';
 import { buildingKeysFor, tileKeysFor } from './art/keys';
 import { dustPuff } from './scene/burst';
-import { bizName, currentEra, eraPalette, facName, settlementName } from '../core/era';
+import { bizName, currentEra, eraPalette, facName, seenKey, settlementName } from '../core/era';
 
 /** 도시 규모 이름은 시대마다 다르다 (석기 '큰 부족' ~ 우주 '성간 도시') */
 export const terrainName = (state: GameState) => settlementName(state);
@@ -372,7 +372,8 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     for (const id of sorted) {
       const lot = LOTS[id];
       const tier = buildingTier(st, id);
-      if (tier > (st.collection.seenTiers[id] ?? 0)) st.collection.seenTiers[id] = tier;
+      const dexKey = seenKey(eraId, id);
+      if (tier > (st.collection.seenTiers[dexKey] ?? 0)) st.collection.seenTiers[dexKey] = tier;
       const unlocked = buildingUnlocked(st, id);
       const alert = buildingAlert(st, id, now);
 

@@ -660,13 +660,40 @@ export const MINIGAMES: Record<string, MinigameDef> = {
   corp: corpGame,
 };
 
-/** 미니게임으로만 얻는 특산물 (기획서 7장) */
-export const MINIGAME_SPOILS: Record<string, { key: 'gem' | 'specs' | 'satisfaction' | 'funds' | 'fish'; label: string; icon: string }> = {
-  mine: { key: 'gem', label: '보석', icon: '💎' },
-  factory: { key: 'specs', label: '고급 규격품', icon: '🔩' },
-  fishery: { key: 'fish', label: '희귀 어종', icon: '🐠' },
-  park: { key: 'satisfaction', label: '만족도', icon: '💗' },
-  corp: { key: 'funds', label: '투자 자금', icon: '💼' },
-};
+/**
+ * 미니게임으로만 얻는 특산물 (기획서 7장).
+ * counter = 개수만 쌓이는 것, list = 이름이 붙어 도감에 남는 것.
+ */
+export interface SpoilDef {
+  label: string;
+  icon: string;
+  /** 개수로 쌓이는 재화 */
+  counter?: 'gem' | 'specs' | 'satisfaction' | 'funds';
+  /** 도감에 이름으로 남는 수집품 */
+  list?: 'fish' | 'rides';
+  /** 성적이 좋을수록 뒤쪽(희귀한) 것이 나온다 */
+  names?: string[];
+}
 
 export const RARE_FISH = ['참돔', '방어', '광어', '전복', '대게', '다랑어', '개복치', '심해 아귀', '황금 잉어'];
+
+/** 놀이공원 미니게임 수집품. 시대를 안 타는 '놀이' 그 자체의 계보로 골랐다 */
+export const RARE_RIDES = [
+  '그네',
+  '회전목마',
+  '범퍼카',
+  '미러 하우스',
+  '바이킹',
+  '자이로드롭',
+  '대관람차',
+  '롤러코스터',
+  '무중력 원심기',
+];
+
+export const MINIGAME_SPOILS: Record<string, SpoilDef> = {
+  mine: { label: '보석', icon: '💎', counter: 'gem' },
+  factory: { label: '고급 규격품', icon: '🔩', counter: 'specs' },
+  fishery: { label: '희귀 어종', icon: '🐠', list: 'fish', names: RARE_FISH },
+  park: { label: '만족도', icon: '💗', counter: 'satisfaction', list: 'rides', names: RARE_RIDES },
+  corp: { label: '투자 자금', icon: '💼', counter: 'funds' },
+};

@@ -54,7 +54,7 @@ export function emptyMinigames(): Record<string, MinigameState> {
 }
 
 export function emptyCollection(): CollectionState {
-  return { specs: 0, satisfaction: 0, funds: 0, fish: [], seenTiers: {} };
+  return { specs: 0, satisfaction: 0, funds: 0, fish: [], rides: [], seenTiers: {} };
 }
 
 export function createInitialState(now = Date.now()): GameState {

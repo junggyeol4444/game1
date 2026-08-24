@@ -10,6 +10,9 @@ import { createInitialState } from '../src/core/state';
 import { CONFIG } from '../src/data/config';
 import { FACILITIES } from '../src/data/buildings';
 import { formatDuration, formatInt, formatNumber } from '../src/core/num';
+import { seenKey, tierLabelOf } from '../src/core/era';
+import { deserialize, serialize } from '../src/core/save';
+import { RARE_FISH, RARE_RIDES } from '../src/ui/minigames/games';
 
 function fresh() {
   const s = createInitialState(0);
@@ -133,4 +136,75 @@ test('시간 표기', () => {
   assert.match(formatDuration(90), /분/);
   assert.match(formatDuration(3600 * 5), /시간/);
   assert.match(formatDuration(86400 * 3), /일/);
+});
+
+// ── 도감 ──
+test('도감 키는 시대별로 갈린다', () => {
+  const a = seenKey('stone', 'mine');
+  const b = seenKey('bronze', 'mine');
+  assert.notEqual(a, b, '문명이 달라도 같은 칸을 쓰면 수집 메타가 죽는다');
+  assert.equal(a, 'stone:mine');
+});
+
+test('시대 구분 없던 세이브의 도감은 그때 서 있던 시대 것으로 옮겨온다', () => {
+  const s = createInitialState(0);
+  s.era = 2; // 철기
+  s.collection.seenTiers = { mine: 3, housing: 1 };
+  const back = deserialize(serialize(s));
+  assert.equal(back.collection.seenTiers['iron:mine'], 3);
+  assert.equal(back.collection.seenTiers['iron:housing'], 1);
+  assert.equal(back.collection.seenTiers.mine, undefined, '옛 키가 남으면 두 번 세어진다');
+});
+
+test('이미 시대별로 적힌 키는 그대로 둔다', () => {
+  const s = createInitialState(0);
+  s.era = 2;
+  s.collection.seenTiers = { 'stone:mine': 4, 'iron:mine': 1 };
+  const back = deserialize(serialize(s));
+  assert.equal(back.collection.seenTiers['stone:mine'], 4, '지나온 시대 기록이 덮어씌워졌다');
+  assert.equal(back.collection.seenTiers['iron:mine'], 1);
+});
+
+test('수집품 이름표는 중복 없이 9종씩이다', () => {
+  for (const [label, names] of [['어종', RARE_FISH], ['놀이기구', RARE_RIDES]] as const) {
+    assert.equal(new Set(names).size, names.length, `${label} 이름이 겹친다`);
+    assert.ok(names.length >= 5, `${label} 가 너무 적다`);
+  }
+});
+
+test('성적이 좋을수록 뒤쪽 수집품이 나온다', () => {
+  const pick = (rate: number, names: readonly string[]) =>
+    names[Math.min(names.length - 1, Math.floor(rate * names.length))];
+  assert.equal(pick(0, RARE_FISH), RARE_FISH[0]);
+  assert.equal(pick(1, RARE_FISH), RARE_FISH[RARE_FISH.length - 1], '만점인데 제일 귀한 게 안 나온다');
+  assert.equal(pick(0.999, RARE_RIDES), RARE_RIDES[RARE_RIDES.length - 1]);
+});
+
+test('근대 이전 문명은 외형 단계도 그 시대 이름으로 부른다', () => {
+  const written = ['빈 터', '갱도 입구', '채굴탑', '채굴장', '대형 채굴장', '광산단지', '광산도시'];
+  // 석기(0): 근대 이름을 쓰면 안 된다
+  const stone = tierLabelOf(0, '돌 채취장', 2, written, false);
+  assert.ok(stone.includes('돌 채취장'), `석기 시대에 '${stone}' 이 나왔다`);
+  assert.ok(!stone.includes('채굴탑'));
+  // 근대(6) 이후: 손으로 쓴 이름 그대로
+  assert.equal(tierLabelOf(6, '노천광', 2, written, false), '채굴탑');
+  // 0단계는 어느 시대든 빈 터
+  assert.equal(tierLabelOf(0, '돌 채취장', 0, written, false), '빈 터');
+});
+
+test('외형 단계 이름은 단계마다 다르다', () => {
+  const written = ['빈 터', 'a', 'b', 'c', 'd', 'e', 'f'];
+  const names = [1, 2, 3, 4, 5, 6].map((t) => tierLabelOf(0, '움집', t, written, false));
+  assert.equal(new Set(names).size, names.length, `단계 이름이 겹친다: ${names.join(', ')}`);
+});
+
+test('시대 이름에 크기 말이 붙어 있어도 겹치지 않는다', () => {
+  const w = ['빈 터', 'a', 'b', 'c', 'd'];
+  const names = [1, 2, 3, 4].map((t) => tierLabelOf(0, '큰 모닥불', t, w, true));
+  for (const n of names) {
+    assert.ok(!n.includes('작은 큰'), `겹침: ${n}`);
+    assert.ok(!n.includes('큰 큰'), `겹침: ${n}`);
+  }
+  assert.equal(names[1], '모닥불');
+  assert.equal(names[2], '큰 모닥불', '시대 이름이 사다리 한가운데 자연스럽게 놓여야 한다');
 });

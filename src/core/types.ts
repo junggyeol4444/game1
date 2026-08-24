@@ -103,7 +103,12 @@ export interface CollectionState {
   satisfaction: number;
   funds: number;
   fish: string[];
-  /** 건물 id -> 지금까지 본 최고 외형 단계 */
+  /** 놀이공원 미니게임으로 발견한 놀이기구 */
+  rides: string[];
+  /**
+   * `시대id:건물id` -> 지금까지 본 최고 외형 단계.
+   * 문명마다 같은 부지에 다른 건물이 서므로 시대를 키에 넣는다.
+   */
   seenTiers: Record<string, number>;
 }
 

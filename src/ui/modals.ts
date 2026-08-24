@@ -2,7 +2,7 @@ import { CONFIG } from '../data/config';
 import { BUSINESSES } from '../data/businesses';
 import { BUSINESS_TIERS, FACILITIES } from '../data/buildings';
 import { buildableFacilities, builtFacilities, cityStats, facilityCost } from '../core/facilities';
-import { RARE_FISH } from './minigames/games';
+import { RARE_FISH, RARE_RIDES } from './minigames/games';
 
 import { IAP_PRODUCTS } from '../core/iap';
 import { formatDuration, formatInt, formatNumber } from '../core/num';
@@ -15,9 +15,11 @@ import {
   facIcon,
   facName,
   leaderTitle,
+  seenKey,
   settlementName,
+  tierLabelOf,
 } from '../core/era';
-import { ERAS, settlementNameOf } from '../data/eras';
+import { ERAS, eraDef, settlementNameOf } from '../data/eras';
 import { terrainStage } from '../data/buildings';
 import { missionComplete, missionDef, missionTarget } from '../core/missions';
 import type { Game } from '../core/game';
@@ -783,18 +785,53 @@ export function showCityLevelSheet(game: Game): void {
 // ═══════════════ 도감 ═══════════════
 export function showCollectionSheet(game: Game): void {
   const s = game.state;
+  const seen = s.collection.seenTiers;
+
+  /** 한 시대의 건물 목록 (사업 5 + 시설 9) */
+  const buildingsOf = (era: number) =>
+    [
+      ...BUSINESSES.map((b) => {
+        const name = eraDef(era).business[b.id].name;
+        return {
+          id: b.id as string,
+          icon: eraDef(era).business[b.id].icon,
+          name,
+          tiers: BUSINESS_TIERS[b.id].map((_t, i) => tierLabelOf(era, name, i, BUSINESS_TIERS[b.id], false)),
+        };
+      }),
+      ...FACILITIES.map((f) => {
+        const name = eraDef(era).facility[f.id].name;
+        return {
+          id: f.id as string,
+          icon: eraDef(era).facility[f.id].icon,
+          name,
+          tiers: f.tiers.map((_t, i) => tierLabelOf(era, name, i, f.tiers, true)),
+        };
+      }),
+    ];
+
+  const tierOf = (era: number, id: string, max: number) =>
+    Math.min(seen[seenKey(eraDef(era).id, id)] ?? 0, max);
+
+  const eraProgressOf = (era: number) => {
+    const list = buildingsOf(era);
+    const total = list.reduce((a, b) => a + b.tiers.length - 1, 0);
+    const got = list.reduce((a, b) => a + tierOf(era, b.id, b.tiers.length - 1), 0);
+    return { got, total };
+  };
+
+  const grand = ERAS.reduce(
+    (acc, _e, i) => {
+      const p = eraProgressOf(i);
+      return { got: acc.got + p.got, total: acc.total + p.total };
+    },
+    { got: 0, total: 0 },
+  );
+
   sheet({
     title: '도감',
-    sub: '건물 외형과 미니게임 특산물을 모읍니다',
+    sub: '문명마다 건물 외형이 전부 다릅니다. 지나온 문명만 남습니다',
     build: () => {
-      const all = [
-        ...BUSINESSES.map((b) => ({ id: b.id as string, icon: bizIcon(s, b.id), name: bizName(s, b.id), tiers: BUSINESS_TIERS[b.id] })),
-        ...FACILITIES.map((f) => ({ id: f.id as string, icon: facIcon(s, f.id), name: facName(s, f.id), tiers: f.tiers })),
-      ];
-      const seen = s.collection.seenTiers;
-      const total = all.reduce((a, b) => a + b.tiers.length - 1, 0);
-      const got = all.reduce((a, b) => a + Math.min(seen[b.id] ?? 0, b.tiers.length - 1), 0);
-
       const spoils = [
         { icon: '💎', name: '보석', v: s.resources.gem, from: '광산 미니게임 · 엘리베이터 재료' },
         { icon: '🔩', name: '고급 규격품', v: s.collection.specs, from: '공장 미니게임' },
@@ -802,39 +839,100 @@ export function showCollectionSheet(game: Game): void {
         { icon: '💼', name: '투자 자금', v: s.collection.funds, from: '기업 미니게임' },
       ];
 
+      const list = (icon: string, title: string, from: string, names: readonly string[], owned: string[]) =>
+        h(
+          'div',
+          { class: 'card' },
+          h(
+            'div',
+            { class: 'row' },
+            h('span', { style: { fontSize: '22px' } }, icon),
+            h(
+              'div',
+              { class: 'grow' },
+              h('div', null, title),
+              h('div', { class: 'small muted' }, from),
+              h(
+                'div',
+                { class: 'small muted', style: { marginTop: '3px' } },
+                names.map((n) => (owned.includes(n) ? n : '???')).join(' · '),
+              ),
+            ),
+            h('b', { class: 'gold' }, `${owned.length}/${names.length}`),
+          ),
+        );
+
+      // 시대 카드 — 지나온 시대는 펼쳐서, 안 가본 시대는 잠금
+      const eraCard = (era: number) => {
+        const def = eraDef(era);
+        const p = eraProgressOf(era);
+        const visited = era <= s.era;
+        const here = era === s.era;
+        if (!visited) {
+          return h(
+            'div',
+            { class: 'card', style: { opacity: '0.5' } },
+            h(
+              'div',
+              { class: 'row' },
+              h('span', { style: { fontSize: '20px' } }, '🔒'),
+              h('div', { class: 'grow' }, h('div', { style: { fontWeight: '700' } }, def.name),
+                h('div', { class: 'small muted' }, `도시 Lv.${ERAS[era - 1].advanceLevel} 에서 넘어옵니다`)),
+              h('span', { class: 'chip' }, `0/${p.total}`),
+            ),
+          );
+        }
+        return h(
+          'div',
+          { class: 'card', style: here ? { borderColor: 'var(--gold)' } : {} },
+          h(
+            'div',
+            { class: 'row' },
+            h('span', { style: { fontSize: '20px' } }, def.business.mine.icon),
+            h(
+              'div',
+              { class: 'grow' },
+              h('div', { style: { fontWeight: '800' } }, def.name, here ? h('span', { class: 'small gold' }, ' · 지금 여기') : null),
+              h('div', { class: 'bar', style: { marginTop: '5px' } },
+                h('i', { style: { width: `${p.total ? (p.got / p.total) * 100 : 0}%` } })),
+            ),
+            h('span', { class: 'chip' }, `${p.got}/${p.total}`),
+          ),
+          ...buildingsOf(era).map((b) => {
+            const max = b.tiers.length - 1;
+            const t = tierOf(era, b.id, max);
+            return h(
+              'div',
+              { class: 'row', style: { padding: '3px 0', gap: '6px' } },
+              h('span', { style: { fontSize: '15px', width: '20px' } }, t > 0 ? b.icon : '·'),
+              h(
+                'div',
+                { class: 'grow' },
+                h('div', { class: 'small', style: { fontWeight: t > 0 ? '700' : '400', opacity: t > 0 ? '1' : '0.5' } }, b.name),
+                h(
+                  'div',
+                  { class: 'small muted' },
+                  b.tiers.slice(1).map((n, i) => (t >= i + 1 ? n : '???')).join(' → '),
+                ),
+              ),
+              h('span', { class: 'small muted' }, `${t}/${max}`),
+            );
+          }),
+        );
+      };
+
       return [
         h(
           'div',
           { class: 'card center' },
-          h('div', { class: 'muted small' }, '건물 외형'),
-          h('div', { class: 'cash' }, `${got} / ${total}`),
+          h('div', { class: 'muted small' }, '전 문명 건물 외형'),
+          h('div', { class: 'cash' }, `${grand.got} / ${grand.total}`),
+          h('div', { class: 'bar', style: { marginTop: '8px' } },
+            h('i', { style: { width: `${grand.total ? (grand.got / grand.total) * 100 : 0}%` } })),
         ),
-        ...all.map((b) =>
-          h(
-            'div',
-            { class: 'card' },
-            h(
-              'div',
-              { class: 'row' },
-              h('span', { style: { fontSize: '22px' } }, b.icon),
-              h(
-                'div',
-                { class: 'grow' },
-                h('div', { style: { fontWeight: '700' } }, b.name),
-                h(
-                  'div',
-                  { class: 'small muted' },
-                  b.tiers
-                    .slice(1)
-                    .map((name, i) => ((seen[b.id] ?? 0) >= i + 1 ? name : '???'))
-                    .join(' → '),
-                ),
-              ),
-              h('span', { class: 'chip' }, `${Math.min(seen[b.id] ?? 0, b.tiers.length - 1)}/${b.tiers.length - 1}`),
-            ),
-          ),
-        ),
-        h('h3', { class: 'muted', style: { marginTop: '12px' } }, '특산물 — 자동화로는 못 얻습니다'),
+        h('h3', { class: 'muted', style: { margin: '14px 0 8px' } }, '문명별'),
+        ...ERAS.map((_e, i) => eraCard(i)),
+        h('h3', { class: 'muted', style: { margin: '14px 0 8px' } }, '특산물 — 자동화로는 못 얻습니다'),
         ...spoils.map((sp) =>
           h(
             'div',
@@ -848,22 +946,8 @@ export function showCollectionSheet(game: Game): void {
             ),
           ),
         ),
-        h(
-          'div',
-          { class: 'card' },
-          h(
-            'div',
-            { class: 'row' },
-            h('span', { style: { fontSize: '22px' } }, '🐠'),
-            h(
-              'div',
-              { class: 'grow' },
-              h('div', null, '희귀 어종'),
-              h('div', { class: 'small muted' }, RARE_FISH.map((f) => (s.collection.fish.includes(f) ? f : '???')).join(' · ')),
-            ),
-            h('b', { class: 'gold' }, `${s.collection.fish.length}/${RARE_FISH.length}`),
-          ),
-        ),
+        list('🐠', '희귀 어종', '낚시 미니게임 · 성적이 좋을수록 귀한 것', RARE_FISH, s.collection.fish),
+        list('🎠', '놀이기구', '놀이공원 미니게임 · 성적이 좋을수록 귀한 것', RARE_RIDES, s.collection.rides),
       ];
     },
   });

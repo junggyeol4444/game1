@@ -8,7 +8,7 @@ import { h, haptic } from './dom';
 import { TH, TW, fit, type Cam } from './scene/iso';
 import { drawSprite, placeholder } from './art/assets';
 import { buildingKeysFor } from './art/keys';
-import { currentEra, eraPalette, facIcon, facName } from '../core/era';
+import { currentEra, eraPalette, facIcon, facName, tierLabelOf } from '../core/era';
 import { sfx } from '../core/audio';
 import type { View } from './businessView';
 
@@ -84,7 +84,8 @@ export function createFacilityView(game: Game, id: FacilityId): View {
     const cost = facilityCost(st, id);
     const maxed = level >= def.maxLevel;
 
-    tierEl.textContent = `${facIcon(st, id)} ${facName(st, id)} · ${def.tiers[tier]}`;
+    const label = tierLabelOf(st.era, facName(st, id), tier, def.tiers, true);
+    tierEl.textContent = `${facIcon(st, id)} ${facName(st, id)} · ${label}`;
     lvEl.innerHTML = '';
     lvEl.append(h('b', null, level > 0 ? `Lv.${formatInt(level)}` : '미건설'), h('span', { class: 'small muted' }, ` / ${def.effect}`));
     effNow.textContent = def.effectText(level);
@@ -98,7 +99,8 @@ export function createFacilityView(game: Game, id: FacilityId): View {
     statusCard.append(h('h3', null, '현황'));
     const nextTier = FAC_TIER_LEVELS.find((v) => v > level);
     if (nextTier !== undefined) {
-      statusCard.append(row('다음 외형', `${def.tiers[Math.min(def.tiers.length - 1, tier + 1)]} (Lv.${nextTier})`, 'gold'));
+      const next = tierLabelOf(st.era, facName(st, id), Math.min(def.tiers.length - 1, tier + 1), def.tiers, true);
+      statusCard.append(row('다음 외형', `${next} (Lv.${nextTier})`, 'gold'));
     }
     if (id === 'power') {
       statusCard.append(row('전력 공급', fmt(cs.powerSupply)));

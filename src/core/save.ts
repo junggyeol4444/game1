@@ -59,6 +59,19 @@ function decode(blob: string): string {
   return out;
 }
 
+/**
+ * 도감 키를 `시대id:건물id` 로 옮긴다.
+ * 시대 구분이 없던 세이브는 키에 ':' 이 없다 — 그때 서 있던 시대 것으로 본다.
+ */
+function migrateSeenTiers(raw: Record<string, number>, era: number): Record<string, number> {
+  const eraId = eraDef(era).id;
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(raw ?? {})) {
+    out[k.includes(':') ? k : `${eraId}:${k}`] = num(v, 0);
+  }
+  return out;
+}
+
 // ── 문서 스키마 직렬화 ──────────────────────────────────────
 export function serialize(state: GameState): Record<string, unknown> {
   return {
@@ -146,6 +159,7 @@ export function serialize(state: GameState): Record<string, unknown> {
     ),
     collection: {
       fish: state.collection.fish,
+      rides: state.collection.rides,
       building: state.collection.seenTiers,
       equipment: { specs: state.collection.specs, satisfaction: state.collection.satisfaction, funds: state.collection.funds },
     },
@@ -277,7 +291,8 @@ export function deserialize(raw: Record<string, unknown>): GameState {
 
   const col = raw.collection as Record<string, unknown> | undefined;
   s.collection.fish = g(col, 'fish', [] as string[]);
-  s.collection.seenTiers = g(col, 'building', {} as Record<string, number>);
+  s.collection.rides = g(col, 'rides', [] as string[]);
+  s.collection.seenTiers = migrateSeenTiers(g(col, 'building', {} as Record<string, number>), s.era);
   const eq = g(col, 'equipment', {} as Record<string, number>);
   s.collection.specs = num(eq['specs'], 0);
   s.collection.satisfaction = num(eq['satisfaction'], 0);

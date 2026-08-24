@@ -80,6 +80,35 @@ export function unitManagerName(state: GameState, id: BusinessId, index: number,
   return `${index + 1}번 ${bizUnitLabel(state, id)} 일꾼`;
 }
 
+/**
+ * 외형 단계 이름.
+ *
+ * businesses.ts / buildings.ts 에 적힌 '갱도 입구 -> 채굴탑' 같은 이름은 근대 도시를
+ * 전제로 쓴 것이다. 석기 시대 '돌 채취장'에 붙으면 말이 안 된다.
+ * 그 이전 문명에서는 시대 건물 이름에 규모 사다리를 붙여 부른다.
+ * (9시대 x 건물 14종 x 단계 = 600줄을 손으로 쓰는 대신)
+ */
+const BIZ_LADDER = ['작은 %s', '%s', '큰 %s', '대형 %s', '%s 단지', '%s 대단지'];
+const FAC_LADDER = ['작은 %s', '%s', '큰 %s', '%s 단지'];
+
+/**
+ * 시대 이름에 이미 크기 말이 붙어 있으면 뗀다.
+ * '큰 모닥불' 에 사다리를 그냥 붙이면 '작은 큰 모닥불' 이 된다.
+ */
+const SIZE_PREFIX = ['큰 ', '작은 ', '대형 ', '소형 ', '거대 '];
+function baseName(name: string): string {
+  for (const p of SIZE_PREFIX) if (name.startsWith(p) && name.length > p.length + 1) return name.slice(p.length);
+  return name;
+}
+
+export function tierLabelOf(era: number, name: string, tier: number, written: string[], facility: boolean): string {
+  if (tier <= 0) return written[0] ?? '빈 터';
+  if (era >= NAMED_FROM_ERA) return written[tier] ?? name;
+  const ladder = facility ? FAC_LADDER : BIZ_LADDER;
+  const pat = ladder[Math.min(tier, ladder.length) - 1];
+  return pat.replace(/%s/g, baseName(name));
+}
+
 export function facName(state: GameState, id: FacilityId): string {
   return currentEra(state).facility[id].name;
 }
@@ -90,6 +119,14 @@ export function facIcon(state: GameState, id: FacilityId): string {
 export function settlementName(state: GameState): string {
   return settlementNameOf(eraIndex(state), terrainStage(state.city.level));
 }
+/**
+ * 도감 키. 문명마다 같은 부지에 다른 건물이 서므로 시대를 키에 넣는다.
+ * 이게 이 게임의 장기 수집 메타다 — 9개 문명 x 건물 14종 x 외형 단계.
+ */
+export function seenKey(eraId: string, buildingId: string): string {
+  return `${eraId}:${buildingId}`;
+}
+
 export function leaderTitle(state: GameState): string {
   return currentEra(state).leader;
 }

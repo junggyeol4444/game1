@@ -49,7 +49,7 @@ import { todayKey } from './state';
 import type { BusinessDef, BusinessId, GameState, OfflineReport } from './types';
 import type { EraDef } from '../data/eras';
 import { LEGACY, bizName, bizUnitLabel, bizHoistName, unitManagerName } from './era';
-import { MINIGAMES, MINIGAME_SPOILS, RARE_FISH } from '../ui/minigames/games';
+import { MINIGAMES, MINIGAME_SPOILS } from '../ui/minigames/games';
 import { playMinigame, type MinigameResult } from '../ui/minigames/host';
 
 type GameEvent = 'structure' | 'toast' | 'unlock' | 'cityEvent' | 'coin' | 'offline' | 'quake';
@@ -514,21 +514,27 @@ export class Game {
 
     // 자동화로는 못 얻는 특산물
     const spoil = MINIGAME_SPOILS[id];
-    if (spoil.key === 'gem') {
+    const notes: string[] = [];
+    if (spoil.counter === 'gem') {
+      // 보석은 개수가 아니라 미니게임 안에서 정타로 캔 만큼만 나온다
       s.resources.gem += r.bonusItems;
-      if (r.bonusItems > 0) r.spoilText = `💎 보석 +${r.bonusItems}`;
-    } else if (spoil.key === 'fish') {
-      const idx = Math.min(RARE_FISH.length - 1, Math.floor(r.rate * RARE_FISH.length));
-      const name = RARE_FISH[idx];
-      if (!s.collection.fish.includes(name)) {
-        s.collection.fish.push(name);
-        r.spoilText = `🐠 새 어종 발견: ${name}`;
-      }
-    } else {
+      if (r.bonusItems > 0) notes.push(`${spoil.icon} ${spoil.label} +${r.bonusItems}`);
+    } else if (spoil.counter) {
       const got = Math.max(1, Math.round(r.rate * 5));
-      s.collection[spoil.key] += got;
-      r.spoilText = `${spoil.icon ?? '📦'} ${spoil.label ?? '특산물'} +${got}`;
+      s.collection[spoil.counter] += got;
+      notes.push(`${spoil.icon} ${spoil.label} +${got}`);
     }
+    // 성적이 좋을수록 뒤쪽(희귀한) 것이 나온다
+    if (spoil.list && spoil.names) {
+      const idx = Math.min(spoil.names.length - 1, Math.floor(r.rate * spoil.names.length));
+      const name = spoil.names[idx];
+      const owned = s.collection[spoil.list];
+      if (!owned.includes(name)) {
+        owned.push(name);
+        notes.push(`${spoil.icon} 새로 발견: ${name}`);
+      }
+    }
+    if (notes.length) r.spoilText = notes.join(' · ');
     s.shop.piggyValue += 4;
     this.bump('minigamePlayed', 1);
     invalidateStats();
