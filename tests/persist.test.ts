@@ -111,3 +111,42 @@ test('여러 번 저장해도 백업은 항상 직전 것이다', () => {
   assert.equal(r.recovered, true);
   assert.equal(r.state.resources.cash, 103, '4회차(직전) 저장본이 아니다');
 });
+
+// ── 스키마 버전 ──
+const { deserialize, serialize, migrateRaw } = await import('../src/core/save');
+
+test('저장본에 현재 스키마 버전이 찍힌다', () => {
+  const raw = serialize(grown()) as Record<string, unknown>;
+  assert.equal(raw.version, CONFIG.saveVersion);
+});
+
+test('현재 버전 세이브는 그대로 통과한다', () => {
+  const a = grown(4, 7e17);
+  const back = deserialize(serialize(a));
+  assert.equal(back.era, 4);
+  assert.equal(back.resources.cash, 7e17);
+});
+
+test('버전이 없는 옛 세이브도 읽힌다 (v1 로 본다)', () => {
+  const raw = serialize(grown(2, 555)) as Record<string, unknown>;
+  delete raw.version;
+  const back = deserialize(raw);
+  assert.equal(back.era, 2);
+  assert.equal(back.resources.cash, 555);
+});
+
+test('더 새 빌드의 세이브를 만나도 안 죽는다', () => {
+  const raw = serialize(grown(3, 999)) as Record<string, unknown>;
+  raw.version = CONFIG.saveVersion + 5;
+  const back = deserialize(raw);
+  // 아는 척 고치지 않고 읽을 수 있는 만큼만 읽는다
+  assert.equal(back.era, 3);
+  assert.ok(Number.isFinite(back.resources.cash));
+});
+
+test('올림 함수는 같은 객체를 돌려주고 버전을 안 낮춘다', () => {
+  const raw = serialize(grown()) as Record<string, unknown>;
+  const out = migrateRaw(raw);
+  assert.equal(out, raw, '새 객체를 만들면 호출부가 옛 것을 쓴다');
+  assert.equal(out.version, CONFIG.saveVersion);
+});

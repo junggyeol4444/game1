@@ -207,7 +207,33 @@ export function serialize(state: GameState): Record<string, unknown> {
   };
 }
 
-export function deserialize(raw: Record<string, unknown>): GameState {
+/**
+ * 스키마 버전 올림.
+ *
+ * `version` 을 쓰기만 하고 아무도 안 읽으면, v2 로 넘어갈 때 옛 세이브를 조용히
+ * 잘못 읽는다. 세이브가 망가지면 되돌릴 방법이 없으므로 자리를 먼저 만들어 둔다.
+ *
+ * 새 버전을 낼 때: `CONFIG.saveVersion` 을 올리고 여기에 `[올린 버전]: (raw) => {...}`
+ * 를 추가한다. 함수는 **문서 스키마(raw)** 를 제자리에서 고친다.
+ */
+type RawSave = Record<string, unknown>;
+const MIGRATIONS: Record<number, (raw: RawSave) => void> = {
+  // 2: (raw) => { ... v1 -> v2 ... },
+};
+
+export function migrateRaw(raw: RawSave): RawSave {
+  const from = num(raw.version, 1);
+  if (from > CONFIG.saveVersion) {
+    // 더 새 빌드에서 만든 세이브다. 아는 척하고 고치면 더 망가진다 — 그대로 둔다
+    console.warn(`세이브 버전이 이 빌드보다 높습니다 (${from} > ${CONFIG.saveVersion})`);
+    return raw;
+  }
+  for (let v = from + 1; v <= CONFIG.saveVersion; v++) MIGRATIONS[v]?.(raw);
+  return raw;
+}
+
+export function deserialize(input: Record<string, unknown>): GameState {
+  const raw = migrateRaw(input);
   const s = createInitialState();
   const g = <T,>(o: unknown, k: string, d: T): T => {
     const v = (o as Record<string, unknown> | undefined)?.[k];

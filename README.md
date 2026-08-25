@@ -310,7 +310,7 @@ npm run sim -- --days 10
 ## 테스트
 
 ```bash
-npm test           # 유닛 테스트 144개. npm run build 에 묶여 있다
+npm test           # 유닛 테스트 149개. npm run build 에 묶여 있다
 ```
 
 `tests/` — 외부 의존성 없이 `node:test` + `tsx` 로 돈다.
