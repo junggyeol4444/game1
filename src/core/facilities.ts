@@ -1,6 +1,7 @@
 import { BUSINESSES } from '../data/businesses';
+import { canAfford } from './num';
 import { eraCostMult } from './era';
-import { FACILITIES, FACILITY_BY_ID, facilityTierOf, type FacilityId } from '../data/buildings';
+import { FACILITIES, FACILITY_BY_ID, type FacilityId } from '../data/buildings';
 import { CONFIG } from '../data/config';
 import { clamp } from './num';
 import type { GameState } from './types';
@@ -15,10 +16,6 @@ export function isBuilt(state: GameState, id: FacilityId): boolean {
 
 export function facilityUnlocked(state: GameState, id: FacilityId): boolean {
   return state.city.level >= FACILITY_BY_ID[id].unlockCityLevel;
-}
-
-export function facilityTier(state: GameState, id: FacilityId): number {
-  return facilityTierOf(facilityLevel(state, id));
 }
 
 /** 다음 레벨 비용: base x rate^(현재레벨) */
@@ -136,15 +133,11 @@ export function buyFacility(state: GameState, id: FacilityId): boolean {
   const def = FACILITY_BY_ID[id];
   if (facilityLevel(state, id) >= def.maxLevel) return false;
   const cost = facilityCost(state, id);
-  if (state.resources.cash < cost) return false;
+  if (!canAfford(state.resources.cash, cost)) return false;
   state.resources.cash -= cost;
   state.facilities[id].level += 1;
   state.facilities[id].unlocked = true;
   return true;
-}
-
-export function unlockedFacilities(state: GameState) {
-  return FACILITIES.filter((f) => facilityUnlocked(state, f.id));
 }
 
 export function buildableFacilities(state: GameState) {

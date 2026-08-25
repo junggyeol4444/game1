@@ -33,13 +33,6 @@ export function project(gx: number, gy: number, gz: number, cam: Cam): [number, 
   return [(sx - cam.x) * cam.zoom + cam.w / 2, (sy - cam.y) * cam.zoom + cam.h / 2];
 }
 
-/** 화면 좌표 -> 타일 좌표 (z=0 평면) */
-export function unproject(px: number, py: number, cam: Cam): [number, number] {
-  const wx = (px - cam.w / 2) / cam.zoom + cam.x;
-  const wy = (py - cam.h / 2) / cam.zoom + cam.y;
-  return [wy / TH + wx / TW, wy / TH - wx / TW];
-}
-
 /** 레티나 배율. 3배 이상은 성능만 먹고 체감이 없어서 2로 자른다 */
 export function dpr(): number {
   return Math.min(window.devicePixelRatio || 1, 2);

@@ -1,4 +1,5 @@
 import type { BusinessId } from '../core/types';
+import { PAL } from './palette';
 import type { FacilityId } from './buildings';
 
 /**
@@ -257,7 +258,8 @@ export const ERAS: EraDef[] = [
     advanceLevel: 19,
     costMult: 729,
     cycleMult: 1.59,
-    palette: P('#9FD8E8', '#BFE8F2', '#A8C97F', '#B8B8B0', '#6FC3DF', '#F2F2F0', '#E85D4A', '#FFC845'),
+    // 아트 문서 3장이 지정한 팔레트 그대로. 다른 시대는 이걸 기준으로 틀었다
+    palette: P(PAL.sky, PAL.skyTop, PAL.ground, PAL.road, PAL.water, PAL.wall, PAL.roof, PAL.accent),
     business: {
       mine: { name: '노천광', icon: '⛏️', unitLabel: '채굴장' },
       factory: { name: '자동화 공장', icon: '🏭', unitLabel: '라인' },
@@ -355,25 +357,6 @@ export function eraDef(index: number): EraDef {
 /** 시대 전환으로 얻는 영구 재화. 내부 id 는 blueprint 를 그대로 쓴다. */
 export const LEGACY = { name: '유산', icon: '🏺' } as const;
 
-export function businessName(era: number, id: BusinessId): string {
-  return eraDef(era).business[id].name;
-}
-export function businessIcon(era: number, id: BusinessId): string {
-  return eraDef(era).business[id].icon;
-}
-export function facilityName(era: number, id: FacilityId): string {
-  return eraDef(era).facility[id].name;
-}
-export function facilityIcon(era: number, id: FacilityId): string {
-  return eraDef(era).facility[id].icon;
-}
-
-export function businessHoistName(era: number, id: BusinessId): string {
-  return eraDef(era).hoist[id];
-}
-export function businessUnitLabel(era: number, id: BusinessId): string {
-  return eraDef(era).business[id].unitLabel;
-}
 /** 도시 발전 단계(0~4) 이름 — 시대마다 다르다 */
 export function settlementNameOf(era: number, stage: number): string {
   const list = eraDef(era).settlement;

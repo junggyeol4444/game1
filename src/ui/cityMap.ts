@@ -25,10 +25,9 @@ import { TH, TW, fit, project, type Cam } from './scene/iso';
 import { drawSprite, drawTileSprite, hasSprite, placeholder } from './art/assets';
 import { buildingKeysFor, tileKeysFor } from './art/keys';
 import { dustPuff } from './scene/burst';
-import { bizName, currentEra, eraPalette, facName, resourceName, seenKey, settlementName } from '../core/era';
+import { bizName, currentEra, eraPalette, facName, resourceName, seenKey } from '../core/era';
 
 /** 도시 규모 이름은 시대마다 다르다 (석기 '큰 부족' ~ 우주 '성간 도시') */
-export const terrainName = (state: GameState) => settlementName(state);
 
 export interface MapView {
   root: HTMLElement;

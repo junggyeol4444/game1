@@ -2,6 +2,7 @@ import { LEGACY_BY_ID, LEGACY_UPGRADES } from '../data/legacy';
 import { BUSINESSES } from '../data/businesses';
 import { MAX_CITY_LEVEL, cityRequirement, cityUnlockText } from '../data/buildings';
 import type { BusinessDef, GameState } from './types';
+import { canAfford } from './num';
 import { MAX_ERA } from '../data/eras';
 import { applyEraReset } from './state';
 
@@ -58,7 +59,7 @@ export function legacyUpgradeCost(state: GameState, id: string): number {
 
 export function buyLegacyUpgrade(state: GameState, id: string): boolean {
   const cost = legacyUpgradeCost(state, id);
-  if (!isFinite(cost) || state.resources.blueprint < cost) return false;
+  if (!canAfford(state.resources.blueprint, cost)) return false;
   state.resources.blueprint -= cost;
   state.prestige.upgrades[id] = (state.prestige.upgrades[id] ?? 0) + 1;
   return true;

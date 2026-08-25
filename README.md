@@ -310,7 +310,7 @@ npm run sim -- --days 10
 ## 테스트
 
 ```bash
-npm test           # 유닛 테스트 63개. npm run build 에 묶여 있다
+npm test           # 유닛 테스트 92개. npm run build 에 묶여 있다
 ```
 
 `tests/` — 외부 의존성 없이 `node:test` + `tsx` 로 돈다.
@@ -322,9 +322,14 @@ npm test           # 유닛 테스트 63개. npm run build 에 묶여 있다
 | `economy.test.ts` | 등비 비용 합 · 최대 구매 개수 · 마일스톤 상한 · 오프라인 상한과 음수 시간 |
 | `city.test.ts` | 시작 데드락 방지(기본 인구/전력) · 시설 게이트 · 숫자 표기 · 도감 키 |
 | `ko.test.ts` | 한국어 조사 — 자원 이름이 시대마다 바뀌므로 을/를·으로/로를 계산한다 |
+| `persist.test.ts` | 실제 저장 경로 — localStorage · 체크섬 · 백업 복구 · wipe |
+| `lategame.test.ts` | 전 시대 × 만렙에서 NaN/Infinity 가 안 새는가 |
+| `minigames.test.ts` | 미니게임 5종을 헤드리스로 30초씩 굴린다 |
 
-여기서 실제로 버그 하나를 잡았다 — `formatNumber(999999)` 가 **`1000K`** 로 나왔다.
-반올림 자리 넘김 처리가 없어서다. 지금은 `1M`.
+여기서 실제로 버그 셋을 잡았다:
+- `formatNumber(999999)` 가 **`1000K`** 로 나왔다 (반올림 자리 넘김 누락). 지금은 `1M`
+- 자금이 `Infinity` 면 Max 구매가 **레벨을 `Infinity` 로** 만들었다. 세이브가 끝난다
+- 자금이 `NaN` 이면 `cash < cost` 가 false 라 **공짜로 사졌다**. `canAfford()` 로 통일
 
 ### 스모크 (실기기 해상도)
 

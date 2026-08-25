@@ -80,5 +80,4 @@ export function requiredSprites(): SpriteSpec[] {
   return out;
 }
 
-export const REQUIRED_KEYS = requiredSprites().filter((s) => !s.optional).map((s) => s.key);
-export const OPTIONAL_KEYS = requiredSprites().filter((s) => s.optional).map((s) => s.key);
+// 목록은 tools/art-check.mjs 가 requiredSprites() 로 직접 뽑아 쓴다.

@@ -29,12 +29,7 @@ export interface ArtManifest {
 
 const images = new Map<string, HTMLImageElement>();
 let manifest: ArtManifest = { sprites: {} };
-let loaded = false;
 let missingLogged = new Set<string>();
-
-export function artLoaded(): boolean {
-  return loaded;
-}
 
 export function manifestSize(): number {
   return Object.keys(manifest.sprites).length;
@@ -63,7 +58,6 @@ export async function loadArt(base = './art/'): Promise<void> {
         }),
     ),
   );
-  loaded = true;
 }
 
 export function hasSprite(key: string): boolean {
@@ -157,10 +151,6 @@ export function placeholder(
   ctx.font = `${fs * 0.85}px system-ui, sans-serif`;
   ctx.fillText('art 없음', cx, cy - bh / 2 + fs * 1.1);
   ctx.textAlign = 'left';
-}
-
-export function missingKeys(required: string[]): string[] {
-  return required.filter((k) => !images.has(k));
 }
 
 /** 평면(비아이소) 화면용 스프라이트. 바닥 중앙 기준 */

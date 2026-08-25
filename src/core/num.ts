@@ -82,14 +82,31 @@ export function geometricCost(base: number, growth: number, ownedLevel: number, 
   return (first * (Math.pow(growth, count) - 1)) / (growth - 1);
 }
 
-/** 주어진 예산으로 살 수 있는 최대 개수 */
+/**
+ * 주어진 예산으로 살 수 있는 최대 개수.
+ *
+ * 유한한 값만 돌려준다. 예산이 Infinity/NaN 이면 0 이다 —
+ * 그대로 흘리면 유닛 레벨이 Infinity 가 되어 세이브가 영구히 망가진다.
+ * (자금이 무한대인 상태는 이미 비정상이므로 '살 수 없다' 가 안전한 답이다)
+ */
 export function maxAffordable(base: number, growth: number, ownedLevel: number, budget: number): number {
-  if (budget <= 0) return 0;
+  if (!Number.isFinite(budget) || budget <= 0) return 0;
   const first = base * Math.pow(growth, ownedLevel);
-  if (budget < first) return 0;
+  if (!Number.isFinite(first) || first <= 0 || budget < first) return 0;
   if (growth === 1) return Math.floor(budget / first);
   const n = Math.log((budget * (growth - 1)) / first + 1) / Math.log(growth);
+  if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.floor(n + 1e-9));
+}
+
+/**
+ * 결제 가능 판정. 모든 구매가 이걸 통과해야 한다.
+ *
+ * `보유 < 비용` 만 보면 안 된다 — 보유가 NaN 이면 비교가 false 라 **공짜로 사진다**.
+ * 보유가 Infinity 인 상태도 이미 비정상이므로 막는다.
+ */
+export function canAfford(have: number, cost: number): boolean {
+  return Number.isFinite(have) && Number.isFinite(cost) && cost >= 0 && have >= cost;
 }
 
 export function clamp(v: number, lo: number, hi: number): number {

@@ -1,4 +1,9 @@
-/** 캔버스 공통 유틸. 에셋 없이 코드로만 그린다(1인 개발 · 용량 · 광고 소재 재활용). */
+/**
+ * 미니게임용 캔버스 유틸.
+ *
+ * 도시 화면의 그림은 전부 public/art 의 스프라이트에서 온다. 여기서 코드로 그리는 건
+ * **미니게임 안쪽뿐**이다 — 추상 미니게임이라 스프라이트를 쓰지 않는다.
+ */
 
 export interface Ctx2D extends CanvasRenderingContext2D {}
 
@@ -16,19 +21,6 @@ export function fitCanvas(canvas: HTMLCanvasElement, cssW: number, cssH: number)
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
   return ctx;
-}
-
-export const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
-export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-/** 0→1→0 왕복 */
-export const pingpong = (t: number) => 1 - Math.abs(1 - 2 * (t % 1));
-
-export function seeded(seed: number): () => number {
-  let s = (seed || 1) >>> 0;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
 }
 
 export function rr(ctx: Ctx2D, x: number, y: number, w: number, h: number, r: number): void {
@@ -128,29 +120,6 @@ export function person(ctx: Ctx2D, x: number, y: number, h: number, o: PersonOpt
 }
 
 /** 헬멧 쓴 광부 */
-export function miner(ctx: Ctx2D, x: number, y: number, h: number, o: PersonOpts = {}): void {
-  person(ctx, x, y, h, { body: '#f4a261', ...o });
-  ctx.fillStyle = '#ffd166';
-  ctx.beginPath();
-  ctx.arc(x, y - h + h * 0.18, h * 0.21, Math.PI, Math.PI * 2);
-  ctx.fill();
-}
-
-export function sparkle(ctx: Ctx2D, x: number, y: number, r: number, color: string, alpha = 1): void {
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  for (let i = 0; i < 4; i++) {
-    const a = (i / 4) * Math.PI * 2;
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
-    ctx.lineTo(x + Math.cos(a + 0.5) * r * 0.35, y + Math.sin(a + 0.5) * r * 0.35);
-  }
-  ctx.fill();
-  ctx.restore();
-}
-
 export function vGradient(ctx: Ctx2D, y0: number, y1: number, c0: string, c1: string): CanvasGradient {
   const g = ctx.createLinearGradient(0, y0, 0, y1);
   g.addColorStop(0, c0);

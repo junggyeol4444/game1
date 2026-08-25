@@ -80,10 +80,6 @@ export function piggyReady(state: GameState): boolean {
   return piggyVisible(state) && state.shop.piggyValue >= PIGGY_GOAL;
 }
 
-export function piggyProgress(state: GameState): number {
-  return Math.min(1, state.shop.piggyValue / PIGGY_GOAL);
-}
-
 export interface PurchaseProvider {
   readonly name: string;
   purchase(sku: string): Promise<boolean>;
@@ -100,10 +96,6 @@ export class StubPurchaseProvider implements PurchaseProvider {
   async restore(): Promise<string[]> {
     return [];
   }
-}
-
-export function productById(id: IapId): IapProduct {
-  return IAP_PRODUCTS.find((p) => p.id === id)!;
 }
 
 export interface PurchaseGrant {

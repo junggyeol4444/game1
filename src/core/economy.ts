@@ -165,20 +165,11 @@ export function autoFactor(state: GameState, id: BusinessId, index: number, now 
   return 0;
 }
 
-export function isAutomated(state: GameState, id: BusinessId, index: number, now = Date.now()): boolean {
-  return autoFactor(state, id, index, now) > 0;
-}
-
 export function automationStage(state: GameState, id: BusinessId, index: number): 1 | 2 | 3 | 4 {
   const u = state.businesses[id].units[index];
   if (u.manager) return bpLevel(state, 'overclock') > 0 ? 4 : 3;
   if (u.equip) return 2;
   return 1;
-}
-
-/** 인구가 모자라 멈춘 유닛인가 */
-export function isUnderstaffed(state: GameState, id: BusinessId, index: number): boolean {
-  return index >= staffed(state, id);
 }
 
 // ── 자원 사슬 ───────────────────────────────────────────────

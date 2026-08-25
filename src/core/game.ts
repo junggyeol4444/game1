@@ -44,6 +44,7 @@ import {
   legacyOnAdvance,
   nextEra,
 } from './progression';
+import { canAfford } from './num';
 import { deviceTime, load, now, save, setTimeSource } from './save';
 import { todayKey } from './state';
 import type { BusinessDef, BusinessId, GameState, OfflineReport } from './types';
@@ -193,7 +194,7 @@ export class Game {
     const u = this.state.businesses[id].units[index];
     if (u.unlocked) return false;
     const cost = unitUnlockCost(this.state, def, index);
-    if (this.state.resources.cash < cost) return false;
+    if (!canAfford(this.state.resources.cash, cost)) return false;
     this.state.resources.cash -= cost;
     u.unlocked = true;
     u.level = 1;
@@ -213,7 +214,7 @@ export class Game {
     const count = this.buyMode === 'max' ? unitMaxAffordable(this.state, def, index) : this.buyMode;
     if (count <= 0) return false;
     const cost = unitCost(this.state, def, index, count);
-    if (this.state.resources.cash < cost) return false;
+    if (!canAfford(this.state.resources.cash, cost)) return false;
     this.state.resources.cash -= cost;
     const before = u.level;
     u.level += count;
@@ -232,7 +233,7 @@ export class Game {
     const u = this.state.businesses[id].units[index];
     if (u.equip || u.manager || !u.unlocked) return false;
     const cost = equipCost(this.state, def, index);
-    if (this.state.resources.cash < cost) return false;
+    if (!canAfford(this.state.resources.cash, cost)) return false;
     this.state.resources.cash -= cost;
     u.equip = true;
     sfx('equip');
@@ -247,7 +248,7 @@ export class Game {
     const u = this.state.businesses[id].units[index];
     if (u.manager || !u.unlocked) return false;
     const cost = managerCost(this.state, def, index);
-    if (this.state.resources.cash < cost) return false;
+    if (!canAfford(this.state.resources.cash, cost)) return false;
     this.state.resources.cash -= cost;
     u.manager = true;
     sfx('manager');
@@ -264,7 +265,7 @@ export class Game {
     if (bs.hoistLevel >= HOIST_LEVELS.length) return false;
     const cost = hoistCost(this.state, id);
     const gems = hoistGemCost(this.state, id);
-    if (this.state.resources.cash < cost || this.state.resources.gem < gems) return false;
+    if (!canAfford(this.state.resources.cash, cost) || !canAfford(this.state.resources.gem, gems)) return false;
     this.state.resources.cash -= cost;
     this.state.resources.gem -= gems;
     bs.hoistLevel += 1;
@@ -304,7 +305,7 @@ export class Game {
   buyOfflineCap(): boolean {
     const lv = this.state.city.capLevel;
     const cost = offlineUpgradeCost(lv);
-    if (lv >= 5 || this.state.resources.material < cost) return false;
+    if (lv >= 5 || !canAfford(this.state.resources.material, cost)) return false;
     this.state.resources.material -= cost;
     this.state.city.capLevel += 1;
     this.persist();
@@ -314,7 +315,7 @@ export class Game {
   buyOfflineEff(): boolean {
     const lv = this.state.city.effLevel;
     const cost = offlineUpgradeCost(lv);
-    if (lv >= 5 || this.state.resources.material < cost) return false;
+    if (lv >= 5 || !canAfford(this.state.resources.material, cost)) return false;
     this.state.resources.material -= cost;
     this.state.city.effLevel += 1;
     this.persist();

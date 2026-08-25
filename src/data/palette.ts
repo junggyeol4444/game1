@@ -78,5 +78,3 @@ export function alpha(hex: string, a: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-/** 아이소 박스 3면 밝기 */
-export const FACE = { top: 1.0, right: 0.84, left: 0.66 } as const;

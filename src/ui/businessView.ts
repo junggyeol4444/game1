@@ -22,7 +22,7 @@ import {
   unitMaxAffordable,
   unitUnlockCost,
 } from '../core/economy';
-import { formatClock, formatInt, formatNumber } from '../core/num';
+import { canAfford, formatClock, formatInt, formatNumber } from '../core/num';
 import type { Game, BuyMode } from '../core/game';
 import type { BusinessId } from '../core/types';
 import { h, haptic } from './dom';
@@ -109,7 +109,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       const u = game.state.businesses[id].units[i];
       const count = game.buyMode === 'max' ? unitMaxAffordable(game.state, def, i) : game.buyMode;
       const cost = u.unlocked ? unitCost(game.state, def, i, Math.max(1, count)) : unitUnlockCost(game.state, def, i);
-      if (game.state.resources.cash < cost) {
+      if (!canAfford(game.state.resources.cash, cost)) {
         sfx('deny');
         return showCashDropSheet(game);
       }
@@ -117,7 +117,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
     });
     lockBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (game.state.resources.cash < unitUnlockCost(game.state, def, i)) {
+      if (!canAfford(game.state.resources.cash, unitUnlockCost(game.state, def, i))) {
         sfx('deny');
         return showCashDropSheet(game);
       }
@@ -128,7 +128,7 @@ export function createBusinessView(game: Game, id: BusinessId): View {
       const u = game.state.businesses[id].units[i];
       if (u.manager) return;
       const cost = u.equip ? managerCost(game.state, def, i) : equipCost(game.state, def, i);
-      if (game.state.resources.cash < cost) {
+      if (!canAfford(game.state.resources.cash, cost)) {
         sfx('deny');
         return showCashDropSheet(game);
       }

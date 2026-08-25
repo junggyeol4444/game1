@@ -14,7 +14,7 @@ import {
   unitCost,
   unitMaxAffordable,
 } from '../src/core/economy';
-import { geometricCost, maxAffordable } from '../src/core/num';
+import { canAfford, geometricCost, maxAffordable } from '../src/core/num';
 import { createInitialState } from '../src/core/state';
 import { CONFIG } from '../src/data/config';
 import { BUSINESS_BY_ID } from '../src/data/businesses';
@@ -150,4 +150,30 @@ test('도시 레벨 요구 세수는 단조 증가한다', () => {
     assert.ok(cityRequirement(l) > cityRequirement(l - 1), `Lv.${l} 요구치가 이전보다 낮다`);
   }
   assert.equal(cityRequirement(1), 0);
+});
+
+test('비정상 예산으로는 아무것도 못 산다 (세이브 파손 방지)', () => {
+  for (const budget of [Infinity, NaN, -Infinity]) {
+    const n = maxAffordable(100, 1.07, 0, budget);
+    assert.equal(n, 0, `예산 ${budget} 에서 ${n} 개를 샀다`);
+  }
+  // 레벨이 너무 깊어 첫 비용이 오버플로해도 0
+  assert.equal(maxAffordable(100, 1.07, 100000, 1e300), 0);
+});
+
+test('보유가 NaN/Infinity 면 결제가 막힌다', () => {
+  assert.equal(canAfford(NaN, 10), false, 'NaN 이면 비교가 false 라 공짜로 사진다');
+  assert.equal(canAfford(Infinity, 10), false);
+  assert.equal(canAfford(100, NaN), false);
+  assert.equal(canAfford(100, Infinity), false);
+  assert.equal(canAfford(100, -5), false, '음수 비용으로 돈을 벌 수 있으면 안 된다');
+  assert.equal(canAfford(100, 100), true);
+  assert.equal(canAfford(99, 100), false);
+});
+
+test('자금이 NaN 이면 아무것도 못 산다', () => {
+  const s = fresh();
+  s.resources.cash = NaN;
+  const def = BUSINESS_BY_ID.mine;
+  assert.equal(canAfford(s.resources.cash, unitCost(s, def, 0)), false);
 });

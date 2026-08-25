@@ -19,10 +19,6 @@ export function activeEvent(state: GameState, target: string, now = Date.now()):
   return state.events.find((e) => e.target === target && e.until > now) ?? null;
 }
 
-export function hasActiveEvents(state: GameState, now = Date.now()): boolean {
-  return state.events.some((e) => e.until > now);
-}
-
 /**
  * 사고 / 도난.
  * 소방서·경찰서가 없으면 그냥 맞는다. 지으면 확률과 피해가 줄어든다.

@@ -5,8 +5,8 @@ import { buildableFacilities, builtFacilities, cityStats, facilityCost } from '.
 import { RARE_FISH, RARE_RIDES } from './minigames/games';
 
 import { IAP_PRODUCTS } from '../core/iap';
-import { formatDuration, formatInt, formatNumber } from '../core/num';
-import { totalCashPerSecond, offlineCapSeconds, offlineRate, offlineUpgradeCost, isUnlocked } from '../core/economy';
+import { canAfford, formatDuration, formatInt, formatNumber } from '../core/num';
+import { totalCashPerSecond, offlineCapSeconds, offlineRate, offlineUpgradeCost } from '../core/economy';
 import { legacyUpgradeCost, cityProgress, cityRequirement, legacyUpgradeList } from '../core/progression';
 import {
   LEGACY,
@@ -315,8 +315,8 @@ export function showEraSheet(game: Game): void {
                 h(
                   'button',
                   {
-                    disabled: maxed || s.resources.blueprint < cost,
-                    class: !maxed && s.resources.blueprint >= cost ? 'primary' : '',
+                    disabled: maxed || !canAfford(s.resources.blueprint, cost),
+                    class: !maxed && canAfford(s.resources.blueprint, cost) ? 'primary' : '',
                     onclick: () => {
                       if (game.buyLegacy(up.id)) renderShop();
                     },
@@ -587,10 +587,6 @@ export function showCashDropSheet(game: Game): void {
       h('button', { class: 'ghost wide', style: { marginTop: '6px' }, onclick: () => { hd.close(); showShopSheet(game); } }, '상점 보기'),
     ],
   });
-}
-
-export function unlockedBusinesses(state: GameState): BusinessDef[] {
-  return BUSINESSES.filter((b) => isUnlocked(state, b));
 }
 
 // ═══════════════ 미니게임 결과 ═══════════════
