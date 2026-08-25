@@ -29,7 +29,13 @@ export class AdMobProvider implements AdProvider {
   private mod: AdMobModule | null = null;
   private ready = new Set<AdPlacement>();
 
-  constructor(private ids: AdUnitIds) {}
+  /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용). 안 넣으면 init() 이 동적 import */
+  constructor(
+    private ids: AdUnitIds,
+    mod: AdMobModule | null = null,
+  ) {
+    this.mod = mod;
+  }
 
   async init(): Promise<boolean> {
     try {
@@ -67,7 +73,9 @@ export class AdMobProvider implements AdProvider {
       const res = await this.mod.AdMob.showRewardVideoAd();
       this.ready.delete(placement);
       void this.preload(placement);
-      return res && (res.amount ?? 0) >= 0 ? 'completed' : 'skipped';
+      // 보상을 실제로 받았을 때만 completed 다.
+      // `(res.amount ?? 0) >= 0` 은 항상 참이라, 광고를 닫아도 보상이 나갔다.
+      return (res?.amount ?? 0) > 0 ? 'completed' : 'skipped';
     } catch (e) {
       console.warn('광고 표시 실패', e);
       this.ready.delete(placement);

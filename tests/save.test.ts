@@ -75,7 +75,7 @@ test('망가진 세이브를 가져오면 null 이다', () => {
 });
 
 test('migrate: 시대 필드가 없는 옛 세이브는 석기 시대로 들어온다', () => {
-  const old = createInitialState(0) as Record<string, unknown>;
+  const old = createInitialState(0) as unknown as Record<string, unknown>;
   delete old.era;
   const m = migrate(old);
   assert.ok(m);
@@ -83,7 +83,7 @@ test('migrate: 시대 필드가 없는 옛 세이브는 석기 시대로 들어�
 });
 
 test('migrate: 튜토리얼 필드가 없는 옛 세이브는 튜토리얼을 다시 안 띄운다', () => {
-  const old = createInitialState(0) as Record<string, unknown>;
+  const old = createInitialState(0) as unknown as Record<string, unknown>;
   delete old.tutorial;
   const m = migrate(old);
   assert.ok(m);
@@ -91,7 +91,7 @@ test('migrate: 튜토리얼 필드가 없는 옛 세이브는 튜토리얼을 �
 });
 
 test('migrate: 시대 값이 범위를 벗어나면 잘린다', () => {
-  const bad = createInitialState(0) as Record<string, unknown>;
+  const bad = createInitialState(0) as unknown as Record<string, unknown>;
   bad.era = 999;
   assert.equal(migrate(bad)!.era, 8);
   bad.era = -5;

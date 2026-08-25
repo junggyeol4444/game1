@@ -474,7 +474,7 @@ export interface MinigameFx {
 `tests/` — `node:test` + `tsx`. 프레임워크 없이 `npm test` 로 돈다. `npm run build` 에 묶여 있어
 테스트가 깨지면 빌드가 안 나간다.
 
-149개. 우선순위는 **되돌릴 수 없는 것**이다.
+161개. 우선순위는 **되돌릴 수 없는 것**이다.
 
 | 파일 | 지키는 것 |
 |---|---|
@@ -489,6 +489,7 @@ export interface MinigameFx {
 | `loops.test.ts` | 이벤트(화재/도난) · 미션 · 출석 · 자원 사슬 |
 | `offline.test.ts` | 복귀 보상 — 2배 지급 · 광고 실패 · 중복 수령 · 세수 배율 |
 | `rewards.test.ts` | 출석 7일 순환 · 하루 1회 · 엘리베이터 보석 비용 |
+| `native.test.ts` | AdMob 보상 판정 · RevenueCat 결제/복원 실패 처리 |
 | `ko.test.ts` | 한국어 조사 — 자원 이름이 시대마다 바뀌므로 계산해야 한다 |
 
 ### 왜 이 순서인가
@@ -698,3 +699,33 @@ const MIGRATIONS: Record<number, (raw: RawSave) => void> = {
 다운그레이드했다는 뜻) 아는 척 고치는 게 더 위험하다. 경고만 남기고 읽을 수 있는 만큼만 읽는다.
 
 버전이 없는 옛 세이브는 v1 로 본다.
+
+
+### 8차 점검 — 네이티브 어댑터, 그리고 타입체크 구멍
+
+**타입체크가 `src` 만 보고 있었다.**
+
+```json
+"include": ["src"]
+```
+
+`tests/` 와 `tools/` 는 타입체크를 아예 안 받았다. 실제로 테스트 하나가
+`PurchaseProvider` 에 없는 `available()` 을 넘기고 있었는데 아무도 못 잡았다.
+`["src", "tests", "tools"]` 로 넓히니 **10개**가 나왔다. 전부 고쳤다.
+
+**AdMob 보상 판정이 항상 참이었다.**
+
+```ts
+return res && (res.amount ?? 0) >= 0 ? 'completed' : 'skipped';
+//              ^^^^^^^^^^^^^^^^^^^^ 0 >= 0 은 참. 광고를 닫아도 completed
+```
+
+보상 없이 닫으면 AdMob 은 `amount` 없이 돌아온다. 그런데 `?? 0` 뒤에 `>= 0` 이라
+**어떤 응답이든 completed** 였다. 유저는 광고를 건너뛰고 보상을 받고, AdMob 은 그
+노출에 돈을 안 준다. `> 0` 으로 고쳤다.
+
+**복원 실패가 예외로 새어 나갔다.** `res.customerInfo.allPurchased...` 를 무방비로
+읽어서, 네트워크가 끊기거나 응답 모양이 다르면 그대로 던진다. 감싸고 빈 목록을 돌려준다.
+
+어댑터에 모듈 주입 인자를 넣었다(`new AdMobProvider(ids, mod)`). 테스트용이자
+SDK 를 갈아끼울 때의 자리다. `init()` 동작은 그대로다.

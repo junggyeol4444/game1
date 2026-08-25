@@ -4,7 +4,6 @@
  */
 import { BUSINESSES } from '../src/data/businesses';
 import { FACILITIES, cityUnlockText } from '../src/data/buildings';
-import { CONFIG } from '../src/data/config';
 import { HOIST_LEVELS } from '../src/data/units';
 import {
   businessRatePerSecond,
@@ -44,7 +43,6 @@ const days = Number(args[args.indexOf('--days') + 1]) || 14;
 
 const state = createInitialState(0);
 let t = 0;
-const dt = 2;
 const marks: string[] = [];
 let seen = new Set<number>([1]);
 let legacyEarned = 0;

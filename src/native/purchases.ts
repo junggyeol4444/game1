@@ -21,7 +21,13 @@ export class RevenueCatProvider implements PurchaseProvider {
   readonly name = 'revenuecat';
   private mod: PurchasesModule | null = null;
 
-  constructor(private apiKey: string) {}
+  /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용) */
+  constructor(
+    private apiKey: string,
+    mod: PurchasesModule | null = null,
+  ) {
+    this.mod = mod;
+  }
 
   async init(): Promise<boolean> {
     try {
@@ -48,7 +54,13 @@ export class RevenueCatProvider implements PurchaseProvider {
 
   async restore(): Promise<string[]> {
     if (!this.mod) return [];
-    const res = await this.mod.Purchases.restorePurchases();
-    return res.customerInfo.allPurchasedProductIdentifiers ?? [];
+    try {
+      const res = await this.mod.Purchases.restorePurchases();
+      return res?.customerInfo?.allPurchasedProductIdentifiers ?? [];
+    } catch (e) {
+      // 복원 실패로 앱이 죽으면 안 된다. 빈 목록이 안전한 답이다
+      console.warn('구매 복원 실패', e);
+      return [];
+    }
   }
 }

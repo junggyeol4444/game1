@@ -132,7 +132,7 @@ test('저금통은 초반에 아예 안 보인다', () => {
 test('결제 실패하면 아무것도 안 준다', async () => {
   const { Game } = await import('../src/core/game');
   const g = new Game(provider());
-  g.purchases = { available: () => true, purchase: () => Promise.resolve(false) };
+  g.purchases = { name: 'test', purchase: () => Promise.resolve(false), restore: async () => [] };
   const before = { cash: g.state.resources.cash, bp: g.state.resources.blueprint };
   assert.equal(await g.purchase('starter'), false);
   assert.equal(g.state.resources.cash, before.cash, '결제 실패인데 자금이 나갔다');
@@ -144,7 +144,7 @@ test('결제 실패하면 아무것도 안 준다', async () => {
 test('결제 성공하면 지급되고 기록된다', async () => {
   const { Game } = await import('../src/core/game');
   const g = new Game(provider());
-  g.purchases = { available: () => true, purchase: () => Promise.resolve(true) };
+  g.purchases = { name: 'test', purchase: () => Promise.resolve(true), restore: async () => [] };
   const bp = g.state.resources.blueprint;
   assert.equal(await g.purchase('starter'), true);
   assert.ok(g.state.resources.blueprint > bp, '유산이 안 들어왔다');
@@ -156,7 +156,7 @@ test('결제 성공하면 지급되고 기록된다', async () => {
 test('광고 제거를 사면 광고 없이도 2배를 받는다', async () => {
   const { Game } = await import('../src/core/game');
   const g = new Game(provider('failed'));
-  g.purchases = { available: () => true, purchase: () => Promise.resolve(true) };
+  g.purchases = { name: 'test', purchase: () => Promise.resolve(true), restore: async () => [] };
   await g.purchase('adFree');
   assert.equal(g.state.shop.adFree, true);
   setTimeSource(deviceTime);
@@ -166,7 +166,7 @@ test('광고 제거를 사면 광고 없이도 2배를 받는다', async () => {
 async function buy(id: string) {
   const { Game } = await import('../src/core/game');
   const g = new Game(provider());
-  g.purchases = { available: () => true, purchase: () => Promise.resolve(true) };
+  g.purchases = { name: 'test', purchase: () => Promise.resolve(true), restore: async () => [] };
   g.state.city.level = 10;
   const before = {
     cash: g.state.resources.cash,
@@ -189,7 +189,7 @@ test('스타터 팩: 자금 + 유산 + 부스터', async () => {
 test('저금통: 지급하고 포인트를 비운다', async () => {
   const { Game } = await import('../src/core/game');
   const g = new Game(provider());
-  g.purchases = { available: () => true, purchase: () => Promise.resolve(true) };
+  g.purchases = { name: 'test', purchase: () => Promise.resolve(true), restore: async () => [] };
   g.state.city.level = 10;
   g.state.shop.piggyValue = 500;
   const bought = g.state.shop.piggyBought;
