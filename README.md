@@ -310,7 +310,7 @@ npm run sim -- --days 10
 ## 테스트
 
 ```bash
-npm test           # 유닛 테스트 130개. npm run build 에 묶여 있다
+npm test           # 유닛 테스트 144개. npm run build 에 묶여 있다
 ```
 
 `tests/` — 외부 의존성 없이 `node:test` + `tsx` 로 돈다.
@@ -328,6 +328,7 @@ npm test           # 유닛 테스트 130개. npm run build 에 묶여 있다
 | `monetize.test.ts` | 광고 쿨다운 · 실패 시 무보상 · 결제 실패 시 무지급 |
 | `loops.test.ts` | 이벤트(화재/도난) · 미션 · 출석 · 자원 사슬 |
 | `offline.test.ts` | 복귀 보상 — 2배 지급 · 광고 실패 · 중복 수령 · 세수 배율 |
+| `rewards.test.ts` | 출석 7일 순환 · 하루 1회 · 엘리베이터 보석 비용 |
 
 여기서 실제로 버그 셋을 잡았다:
 - `formatNumber(999999)` 가 **`1000K`** 로 나왔다 (반올림 자리 넘김 누락). 지금은 `1M`

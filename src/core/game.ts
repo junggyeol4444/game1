@@ -631,9 +631,13 @@ export class Game {
       case 'adFree':
         s.shop.adFree = true;
         break;
-      case 'redevelop':
-        s.resources.blueprint += Math.max(10, Math.floor(CONFIG.era.baseGain * 1.5));
+      case 'redevelop': {
+        // 보유와 누적 획득량을 같이 올린다. 다른 상품과 규칙을 맞춘다
+        const gain = Math.max(10, Math.floor(CONFIG.era.baseGain * 1.5));
+        s.resources.blueprint += gain;
+        s.prestige.blueprints += gain;
         break;
+      }
     }
   }
 

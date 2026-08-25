@@ -161,3 +161,63 @@ test('광고 제거를 사면 광고 없이도 2배를 받는다', async () => {
   assert.equal(g.state.shop.adFree, true);
   setTimeSource(deviceTime);
 });
+
+// ── 상품별 지급 ──
+async function buy(id: string) {
+  const { Game } = await import('../src/core/game');
+  const g = new Game(provider());
+  g.purchases = { available: () => true, purchase: () => Promise.resolve(true) };
+  g.state.city.level = 10;
+  const before = {
+    cash: g.state.resources.cash,
+    bp: g.state.resources.blueprint,
+    total: g.state.prestige.blueprints,
+    piggy: g.state.shop.piggyValue,
+  };
+  const okBuy = await g.purchase(id as never);
+  return { g, before, okBuy };
+}
+
+test('스타터 팩: 자금 + 유산 + 부스터', async () => {
+  const { g, before, okBuy } = await buy('starter');
+  assert.equal(okBuy, true);
+  assert.ok(g.state.resources.cash > before.cash, '자금이 안 늘었다');
+  assert.ok(g.state.resources.blueprint > before.bp, '유산이 안 늘었다');
+  assert.ok(g.state.businesses.mine.boostUntil > clock, '부스터가 안 붙었다');
+});
+
+test('저금통: 지급하고 포인트를 비운다', async () => {
+  const { Game } = await import('../src/core/game');
+  const g = new Game(provider());
+  g.purchases = { available: () => true, purchase: () => Promise.resolve(true) };
+  g.state.city.level = 10;
+  g.state.shop.piggyValue = 500;
+  const bought = g.state.shop.piggyBought;
+  await g.purchase('piggy');
+  assert.equal(g.state.shop.piggyValue, 0, '저금통이 안 비워졌다');
+  assert.equal(g.state.shop.piggyBought, bought + 1);
+});
+
+test('광고 제거는 재구매 목록에 안 남는다', async () => {
+  const { g } = await buy('adFree');
+  assert.equal(g.state.shop.adFree, true);
+  assert.ok(g.state.shop.purchases.includes('adFree'));
+});
+
+test('유산 팩도 누적 획득량에 잡힌다', async () => {
+  const { g, before } = await buy('redevelop');
+  assert.ok(g.state.resources.blueprint > before.bp, '유산이 안 들어왔다');
+  assert.ok(
+    g.state.prestige.blueprints > before.total,
+    '보유는 늘었는데 누적 획득량(total_blueprint_earned)이 그대로다',
+  );
+});
+
+test('유산을 주는 상품은 보유와 누적이 같은 폭으로 오른다', async () => {
+  for (const id of ['starter', 'piggy', 'redevelop']) {
+    const { g, before } = await buy(id);
+    const dHave = g.state.resources.blueprint - before.bp;
+    const dTotal = g.state.prestige.blueprints - before.total;
+    assert.equal(dTotal, dHave, `${id}: 보유 +${dHave} 인데 누적은 +${dTotal}`);
+  }
+});
