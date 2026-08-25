@@ -310,7 +310,7 @@ npm run sim -- --days 10
 ## 테스트
 
 ```bash
-npm test           # 유닛 테스트 92개. npm run build 에 묶여 있다
+npm test           # 유닛 테스트 104개. npm run build 에 묶여 있다
 ```
 
 `tests/` — 외부 의존성 없이 `node:test` + `tsx` 로 돈다.
@@ -325,6 +325,7 @@ npm test           # 유닛 테스트 92개. npm run build 에 묶여 있다
 | `persist.test.ts` | 실제 저장 경로 — localStorage · 체크섬 · 백업 복구 · wipe |
 | `lategame.test.ts` | 전 시대 × 만렙에서 NaN/Infinity 가 안 새는가 |
 | `minigames.test.ts` | 미니게임 5종을 헤드리스로 30초씩 굴린다 |
+| `monetize.test.ts` | 광고 쿨다운 · 실패 시 무보상 · 결제 실패 시 무지급 |
 
 여기서 실제로 버그 셋을 잡았다:
 - `formatNumber(999999)` 가 **`1000K`** 로 나왔다 (반올림 자리 넘김 누락). 지금은 `1M`
@@ -342,6 +343,8 @@ node tools/smoke.mjs http://localhost:4173/
 Playwright로 390×844에서 실제로 눌러 본다 — 튜토리얼 7단계를 지시대로 완주하고,
 미니게임을 한 판 돌려 성적표를 확인하고, 문명 전환까지 하고, 콘솔 에러를 잡는다.
 단계마다 `/tmp/shots/*.png` 를 남긴다.
+글자 크기 1.3(55+ 대응)에서 **가로 넘침 · 줄바꿈 · 버튼이 글자를 덮는지**를 재고,
+시트/건물/코인을 20번씩 돌려 DOM 노드가 쌓이는지 본다.
 
 디버그 콘솔:
 ```js

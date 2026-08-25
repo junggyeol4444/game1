@@ -48,8 +48,16 @@ export class AdService {
   cooldownRemaining(placement: AdPlacement): number {
     const cd = CONFIG.ads.cooldowns[placement] ?? 0;
     if (cd <= 0) return 0;
-    const last = this.state().adCooldowns[placement] ?? 0;
-    return Math.max(0, cd - (now() - last) / 1000);
+    const s = this.state();
+    const t = now();
+    const last = s.adCooldowns[placement] ?? 0;
+    // 기기 시계를 뒤로 돌리면 last 가 미래가 된다. 그대로 두면 쿨다운이 몇 시간으로
+    // 늘어나 광고가 잠긴다(유저 손해). 미래 기록은 지금으로 당겨 스스로 낫게 한다.
+    if (last > t) {
+      s.adCooldowns[placement] = t;
+      return cd;
+    }
+    return Math.max(0, cd - (t - last) / 1000);
   }
 
   isAvailable(placement: AdPlacement): boolean {

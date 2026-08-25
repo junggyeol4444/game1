@@ -202,6 +202,109 @@ const afterEra = await page.evaluate(() => ({
 }));
 console.log('문명 전환 후:', JSON.stringify(afterEra), '| 도착 시트:', (eraName || '').trim());
 
+// 글자 크기 '아주 크게'(1.3) — 55+ 코호트 대응. 가로 넘침을 실제로 잰다
+await settle();
+await page.evaluate(() => {
+  window.game.state.settings.textScale = 1.3;
+  window.game.emit('structure');
+});
+await page.waitForTimeout(600);
+await shot('18-scale-city');
+
+async function overflow(label) {
+  return page.evaluate((lb) => {
+    const bad = [];
+    const vw = document.documentElement.clientWidth;
+    if (document.documentElement.scrollWidth > vw + 1) {
+      bad.push(`문서 가로 넘침 ${document.documentElement.scrollWidth} > ${vw}`);
+    }
+    for (const el of document.querySelectorAll('button, .card, .chip, .top-res, .quick, .floor, .sheet')) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      if (r.right > vw + 1 || r.left < -1) {
+        bad.push(`${lb}: ${el.className || el.tagName} 이 화면 밖 (left=${Math.round(r.left)} right=${Math.round(r.right)})`);
+      }
+      // 글자가 잘렸는가
+      if (el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflowX === 'visible') {
+        bad.push(`${lb}: ${el.className || el.tagName} 글자 잘림 (${el.scrollWidth} > ${el.clientWidth})`);
+      }
+    }
+    // 한 줄이어야 하는 것이 두 줄로 깨졌는가
+    for (const sel of ['.top-rate', '.top-res b', '.floor-lv']) {
+      for (const el of document.querySelectorAll(sel)) {
+        if (el.getClientRects().length > 1) bad.push(`${lb}: ${sel} 이 두 줄로 깨졌다`);
+      }
+    }
+    // 버튼이 글자를 덮었는가
+    const hit = (a, b) => a.right > b.left + 2 && a.left < b.right - 2 && a.bottom > b.top + 2 && a.top < b.bottom - 2;
+    for (const row of document.querySelectorAll('.floor')) {
+      const info = row.querySelector('.floor-info');
+      for (const btn of row.querySelectorAll('button')) {
+        const br = btn.getBoundingClientRect();
+        if (br.width === 0) continue;
+        if (info && hit(info.getBoundingClientRect(), br)) {
+          bad.push(`${lb}: ${btn.className} 버튼이 층 정보를 덮는다`);
+        }
+      }
+    }
+    return bad.slice(0, 8);
+  }, label);
+}
+
+const scaleIssues = [];
+scaleIssues.push(...(await overflow('도시')));
+await goto('mine');
+await page.waitForTimeout(600);
+await shot('19-scale-mine');
+scaleIssues.push(...(await overflow('광산')));
+await back();
+await settle(); await menu(2).click(); await page.waitForTimeout(500);
+await shot('20-scale-level');
+scaleIssues.push(...(await overflow('레벨 시트')));
+await dismiss();
+console.log(scaleIssues.length ? '글자 1.3 문제:\n  ' + scaleIssues.join('\n  ') : '글자 1.3: 넘침 없음');
+await page.evaluate(() => {
+  window.game.state.settings.textScale = 1;
+  window.game.emit('structure');
+});
+await settle();
+
+// 메모리 누수: DOM 노드가 계속 쌓이는가
+await settle();
+const nodeCount = () => page.evaluate(() => document.querySelectorAll('*').length);
+const base = await nodeCount();
+
+// 시트를 20번 열고 닫는다 (매번 새 DOM 을 만든다)
+for (let i = 0; i < 20; i++) {
+  await menu(2).click().catch(() => {});
+  await page.waitForTimeout(90);
+  await dismiss();
+}
+await settle();
+const afterSheets = await nodeCount();
+
+// 건물을 20번 드나든다 (뷰는 캐시된다)
+for (let i = 0; i < 20; i++) {
+  await goto(i % 2 ? 'mine' : 'housing');
+  await page.waitForTimeout(70);
+}
+await back();
+await settle();
+const afterViews = await nodeCount();
+
+// 코인 연출을 20번 터뜨린다 (DOM 을 만들고 타이머로 지운다)
+await page.evaluate(() => { for (let i = 0; i < 20; i++) window.game.grantCash(1000); });
+await page.waitForTimeout(1800);
+const afterCoins = await nodeCount();
+
+const leak = [];
+if (afterSheets > base + 30) leak.push(`시트 20회: ${base} -> ${afterSheets}`);
+if (afterViews > afterSheets + 400) leak.push(`건물 20회: ${afterSheets} -> ${afterViews}`);
+if (afterCoins > afterViews + 30) leak.push(`코인 20회: ${afterViews} -> ${afterCoins}`);
+console.log(leak.length
+  ? '누수 의심:\n  ' + leak.join('\n  ')
+  : `누수 없음 (노드 ${base} -> ${afterSheets} -> ${afterViews} -> ${afterCoins})`);
+
 // 오프라인 복귀
 await page.evaluate(() => {
   const g = window.game;
