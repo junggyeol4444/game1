@@ -269,6 +269,45 @@ await page.evaluate(() => {
 });
 await settle();
 
+// 프레임 시간 — 저사양 안드로이드가 대상이라 여유가 필요하다
+async function frameStats(label, seconds = 3) {
+  return page.evaluate(
+    ([lb, secs]) =>
+      new Promise((resolve) => {
+        const d = [];
+        let last = performance.now();
+        const t0 = last;
+        const tick = (now) => {
+          d.push(now - last);
+          last = now;
+          if (now - t0 < secs * 1000) requestAnimationFrame(tick);
+          else {
+            d.shift(); // 첫 프레임은 측정 시작 오차
+            d.sort((a, b) => a - b);
+            const avg = d.reduce((a, b) => a + b, 0) / d.length;
+            resolve({ label: lb, n: d.length, avg, p95: d[Math.floor(d.length * 0.95)], max: d[d.length - 1] });
+          }
+        };
+        requestAnimationFrame(tick);
+      }),
+    [label, seconds],
+  );
+}
+
+await settle();
+const perf = [];
+perf.push(await frameStats('도시 지도'));
+await goto('mine');
+await page.waitForTimeout(500);
+perf.push(await frameStats('광산 12층'));
+await back();
+await settle();
+const slow = perf.filter((p) => p.p95 > 33);
+for (const p of perf) {
+  console.log(`프레임 ${p.label}: 평균 ${p.avg.toFixed(1)}ms · p95 ${p.p95.toFixed(1)}ms · 최대 ${p.max.toFixed(1)}ms (${p.n}프레임)`);
+}
+if (slow.length) console.log('  ⚠ p95 가 33ms(30fps) 를 넘는 화면: ' + slow.map((p) => p.label).join(', '));
+
 // 메모리 누수: DOM 노드가 계속 쌓이는가
 await settle();
 const nodeCount = () => page.evaluate(() => document.querySelectorAll('*').length);

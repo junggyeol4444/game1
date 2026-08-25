@@ -140,3 +140,16 @@ npm run dev
 ```
 
 등록 안 된 키는 콘솔에 `[art] 스프라이트 없음: buildings/mine_2` 로 찍힌다.
+
+`npm run art:check` 는 manifest 자체도 검사한다. 아트를 넣고 **"왜 회색 상자만 나오지"**
+하는 원인 대부분이 여기다:
+
+```
+❓ buildings/mine1 — 게임이 안 쓰는 키입니다 (오타?)
+⚠ ground/grass — 'file' 이 비어 있습니다
+⚠ props/tree — 파일이 없습니다: public/art/props/tree.png
+⚠ props/tree — anchorY 가 범위를 벗어났습니다: 5 (0~1)
+❌ manifest.json 을 읽지 못했습니다: Unexpected end of JSON input
+```
+
+키 오타는 게임 쪽에서 조용히 플레이스홀더가 되므로 여기서 안 잡으면 못 찾는다.
