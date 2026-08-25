@@ -15,6 +15,7 @@ import {
   managerCost,
   offlineUpgradeCost,
   projectedEfficiency,
+  stats,
   tickBusinesses,
   totalCashPerSecond,
   unitCost,
@@ -375,8 +376,11 @@ export class Game {
       const ok = this.state.shop.adFree ? true : await this.watchAd('dailyDouble');
       if (ok) {
         this.grantCash(report.cash);
-        this.state.city.taxRun += report.cash * CONFIG.taxRate;
-        this.state.city.taxTotal += report.cash * CONFIG.taxRate;
+        // 세수는 기본 정산(computeOffline)과 같은 식으로 잡아야 한다.
+        // 시설 배율을 빼먹으면 2배로 받은 쪽만 도시 경험치가 덜 들어온다.
+        const tax = report.cash * CONFIG.taxRate * stats(this.state).taxMult;
+        this.state.city.taxRun += tax;
+        this.state.city.taxTotal += tax;
       }
     }
     this.pendingOffline = null;

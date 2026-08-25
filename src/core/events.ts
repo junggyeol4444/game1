@@ -1,6 +1,7 @@
 import { BUSINESSES } from '../data/businesses';
 import { CONFIG } from '../data/config';
 import { isUnlocked, stats, totalCashPerSecond } from './economy';
+import { bizName } from './era';
 import type { BusinessId, CityEvent, GameState } from './types';
 
 export interface EventNotice {
@@ -44,7 +45,7 @@ export function tickEvents(state: GameState, now = Date.now()): EventNotice[] {
   const pool = candidates(state);
   if (pool.length === 0) return notices;
   const target = pool[Math.floor(Math.random() * pool.length)];
-  const def = BUSINESSES.find((b) => b.id === target)!;
+  const name = bizName(state, target);
 
   if (Math.random() < 0.55) {
     // 화재
@@ -56,15 +57,18 @@ export function tickEvents(state: GameState, now = Date.now()): EventNotice[] {
       until: now + C.fireSeconds * 1000,
       severity: C.fireSeverity,
     });
-    notices.push({ kind: 'fire', target, text: `🔥 ${def.name}에 화재! 소방차 출동` });
+    notices.push({ kind: 'fire', target, text: `🔥 ${name}에 화재! 소방차 출동` });
   } else {
     // 도난
     if (Math.random() < cs.lossPrevent) {
-      notices.push({ kind: 'blocked', target, text: `👮 ${def.name} 도난 시도를 경찰이 차단했습니다` });
+      notices.push({ kind: 'blocked', target, text: `👮 ${name} 도난 시도를 경찰이 차단했습니다` });
       return notices;
     }
     const loss = totalCashPerSecond(state, now) * C.theftSeconds * (1 - cs.lossPrevent);
-    const taken = Math.min(state.resources.cash, loss);
+    // 수입이 비정상이면 훔칠 것도 없다. NaN 을 자금에 흘리면 세이브가 망가진다
+    const taken = Number.isFinite(loss) && Number.isFinite(state.resources.cash)
+      ? Math.max(0, Math.min(state.resources.cash, loss))
+      : 0;
     state.resources.cash -= taken;
     state.events.push({
       id: `theft-${now}`,
@@ -73,7 +77,7 @@ export function tickEvents(state: GameState, now = Date.now()): EventNotice[] {
       until: now + 20_000,
       severity: 0,
     });
-    notices.push({ kind: 'theft', target, text: `🚨 ${def.name} 도난 발생` });
+    notices.push({ kind: 'theft', target, text: `🚨 ${name} 도난 발생` });
   }
   return notices;
 }
