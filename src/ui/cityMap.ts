@@ -11,6 +11,7 @@ import {
   isWaterTile,
   terrainStage,
   type BuildingId,
+  type Lot,
 } from '../data/buildings';
 import { CONFIG } from '../data/config';
 import { alpha, shade } from '../data/palette';
@@ -162,12 +163,27 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
   }
 
   /** 도시 전체가 가로로 들어오는 배율 */
+  /** 도시 전체가 가로로 딱 들어가는 배율 */
   function fitZoom(): number {
     const b = bounds();
     return viewW() / (b.maxX - b.minX);
   }
   function minZoom(): number {
     return fitZoom() * 0.85;
+  }
+  /**
+   * 처음 보여줄 배율.
+   *
+   * 2:1 아이소라서 어떤 격자든 화면 비율이 항상 2:1 이다 — 세로로 긴 폰에서
+   * "도시 전체를 한 화면에" 를 지키면 도시가 가운데 띠로 눌리고 위아래가 전부 들판이 된다
+   * (10x16 격자 = 화면 832x516, 세로 여백의 60%가 남았다).
+   * 그래서 시작은 **세로를 채우는 쪽**에 맞추고 좌우는 밀어서 본다.
+   * 전체를 보고 싶으면 손가락으로 오므리면 된다 — minZoom 은 그대로 두었다.
+   */
+  function startZoom(): number {
+    const b = bounds();
+    const fill = ((viewH() - UI_BOTTOM) * 0.65) / (b.maxY - b.minY);
+    return clamp(fill, fitZoom(), fitZoom() * 2.2);
   }
 
   function clampCam(): void {
@@ -263,6 +279,32 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     clampCam();
   }
 
+  /**
+   * 처음 화면을 어디에 맞출지.
+   *
+   * 전체가 한 화면에 안 들어오는 배율로 시작하니(startZoom 주석 참고) 격자 한가운데를
+   * 잡으면 초반엔 빈 부지만 보인다. 그래서 **지어진 건물들의 한가운데**를 잡는다.
+   * 아무것도 없으면 광산 — 튜토리얼이 가리키는 곳이고 처음 열리는 사업이다.
+   */
+  function startCenter(): void {
+    const built = ALL_IDS.filter((id) => buildingTier(game.state, id) > 0);
+    if (built.length === 0) {
+      focus('mine');
+      return;
+    }
+    let gx = 0;
+    let gy = 0;
+    for (const id of built) {
+      gx += LOTS[id].gx + LOTS[id].w / 2;
+      gy += LOTS[id].gy + LOTS[id].h / 2;
+    }
+    gx /= built.length;
+    gy /= built.length;
+    cam.x = (gx - gy) * (TW / 2);
+    cam.y = (gx + gy) * (TH / 2);
+    clampCam();
+  }
+
   function draw(t: number): void {
     const vw = viewW();
     const vh = viewH();
@@ -278,8 +320,8 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
 
     if (!started) {
       started = true;
-      cam.zoom = fitZoom() * 0.95;
-      clampCam();
+      cam.zoom = startZoom();
+      startCenter();
     }
     cam.zoom = Math.max(cam.zoom, minZoom());
     clampCam();
@@ -378,12 +420,72 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
       ctx.setLineDash([]);
     }
 
+    // 차량 · 시민 — 건물 사이에 깊이 순서대로 끼워 그린다.
+    //
+    // 예전엔 건물을 다 그린 뒤 몰아 그렸다. 배율이 낮을 땐 티가 안 났는데
+    // 지금 배율에선 차가 공중에 뜨고 사람이 지붕 위에 선다.
+    //
+    // 아이소에서 `gx + gy` 한 숫자로 정렬하는 흔한 방법은 여기서 안 통한다 —
+    // 멀리 떨어진 두 상자에는 그 합이 앞뒤를 뜻하지 않는다
+    // (세로 도로 gx=9 를 달리는 차는 합이 크지만 gy=1 의 건물보다 뒤에 있다).
+    // 축 정렬 상자끼리는 이 판정이 정확하다:
+    //   A 가 B 보다 뒤 <=> A 가 두 축 중 하나에서 B 보다 완전히 앞쪽에 끝난다.
+    // 건물을 뒤에서 앞으로 돌면서, **처음으로 자기보다 앞인 건물**을 만나기 직전에
+    // 프롭을 내보낸다. 그 앞의 건물들은 전부 그 프롭보다 뒤라는 게 보장된다.
+    interface Prop {
+      gx: number;
+      gy: number;
+      w: number;
+      drawn: boolean;
+      draw: () => void;
+    }
+    const props: Prop[] = [];
+    {
+      const nf = night ? 0.72 : 1;
+      const put = (gx: number, gy: number, w: number, key: string): void => {
+        props.push({
+          gx,
+          gy,
+          w,
+          drawn: false,
+          draw: () => drawAny(ctx, tileKeysFor(eraId, key), gx, gy, w, w, nf),
+        });
+      };
+      const cars = roadTier === 0 ? 2 : 2 + Math.min(6, roadTier);
+      for (let i = 0; i < cars; i++) {
+        const lane = (i % 4) * 3;
+        put(((t * 0.16 + i * 0.31) % 1) * GRID.cols - 0.4, lane + 0.1, 0.8, 'props/car_a');
+      }
+      // 세로 도로 (car_b 는 반대 방향을 보는 그림이다)
+      for (let i = 0; i < cars; i++) {
+        const lane = (i % 4) * 3;
+        put(lane + 0.1, ((t * 0.13 + i * 0.27) % 1) * GRID.rows - 0.4, 0.8, 'props/car_b');
+      }
+      const citizens = clamp(Math.round(2 + Math.log10(1 + st.city.pop) * 3), 2, 18);
+      for (let i = 0; i < citizens; i++) {
+        const row = (i % 5) * 3;
+        put(((t * 0.05 + i * 0.17) % 1) * GRID.cols - 0.3, row + 0.2, 0.6, 'props/citizen');
+      }
+    }
+    /** 프롭이 이 부지보다 뒤에 있나 */
+    const propBehind = (p: Prop, lot: Lot): boolean =>
+      p.gx + p.w <= lot.gx || p.gy + p.w <= lot.gy;
+    const flushProps = (lot: Lot | null): void => {
+      for (const p of props) {
+        if (p.drawn) continue;
+        if (lot && !propBehind(p, lot)) continue;
+        p.drawn = true;
+        p.draw();
+      }
+    };
+
     // 건물 (뒤 -> 앞)
     hitRects.clear();
     const sorted = [...ALL_IDS].sort((a, b) => LOTS[a].gx + LOTS[a].gy - (LOTS[b].gx + LOTS[b].gy));
     const labels: { id: BuildingId; x: number; y: number; unlocked: boolean; alert: BuildingAlert | null }[] = [];
     for (const id of sorted) {
       const lot = LOTS[id];
+      flushProps(lot);
       const tier = buildingTier(st, id);
       const dexKey = seenKey(eraId, id);
       if (tier > (st.collection.seenTiers[dexKey] ?? 0)) st.collection.seenTiers[dexKey] = tier;
@@ -439,25 +541,7 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
       labels.push({ id, x: lx, y: ly + 12 * cam.zoom, unlocked, alert });
     }
 
-    // 차량 · 시민
-    const cars = roadTier === 0 ? 2 : 2 + Math.min(6, roadTier);
-    for (let i = 0; i < cars; i++) {
-      const lane = (i % 4) * 3;
-      const q = ((t * 0.16 + i * 0.31) % 1) * GRID.cols;
-      drawAny(ctx, tileKeysFor(eraId, 'props/car_a'), q - 0.4, lane + 0.1, 0.8, 0.8, night ? 0.72 : 1);
-    }
-    // 세로 도로 (car_b 는 반대 방향을 보는 그림이다)
-    for (let i = 0; i < cars; i++) {
-      const lane = (i % 4) * 3;
-      const q = ((t * 0.13 + i * 0.27) % 1) * GRID.rows;
-      drawAny(ctx, tileKeysFor(eraId, 'props/car_b'), lane + 0.1, q - 0.4, 0.8, 0.8, night ? 0.72 : 1);
-    }
-    const citizens = clamp(Math.round(2 + Math.log10(1 + st.city.pop) * 3), 2, 18);
-    for (let i = 0; i < citizens; i++) {
-      const row = (i % 5) * 3;
-      const q = ((t * 0.05 + i * 0.17) % 1) * GRID.cols;
-      drawAny(ctx, tileKeysFor(eraId, 'props/citizen'), q - 0.3, row + 0.2, 0.6, 0.6, night ? 0.72 : 1);
-    }
+    flushProps(null);
 
     // 라벨 · 경고 (화면 좌표)
     ctx.textAlign = 'center';
