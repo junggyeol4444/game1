@@ -23,10 +23,10 @@ import type { Game } from '../core/game';
 import type { BusinessId, GameState } from '../core/types';
 import { h } from './dom';
 import { TH, TW, fit, project, type Cam } from './scene/iso';
-import { drawSprite, drawTileSprite, hasSprite, placeholder } from './art/assets';
+import { drawSprite, drawTileSprite, ensureEra, hasSprite, placeholder } from './art/assets';
 import { buildingKeysFor, tileKeysFor } from './art/keys';
 import { dustPuff } from './scene/burst';
-import { bizName, currentEra, eraPalette, facName, resourceName, seenKey } from '../core/era';
+import { bizName, currentEra, eraIndex, eraPalette, facName, resourceName, seenKey } from '../core/era';
 
 /** 도시 규모 이름은 시대마다 다르다 (석기 '큰 부족' ~ 우주 '성간 도시') */
 
@@ -329,6 +329,7 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     // 하늘
     const pal = eraPalette(st);
     const eraId = currentEra(st).id;
+    ensureEra(eraId);
     const skyTop = night ? shade(pal.skyTop, 0.5) : pal.skyTop;
     const skyBot = night ? shade(pal.sky, 0.62) : pal.sky;
     const g = ctx.createLinearGradient(0, 0, 0, vh);
@@ -451,7 +452,9 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
           draw: () => drawAny(ctx, tileKeysFor(eraId, key), gx, gy, w, w, nf),
         });
       };
-      const cars = roadTier === 0 ? 2 : 2 + Math.min(6, roadTier);
+      // 자동차는 산업혁명부터. 석기 시대 흙길에 세단이 굴러다니면 그림이 다 죽는다.
+      const motorised = eraIndex(st) >= 5;
+      const cars = motorised ? (roadTier === 0 ? 2 : 2 + Math.min(6, roadTier)) : 0;
       for (let i = 0; i < cars; i++) {
         const lane = (i % 4) * 3;
         put(((t * 0.16 + i * 0.31) % 1) * GRID.cols - 0.4, lane + 0.1, 0.8, 'props/car_a');
@@ -461,7 +464,9 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
         const lane = (i % 4) * 3;
         put(lane + 0.1, ((t * 0.13 + i * 0.27) % 1) * GRID.rows - 0.4, 0.8, 'props/car_b');
       }
-      const citizens = clamp(Math.round(2 + Math.log10(1 + st.city.pop) * 3), 2, 18);
+      // 차가 없는 시대는 사람이 그만큼 더 다닌다 — 안 그러면 길이 텅 빈다
+      const walkers = motorised ? 0 : 6;
+      const citizens = clamp(Math.round(2 + Math.log10(1 + st.city.pop) * 3), 2, 18) + walkers;
       for (let i = 0; i < citizens; i++) {
         const row = (i % 5) * 3;
         put(((t * 0.05 + i * 0.17) % 1) * GRID.cols - 0.3, row + 0.2, 0.6, 'props/citizen');

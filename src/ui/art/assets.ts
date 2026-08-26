@@ -43,7 +43,38 @@ export function manifestSize(): number {
   return Object.keys(manifest.sprites).length;
 }
 
+let artBase = './art/';
+const eraLoaded = new Set<string>();
+/** 공통 78장을 다 받았나. 시대 전용은 이게 끝난 다음에 받는다 */
+let baseReady = false;
+
+/** `buildings/stone/mine_1` -> 'stone'. 시대 전용이 아니면 null */
+function eraOf(key: string): string | null {
+  const parts = key.split('/');
+  return parts.length >= 3 ? parts[1] : null;
+}
+
+function loadOne(key: string, entry: SpriteEntry): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      images.set(key, img);
+      resolve();
+    };
+    img.onerror = () => resolve();
+    img.src = `${artBase}${entry.file}`;
+  });
+}
+
+/**
+ * 시대 공통 스프라이트만 미리 받는다.
+ *
+ * manifest 에는 시대 전용까지 574장이 들어 있다. 전부 받으면 첫 화면이 4MB 를 기다린다.
+ * 공통 78장만 먼저 받고, 시대 전용은 그 시대에 들어갈 때 받는다 (`ensureEra`).
+ * 아직 안 받았으면 `buildingKeysFor` 가 공통 키로 떨어지니 화면은 어차피 나온다.
+ */
 export async function loadArt(base = './art/'): Promise<void> {
+  artBase = base;
   try {
     const res = await fetch(`${base}manifest.json`, { cache: 'no-cache' });
     if (!res.ok) throw new Error(String(res.status));
@@ -52,21 +83,26 @@ export async function loadArt(base = './art/'): Promise<void> {
     manifest = { sprites: {} };
   }
   shaded.clear();
-  const entries = Object.entries(manifest.sprites ?? {});
-  await Promise.all(
-    entries.map(
-      ([key, entry]) =>
-        new Promise<void>((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            images.set(key, img);
-            resolve();
-          };
-          img.onerror = () => resolve();
-          img.src = `${base}${entry.file}`;
-        }),
-    ),
-  );
+  eraLoaded.clear();
+  images.clear();
+  const entries = Object.entries(manifest.sprites ?? {}).filter(([key]) => eraOf(key) === null);
+  baseReady = false;
+  await Promise.all(entries.map(([key, entry]) => loadOne(key, entry)));
+  baseReady = true;
+}
+
+/**
+ * 이 시대의 전용 스프라이트를 받아 둔다. 여러 번 불러도 한 번만 받는다.
+ *
+ * 공통 78장이 끝나기 전엔 시작하지 않는다 — 같이 던지면 연결을 나눠 쓰느라
+ * 공통본이 늦게 도착해서 첫 화면에 회색 상자가 잠깐 뜬다.
+ */
+export function ensureEra(eraId: string): void {
+  if (!baseReady || eraLoaded.has(eraId)) return;
+  eraLoaded.add(eraId);
+  for (const [key, entry] of Object.entries(manifest.sprites ?? {})) {
+    if (eraOf(key) === eraId && !images.has(key)) void loadOne(key, entry);
+  }
 }
 
 export function hasSprite(key: string): boolean {

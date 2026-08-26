@@ -12,7 +12,7 @@ npm run art:check -- --csv # 외주 발주용 CSV
 
 ## 1. 지금 상태
 
-**스프라이트 78 / 78. 전부 들어와 있다.** 플레이스홀더는 더 안 나온다.
+**시대 공통 78 / 78, 시대 전용 496 / 702. 전부 들어와 있다.** 플레이스홀더는 더 안 나온다.
 
 출처는 **Kenney CC0 아이소 팩** — `Isometric City`, `Isometric Buildings`,
 `Isometric Landscape`, `Isometric Vehicles`. 표기 의무 없이 상업적 사용이 된다.
@@ -34,6 +34,37 @@ npm run art:check          # 필수 78 / 78 확인
 
 사람 2종(`props/citizen`, `props/worker`)은 아이소 사람 팩이 없어서 직접 그렸다
 (`tools/art-build/people.mjs`, Chromium 캔버스).
+
+**시대별로 다른 건물.** 팩엔 현대 도시 모듈뿐이라, 같은 조리법을 시대마다 비틀어 뽑는다
+(`tools/art-build/eras.py`) — 층 수 상한, 부지에 채우는 칸 수, 지붕 모양, 벽/지붕 색.
+
+| 시대 | 층 상한 | 칸 | 지붕 | 느낌 |
+|---|---|---|---|---|
+| 석기 | 1 | 2 | 박공 | 흙바닥 위 낮은 오두막 |
+| 청동기 | 1 | 3 | 박공 | 흙바닥, 주황 지붕 |
+| 철기 | 2 | 3 | 박공 | 2층 석조 |
+| 중세 | 2 | 4 | 급경사 | 어두운 목조 |
+| 르네상스 | 3 | 4 | 급경사 | 밝은 회벽 + 붉은 기와 |
+| 산업혁명 | 4 | 4 | 회색 | 그을음 |
+| 근대 | 제한없음 | 4 | 평지붕 | **기본본** — 시대 전용을 안 만든다 |
+| 정보화 | 제한없음 | 4 | 평지붕 | 흰 벽 + 파란 평지붕 |
+| 우주 | 제한없음 | 4 | 평지붕 | 흰 벽 + 보라 평지붕 |
+
+한 시대만 다시 뽑으려면 인자로 준다 (전체는 20분 넘게 걸린다):
+
+```bash
+KENNEY_SRC=/tmp/kenney-src python3 tools/art-build/make.py medieval industrial
+```
+
+인자를 주면 `manifest.json` 은 건드리지 않는다 — 키 목록이 안 바뀌기 때문이다.
+
+**용량.** PNG 는 인덱스(256색)로 저장한다. 이 아트는 단색 면 위주라 색이 몇 개 안 되고,
+픽셀당 32비트가 8비트로 줄어 파일이 3~4배 작아진다 (RGBA 로 뽑으면 574장에 14MB,
+인덱스로 4.7MB). `png.py` 가 두 방식으로 다 압축해 보고 작은 쪽을 쓴다.
+
+**불러오기.** `loadArt()` 는 **시대 공통 78장만** 미리 받는다. 574장을 다 받으면
+첫 화면이 4MB 를 기다린다. 시대 전용은 그 시대 지도를 그릴 때 `ensureEra()` 가 받고,
+아직 안 받았으면 공통 키로 떨어져서 화면은 어차피 나온다.
 
 ---
 
@@ -96,7 +127,8 @@ npm run art:check          # 필수 78 / 78 확인
 | 바닥 타일 | 7 | `ground/{grass,grass_alt,dirt,road,road_line,water,empty}` |
 | 소품 | 5 | `props/{tree,car_a,car_b,citizen,worker}` |
 
-전부 들어와 있다. 바꾸고 싶으면 `tools/art-build/recipes.py` 를 고치고 `npm run art:build`.
+전부 들어와 있다. 바꾸고 싶으면 `tools/art-build/recipes.py`(모양) 또는
+`tools/art-build/eras.py`(시대별 변형)를 고치고 `npm run art:build`.
 
 ### 4-1. 시대 전용 변형 (선택)
 
@@ -113,9 +145,9 @@ ground/stone/grass          ← 타일·소품도 같은 규칙
 (`src/data/eras.ts`).
 
 - **필수는 시대 공통 78개뿐이다.** 이것만 있으면 9개 문명 전부 돌아간다.
-- 시대 전용은 702개(9 × 78)까지 열려 있지만 전부 그릴 필요는 없다.
-  체감이 큰 것부터 — `buildings/<시대>/{mine,housing,power}_*` 와 `ground/<시대>/grass` 정도면
-  문명이 바뀐 느낌이 난다. 나머지는 공통본이 받아준다.
+- 지금 496개가 들어와 있다: 8개 시대 × 건물 62개
+  (근대는 기본본이 곧 근대라 안 만들고, 도로·공원처럼 건물이 없는 단계도 공통본으로 충분하다).
+- 바닥·소품의 시대 전용은 아직 없다 — 공통본이 받아준다.
 - 목록: `npm run art:check --all`, 외주용 CSV 는 `npm run art:check -- --csv`.
 
 ---

@@ -4,6 +4,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from png import read_png
 import build as BD
 import recipes as R
+import eras as E
 
 SRC = BD.SRC
 OUT = BD.OUT
@@ -90,6 +91,34 @@ for fid, tiers in R.FACILITY.items():
     for t, p in enumerate(tiers, start=1):
         build_plan('buildings/%s_%d' % (fid, t), p, fid, t)
 
+# ---------- 시대 전용 변형 ----------
+# 없으면 게임이 공통 키로 자동 대체하므로, 여기서 만드는 건 전부 "있으면 더 좋은" 것이다.
+def build_era(era_id, style, key, plan, bid, tier):
+    slots = []
+    for i, j, floors, roof in E.restyle(plan, style, tier):
+        mods = [BD.colorize(BD.B(m), style['wall']) for m in floors]
+        mods.append(BD.colorize(BD.B(roof), style['roof']))
+        slots.append((i, j, mods))
+    used = {(i, j) for i, j, _ in slots}
+    n = TREES.get(bid, [])
+    count = n[tier - 1] if tier - 1 < len(n) else 0
+    decos = plant(sum(ord(c) for c in key) * 7919 + tier, count, used)
+    g = style['ground'] or plan['ground']
+    w, h, rgba, ay = BD.compose(grounds(g), slots, decos)
+    emit(key, w, h, rgba, ay)
+
+# 인자로 시대를 주면 그 시대만 다시 뽑는다 (전체는 20분 넘게 걸린다)
+_only = set(sys.argv[1:])
+for era_id, style in E.ERA_STYLE.items():
+    if _only and era_id not in _only:
+        continue
+    for src in (R.BUSINESS, R.FACILITY):
+        for bid, tiers in src.items():
+            for t, p in enumerate(tiers, start=1):
+                if not p['slots']:
+                    continue  # 도로/공원처럼 건물이 없는 단계는 공통본으로 충분하다
+                build_era(era_id, style, 'buildings/%s/%s_%d' % (era_id, bid, t), p, bid, t)
+
 # ---------- 바닥 타일 ----------
 def emit_tile(key, img):
     w, h, r = BD.pad_skirt(img, 101)
@@ -129,6 +158,9 @@ manifest = {
     'tileHeight': 66,
     'sprites': dict(sorted(sprites.items())),
 }
+if _only:
+    print(json.dumps({'rebuilt': sorted(_only), 'manifest': 'unchanged'}))
+    raise SystemExit(0)
 with open(os.path.join(OUT, 'manifest.json'), 'w', encoding='utf-8') as f:
     json.dump(manifest, f, ensure_ascii=False, indent=2)
     f.write('\n')

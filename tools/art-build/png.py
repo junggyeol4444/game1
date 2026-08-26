@@ -50,19 +50,113 @@ def read_png(path):
             rgba[idx*4+3]= trns[pi] if (trns and pi<len(trns)) else 255
     return w,h,rgba
 
-def write_png(path, w, h, rgba):
+def _filtered(w, h, rgba, adaptive):
+    """스캔라인 필터를 적용한 IDAT 원본 바이트."""
     raw = bytearray()
     stride = w*4
+    prev = bytes(stride)
     for y in range(h):
-        raw.append(0); raw += rgba[y*stride:(y+1)*stride]
+        line = rgba[y*stride:(y+1)*stride]
+        cands = []
+        # 0 = None
+        cands.append((0, bytes(line)))
+        # 1 = Sub
+        sub = bytearray(stride)
+        for x in range(stride):
+            sub[x] = (line[x] - (line[x-4] if x >= 4 else 0)) & 255
+        cands.append((1, bytes(sub)))
+        # 2 = Up
+        up = bytearray(stride)
+        for x in range(stride):
+            up[x] = (line[x] - prev[x]) & 255
+        cands.append((2, bytes(up)))
+        # 4 = Paeth
+        pae = bytearray(stride)
+        for x in range(stride):
+            a = line[x-4] if x >= 4 else 0
+            b = prev[x]
+            c = prev[x-4] if x >= 4 else 0
+            pp = a + b - c
+            pa, pb, pc = abs(pp-a), abs(pp-b), abs(pp-c)
+            pr = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+            pae[x] = (line[x] - pr) & 255
+        cands.append((4, bytes(pae)))
+        if adaptive:
+            # 최소 절대합 휴리스틱 (libpng 기본값과 같다)
+            best = min(cands, key=lambda c: sum(v if v < 128 else 256-v for v in c[1]))
+        else:
+            best = cands[0]
+        raw.append(best[0]); raw += best[1]
+        prev = bytes(line)
+    return bytes(raw)
+
+
+def _quantize(w, h, rgba, maxc=256):
+    """RGBA 를 색 인덱스로 바꾼다. 팔레트 밖의 색은 가장 가까운 색으로 붙인다."""
+    from collections import Counter
+    cnt = Counter()
+    for k in range(w * h):
+        cnt[bytes(rgba[k * 4:k * 4 + 4])] += 1
+    # 반투명한 색을 앞에 몰아 두면 tRNS 청크가 짧아진다
+    order = sorted(cnt.items(), key=lambda kv: (kv[0][3] == 255, -kv[1]))
+    pal = [c for c, _ in order[:maxc]]
+    idx_of = {c: i for i, c in enumerate(pal)}
+    if len(cnt) > maxc:
+        for c in cnt:
+            if c in idx_of:
+                continue
+            best, bd = 0, 1 << 30
+            for i, p in enumerate(pal):
+                d = (c[0]-p[0])**2 + (c[1]-p[1])**2 + (c[2]-p[2])**2 + ((c[3]-p[3])*3)**2
+                if d < bd:
+                    bd, best = d, i
+            idx_of[c] = best
+    data = bytearray(w * h)
+    for k in range(w * h):
+        data[k] = idx_of[bytes(rgba[k * 4:k * 4 + 4])]
+    return pal, data
+
+
+def write_png(path, w, h, rgba):
+    """
+    PNG 저장.
+
+    이 그림들은 넓은 단색 면이 많아서 필터를 안 쓰는 게 이길 때도, 쓰는 게 이길 때도 있다.
+    (평평한 면은 zlib 이 그대로 잘 먹고, 그라데이션은 필터가 크게 이긴다)
+    둘 다 압축해 보고 작은 쪽을 쓴다.
+    """
+    body = min(
+        zlib.compress(_filtered(w, h, rgba, False), 9),
+        zlib.compress(_filtered(w, h, rgba, True), 9),
+        key=len,
+    )
+    # 인덱스 PNG. 이 그림들은 단색 면 위주라 256색이면 충분하고, 픽셀당 32비트가
+    # 8비트로 줄어서 파일이 3~4배 작아진다.
+    pal, idx = _quantize(w, h, rgba)
+    iraw = bytearray()
+    for y in range(h):
+        iraw.append(0)
+        iraw += idx[y * w:(y + 1) * w]
+    ibody = zlib.compress(bytes(iraw), 9)
+    plte = b''.join(bytes(c[:3]) for c in pal)
+    alphas = bytes(c[3] for c in pal)
+    while alphas and alphas[-1] == 255:
+        alphas = alphas[:-1]
     def chunk(t, d):
         c = struct.pack('>I', len(d)) + t + d
         return c + struct.pack('>I', zlib.crc32(t+d) & 0xffffffff)
-    out = b'\x89PNG\r\n\x1a\n'
-    out += chunk(b'IHDR', struct.pack('>IIBBBBB', w,h,8,6,0,0,0))
-    out += chunk(b'IDAT', zlib.compress(bytes(raw), 9))
-    out += chunk(b'IEND', b'')
-    open(path,'wb').write(out)
+    rgba_png = (
+        b'\x89PNG\r\n\x1a\n'
+        + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0))
+        + chunk(b'IDAT', body)
+        + chunk(b'IEND', b'')
+    )
+    idx_png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 3, 0, 0, 0))
+    idx_png += chunk(b'PLTE', plte)
+    if alphas:
+        idx_png += chunk(b'tRNS', alphas)
+    idx_png += chunk(b'IDAT', ibody) + chunk(b'IEND', b'')
+    open(path, 'wb').write(min(rgba_png, idx_png, key=len))
 
 def bbox(w,h,rgba):
     x0,y0,x1,y1 = w,h,-1,-1

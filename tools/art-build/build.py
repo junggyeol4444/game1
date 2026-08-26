@@ -179,3 +179,27 @@ def recolor(img, mode):
         o[k * 4 + 1] = max(0, min(255, int(ng)))
         o[k * 4 + 2] = max(0, min(255, int(nb)))
     return (w, h, o)
+
+
+def colorize(img, hex_color, ref=205.0):
+    """
+    밝기(음영)는 남기고 색만 목표색으로 바꾼다.
+
+    Kenney 벽 모듈은 크림색 한 종류뿐이라, 시대별로 다른 재질을 보여주려면
+    다시 칠하는 수밖에 없다. 픽셀 밝기를 목표색에 곱해서 면마다의 명암 차이를 지킨다.
+    """
+    r0 = int(hex_color[1:3], 16)
+    g0 = int(hex_color[3:5], 16)
+    b0 = int(hex_color[5:7], 16)
+    w, h, r = img
+    o = bytearray(r)
+    for k in range(w * h):
+        a = o[k * 4 + 3]
+        if a == 0:
+            continue
+        lum = 0.299 * o[k * 4] + 0.587 * o[k * 4 + 1] + 0.114 * o[k * 4 + 2]
+        f = lum / ref
+        o[k * 4] = max(0, min(255, int(r0 * f)))
+        o[k * 4 + 1] = max(0, min(255, int(g0 * f)))
+        o[k * 4 + 2] = max(0, min(255, int(b0 * f)))
+    return (w, h, o)
