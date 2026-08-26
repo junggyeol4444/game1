@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "sim": "tsx tools/balance-sim.ts",
     "art:check": "node tools/art-check.mjs",
+    "art:build": "python3 tools/art-build/make.py && node tools/art-build/people.mjs",
     "android:sync": "npm run build && cap sync android",
     "android:open": "npm run build && cap sync android && cap open android",
     "test": "tsx --test tests/*.test.ts",

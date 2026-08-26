@@ -12,52 +12,47 @@ npm run art:check -- --csv # 외주 발주용 CSV
 
 ## 1. 지금 상태
 
-**스프라이트 0 / 78.** 전부 플레이스홀더다.
+**스프라이트 78 / 78. 전부 들어와 있다.** 플레이스홀더는 더 안 나온다.
 
-이 저장소 안에서 아트를 만들 수 없다 —
-이미지 생성 수단이 없고, kenney.nl · OpenGameArt 같은 에셋 사이트는 이 환경의 프록시가 막는다.
-그래서 **아트는 넣어 주셔야 하고, 코드는 넣으면 바로 붙도록 되어 있다.**
+출처는 **Kenney CC0 아이소 팩** — `Isometric City`, `Isometric Buildings`,
+`Isometric Landscape`, `Isometric Vehicles`. 표기 의무 없이 상업적 사용이 된다.
+(kenney.nl 은 이 환경의 프록시가 막아서, GitHub 의 CC0 미러 `ETdoFresh/kenney.nl` 에서 받았다.)
 
-넘겨주는 방법 두 가지:
-1. 파일을 `public/art/` 에 넣고 `manifest.json` 에 등록 → 그대로 뜬다
-2. 공개 GitHub 저장소 URL을 주면 (raw.githubusercontent.com 은 접근 가능) 내가 받아서 등록한다
+`public/art/` 의 PNG 는 전부 **조립된 결과물**이다. 손으로 고치지 말고 조리법을 고쳐서 다시 뽑는다:
 
----
+```bash
+npm run art:build          # tools/art-build/ 참고 — 원본 팩 경로가 필요하다
+npm run art:check          # 필수 78 / 78 확인
+```
 
-## 2. 어떤 팩을 쓰나
+**왜 조립하나.** Kenney 팩은 완성된 건물이 아니라 모듈(바닥 타일 · 층 · 지붕)이다.
+게임은 66채 × 단계별 성장이 필요해서, 단계가 오를수록 **건물 수가 늘고 층이 높아지도록** 쌓는다.
+조리법은 `tools/art-build/recipes.py` 한 파일에 다 있다.
 
-기획서 아트 문서 11장: *"1단계 프로토타입 — 에셋스토어 저폴리 팩 사용. 아트 자체 제작 안 함."*
+건물 종류별 색은 팩에 없는 것도 있어서(회색·남색 벽 모듈이 없다) 크림색 모듈의 명도만 남기고
+다시 칠한다 — 공장은 강철색, 경찰서는 남색, 병원은 흰색. `build.py` 의 `recolor()`.
 
-요구 조건: **고정 아이소메트릭 · 저폴리 · 밝은 톤 · 상업적 사용 가능**
-
-| 후보 | 라이선스 | 비고 |
-|---|---|---|
-| Kenney *Isometric City* / *City Kit (Commercial·Suburban)* | CC0 | 무료. 아이소 각도·톤이 기획서와 거의 일치 |
-| Kenney *Isometric Vehicles* / *Isometric Miniature Library* | CC0 | 차량·소품 보충 |
-| Unity Asset Store *Low Poly City* 계열 | 유료 | 3D 모델. Unity로 갈 때 |
-| Synty *POLYGON City* | 유료 | 3D. 물량은 가장 많음 |
-
-CC0(Kenney)이면 저작권 표기 없이 상업적 사용이 된다. 1단계 프로토타입은 이걸로 충분하다.
-
-3D 모델(FBX/GLB)을 쓸 경우: 이 빌드는 2D 캔버스라 **각 건물을 고정 각도에서 렌더해 PNG로 뽑아**
-넣으면 된다. 각도는 아래 규격과 맞춘다.
+사람 2종(`props/citizen`, `props/worker`)은 아이소 사람 팩이 없어서 직접 그렸다
+(`tools/art-build/people.mjs`, Chromium 캔버스).
 
 ---
 
-## 3. 규격
+## 2. 규격
 
-- **투영**: 2:1 아이소메트릭. 타일 폭:높이 = 2:1 (게임 내부 기본 64×32, 아트는 128×64 권장)
+- **투영**: 2:1 아이소메트릭. 타일 폭:높이 = 2:1 (게임 내부 기본 64×32, 지금 아트는 132×66)
 - **각도**: 카메라 회전 없음. 모든 건물이 같은 방향
 - **형식**: PNG, 투명 배경
-- **크기**: 건물 1채 = 2×2 타일 부지 → 권장 폭 **256px** (높이는 자유)
+- **크기**: 건물 1채 = 2×2 타일 부지 → 지금 아트는 폭 **264px** (높이는 자유)
 - **바닥 기준선**: 스프라이트 하단 중앙이 부지 바닥 중심에 놓인다.
   기준점이 다르면 `manifest.json` 의 `anchorX` / `anchorY` 로 보정한다
+- **바닥 타일**(`ground/*`)만 규칙이 다르다: 윗면 다이아몬드의 **위 꼭짓점이 이미지 y=0**.
+  `anchorX`/`anchorY` 를 안 본다. 아래로 남는 부분은 블록 옆면으로 흘러내린다
 
 ```
         ╱╲          ← 건물 (높이 자유)
        ╱  ╲
       ╱____╲
-     ╱      ╲       ← 부지 2×2 타일 (폭 256px)
+     ╱      ╲       ← 부지 2×2 타일 (폭 264px)
      ╲      ╱
       ╲____╱
          ▲
@@ -66,12 +61,12 @@ CC0(Kenney)이면 저작권 표기 없이 상업적 사용이 된다. 1단계 �
 
 ---
 
-## 4. manifest.json
+## 3. manifest.json
 
 ```json
 {
-  "tileWidth": 128,
-  "tileHeight": 64,
+  "tileWidth": 132,
+  "tileHeight": 66,
   "sprites": {
     "buildings/mine_1":  { "file": "buildings/mine_1.png" },
     "buildings/mine_2":  { "file": "buildings/mine_2.png", "anchorY": 0.92 },
@@ -90,7 +85,7 @@ CC0(Kenney)이면 저작권 표기 없이 상업적 사용이 된다. 1단계 �
 
 ---
 
-## 5. 필요한 스프라이트
+## 4. 필요한 스프라이트
 
 `npm run art:check` 가 전체 목록을 뽑는다. 요약:
 
@@ -101,10 +96,9 @@ CC0(Kenney)이면 저작권 표기 없이 상업적 사용이 된다. 1단계 �
 | 바닥 타일 | 7 | `ground/{grass,grass_alt,dirt,road,road_line,water,empty}` |
 | 소품 | 5 | `props/{tree,car_a,car_b,citizen,worker}` |
 
-**우선순위**: 1단계 프로토타입은 광산만 검증하므로
-`buildings/mine_1..6` + `ground/*` + `props/*` 17개만 있으면 화면이 완성된다.
+전부 들어와 있다. 바꾸고 싶으면 `tools/art-build/recipes.py` 를 고치고 `npm run art:build`.
 
-### 5-1. 시대 전용 변형 (선택)
+### 4-1. 시대 전용 변형 (선택)
 
 문명이 바뀌면 같은 부지에 완전히 다른 건물이 선다. 그리는 쪽은 **시대 전용 키를 먼저 찾고,
 없으면 시대 공통 키로 떨어진다** (`src/ui/art/keys.ts` `buildingKeysFor`).
@@ -126,18 +120,22 @@ ground/stone/grass          ← 타일·소품도 같은 규칙
 
 ---
 
-## 6. 넣고 확인하기
+## 5. 바꾸고 확인하기
 
 ```bash
-# 1. 파일 복사
-cp -r ~/Downloads/kenney_isometric-city/PNG/* public/art/buildings/
+# 1. 조리법을 고친다
+$EDITOR tools/art-build/recipes.py
 
-# 2. manifest.json 에 등록
+# 2. 다시 뽑는다 (원본 팩 경로 필요 — tools/art-build/README.md)
+KENNEY_SRC=/tmp/kenney-src npm run art:build
 
 # 3. 확인
 npm run art:check
 npm run dev
 ```
+
+팩 밖의 그림을 직접 넣고 싶으면 `public/art/` 에 파일을 두고 `manifest.json` 에 등록해도 된다.
+단 다음 `npm run art:build` 가 `manifest.json` 을 통째로 다시 쓴다 — 조리법 쪽에 반영해 두는 게 안전하다.
 
 등록 안 된 키는 콘솔에 `[art] 스프라이트 없음: buildings/mine_2` 로 찍힌다.
 

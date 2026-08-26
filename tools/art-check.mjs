@@ -100,4 +100,8 @@ if (csv) {
     console.log(`\n필수 누락 ${miss}개. public/art/ 에 파일을 넣고 manifest.json 에 등록하세요.`);
     console.log('자세한 규격: docs/ART.md');
   }
+
+  // 필수가 빠지거나 manifest 가 깨지면 화면이 회색 상자가 된다.
+  // 조용히 통과시키면 CI 를 붙인 의미가 없으므로 실패로 끝낸다.
+  if (miss > 0 || manifestError || manifestProblems.length) process.exitCode = 1;
 }

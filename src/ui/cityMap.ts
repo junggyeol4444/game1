@@ -306,18 +306,31 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
         const col = water
           ? shade(night ? shade(pal.water, 0.6) : pal.water, 0.93 + wob * 0.1)
           : shade(grassOut, (gx + gy) % 2 === 0 ? 1 : 0.97);
-        tileAt(ctx, eraId, gx, gy, col, water ? 'ground/water' : 'ground/grass');
+        // 도시 밖은 한 단계 눌러서 부지 경계가 보이게 한다
+        const f = water
+          ? (night ? 0.6 : 1) * (0.93 + wob * 0.1)
+          : (night ? 0.66 : 0.9) * ((gx + gy) % 2 === 0 ? 1 : 0.97);
+        tileAt(ctx, eraId, gx, gy, col, water ? 'ground/water' : 'ground/grass', f);
       }
     }
-    // 바깥 나무
-    for (let i = 0; i < 26; i++) {
-      const seed = i * 2654435761;
-      const rx = ((seed >>> 8) % 1000) / 1000;
-      const ry = ((seed >>> 16) % 1000) / 1000;
+    // 바깥 나무.
+    // 도시가 아직 작을 때 화면 대부분이 들판이라, 나무가 성기면 그냥 빈 잔디밭으로 보인다.
+    // 뒤에서 앞으로 그려야 앞 나무가 뒤 나무를 가린다.
+    const outTrees: [number, number, number][] = [];
+    for (let i = 0; i < 90; i++) {
+      const seed = (i * 2654435761) >>> 0;
+      const rx = ((seed >>> 8) % 1009) / 1009;
+      const ry = ((seed >>> 17) % 1013) / 1013;
+      const rs = ((seed >>> 3) % 1021) / 1021;
       const gx = -OUT + rx * (GRID.cols + OUT * 2);
       const gy = -OUT + ry * (GRID.rows - 1 + OUT);
       if (gx > -1.5 && gx < GRID.cols + 0.5 && gy > -1.5 && gy < GRID.rows + 0.5) continue;
-      drawAny(ctx, tileKeysFor(eraId, 'props/tree'), gx - 0.5, gy - 0.5, 1, 1);
+      if (gy >= GRID.rows - 1) continue; // 물 위에는 안 심는다
+      outTrees.push([gx, gy, 0.75 + rs * 0.55]);
+    }
+    outTrees.sort((a, b) => a[0] + a[1] - (b[0] + b[1]));
+    for (const [gx, gy, sz] of outTrees) {
+      drawAny(ctx, tileKeysFor(eraId, 'props/tree'), gx - sz / 2, gy - sz / 2, sz, sz, night ? 0.66 : 0.9);
     }
 
     // 도시 부지 타일
@@ -330,14 +343,15 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
         const isRoad = isRoadTile(gx, gy);
         let col = isRoad ? (roadTier === 0 ? shade(pal.road, 1.08) : roadCol) : grass;
         if (!isRoad && (gx + gy) % 2 === 0) col = shade(col, 0.97);
-        tileAt(ctx, eraId, gx, gy, col, isRoad ? (roadTier === 0 ? 'ground/dirt' : 'ground/road') : (gx + gy) % 2 === 0 ? 'ground/grass' : 'ground/grass_alt');
+        const f = (night ? (isRoad ? 0.68 : 0.72) : 1) * (!isRoad && (gx + gy) % 2 === 0 ? 0.97 : 1);
+        tileAt(ctx, eraId, gx, gy, col, isRoad ? (roadTier === 0 ? 'ground/dirt' : 'ground/road') : (gx + gy) % 2 === 0 ? 'ground/grass' : 'ground/grass_alt', f);
       }
     }
     // 물
     for (let gy = GRID.rows - 1; gy < GRID.rows + 3; gy++) {
       for (let gx = -2; gx < GRID.cols + 2; gx++) {
         const wobble = Math.sin(gx * 0.8 + gy * 0.6 + t * 1.4) * 0.5 + 0.5;
-        tileAt(ctx, eraId, gx, gy, shade(night ? shade(pal.water, 0.6) : pal.water, 0.94 + wobble * 0.1), 'ground/water');
+        tileAt(ctx, eraId, gx, gy, shade(night ? shade(pal.water, 0.6) : pal.water, 0.94 + wobble * 0.1), 'ground/water', (night ? 0.6 : 1) * (0.94 + wobble * 0.1));
       }
     }
     // 차선
@@ -387,13 +401,14 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
 
       ctx.save();
       if (!unlocked) ctx.globalAlpha = 0.45;
+      const nf = night ? 0.72 : 1;
       if (tier === 0) {
-        if (!drawTileLot(ctx, eraId, lot.gx, lot.gy, lot.w, lot.h, 'ground/empty')) {
+        if (!drawTileLot(ctx, eraId, lot.gx, lot.gy, lot.w, lot.h, 'ground/empty', nf)) {
           emptyLotFill(ctx, eraId, lot.gx, lot.gy, lot.w, lot.h);
         }
       } else {
         const keys = buildingKeysFor(eraId, id, tier);
-        if (!drawAny(ctx, keys, lot.gx, lot.gy, lot.w, lot.h)) {
+        if (!drawAny(ctx, keys, lot.gx, lot.gy, lot.w, lot.h, nf)) {
           placeholder(ctx, cam, keys[0], lot.gx, lot.gy, lot.w, lot.h, buildingName(st, id));
         }
       }
@@ -429,13 +444,19 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     for (let i = 0; i < cars; i++) {
       const lane = (i % 4) * 3;
       const q = ((t * 0.16 + i * 0.31) % 1) * GRID.cols;
-      drawAny(ctx, tileKeysFor(eraId, 'props/car_a'), q - 0.4, lane + 0.1, 0.8, 0.8);
+      drawAny(ctx, tileKeysFor(eraId, 'props/car_a'), q - 0.4, lane + 0.1, 0.8, 0.8, night ? 0.72 : 1);
+    }
+    // 세로 도로 (car_b 는 반대 방향을 보는 그림이다)
+    for (let i = 0; i < cars; i++) {
+      const lane = (i % 4) * 3;
+      const q = ((t * 0.13 + i * 0.27) % 1) * GRID.rows;
+      drawAny(ctx, tileKeysFor(eraId, 'props/car_b'), lane + 0.1, q - 0.4, 0.8, 0.8, night ? 0.72 : 1);
     }
     const citizens = clamp(Math.round(2 + Math.log10(1 + st.city.pop) * 3), 2, 18);
     for (let i = 0; i < citizens; i++) {
       const row = (i % 5) * 3;
       const q = ((t * 0.05 + i * 0.17) % 1) * GRID.cols;
-      drawAny(ctx, tileKeysFor(eraId, 'props/citizen'), q - 0.3, row + 0.2, 0.6, 0.6);
+      drawAny(ctx, tileKeysFor(eraId, 'props/citizen'), q - 0.3, row + 0.2, 0.6, 0.6, night ? 0.72 : 1);
     }
 
     // 라벨 · 경고 (화면 좌표)
@@ -475,16 +496,24 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
   }
 
   /** 시대 전용 스프라이트를 먼저 시도하고, 없으면 시대 공통으로 떨어진다 */
-  function drawAny(ctx: CanvasRenderingContext2D, keys: string[], gx: number, gy: number, w: number, d: number): boolean {
-    for (const k of keys) if (drawSprite(ctx, cam, k, gx, gy, w, d)) return true;
+  function drawAny(
+    ctx: CanvasRenderingContext2D,
+    keys: string[],
+    gx: number,
+    gy: number,
+    w: number,
+    d: number,
+    shadeF = 1,
+  ): boolean {
+    for (const k of keys) if (drawSprite(ctx, cam, k, gx, gy, w, d, shadeF)) return true;
     return false;
   }
 
   /** 부지 전체를 한 종류 타일로 */
-  function drawTileLot(ctx: CanvasRenderingContext2D, eraId: string, gx: number, gy: number, w: number, d: number, key: string): boolean {
+  function drawTileLot(ctx: CanvasRenderingContext2D, eraId: string, gx: number, gy: number, w: number, d: number, key: string, shadeF = 1): boolean {
     const use = tileKeysFor(eraId, key).find((k) => hasSprite(k));
     if (!use) return false;
-    for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) drawTileSprite(ctx, cam, use, gx + x, gy + y);
+    for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) drawTileSprite(ctx, cam, use, gx + x, gy + y, shadeF);
     return true;
   }
 
@@ -492,9 +521,17 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) tileAt(ctx, eraId, gx + x, gy + y, '#C4B191');
   }
 
-  function tileAt(ctx: CanvasRenderingContext2D, eraId: string, gx: number, gy: number, color: string, key?: string): void {
+  function tileAt(
+    ctx: CanvasRenderingContext2D,
+    eraId: string,
+    gx: number,
+    gy: number,
+    color: string,
+    key?: string,
+    shadeF = 1,
+  ): void {
     if (key) {
-      for (const k of tileKeysFor(eraId, key)) if (drawTileSprite(ctx, cam, k, gx, gy)) return;
+      for (const k of tileKeysFor(eraId, key)) if (drawTileSprite(ctx, cam, k, gx, gy, shadeF)) return;
     }
     const a = project(gx, gy, 0, cam);
     const b = project(gx + 1, gy, 0, cam);

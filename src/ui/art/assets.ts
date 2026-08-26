@@ -8,7 +8,7 @@
  *  - 코드로 건물을 그리지 않는다. 아트는 전부 이 폴더의 파일에서 온다.
  */
 import { alpha } from '../../data/palette';
-import { TH, TW, project, type Cam, type Ctx } from '../scene/iso';
+import { TW, project, type Cam, type Ctx } from '../scene/iso';
 
 export interface SpriteEntry {
   /** public/art 기준 상대 경로 */
@@ -28,6 +28,14 @@ export interface ArtManifest {
 }
 
 const images = new Map<string, HTMLImageElement>();
+/** 밝기를 눌러 둔 사본. 밤/체크무늬/물결은 프레임마다 같은 값이 반복돼서 캐시가 잘 먹는다 */
+const shaded = new Map<string, CanvasImageSource>();
+/**
+ * 사본 상한. 건물 스프라이트 한 장이 264×400 이면 비트맵으로 400KB 가 넘는다 —
+ * 무제한으로 두면 저사양 폰에서 메모리가 샌다. 넘치면 통째로 비우고 다시 쌓는다
+ * (실제로 쓰이는 계수는 키당 두어 개뿐이라 넘칠 일이 잘 없다).
+ */
+const SHADE_CACHE_MAX = 160;
 let manifest: ArtManifest = { sprites: {} };
 let missingLogged = new Set<string>();
 
@@ -43,6 +51,7 @@ export async function loadArt(base = './art/'): Promise<void> {
   } catch {
     manifest = { sprites: {} };
   }
+  shaded.clear();
   const entries = Object.entries(manifest.sprites ?? {});
   await Promise.all(
     entries.map(
@@ -65,10 +74,50 @@ export function hasSprite(key: string): boolean {
 }
 
 /**
+ * 밝기 계수를 먹인 스프라이트.
+ *
+ * 스프라이트로 갈아타면서 밤이 와도 땅이 안 어두워지는 문제가 생겼다 —
+ * 예전에는 타일 색을 코드가 직접 칠했기 때문에 `shade()` 한 방이면 됐다.
+ * 이미지는 그렇게 못 하니 곱셈 합성한 사본을 만들어 캐시한다.
+ * 계수는 0.02 단위로 뭉쳐서 사본 수를 몇 개로 묶는다.
+ */
+function shadedImage(key: string, img: HTMLImageElement, f: number): CanvasImageSource {
+  const q = Math.round(Math.max(0.2, Math.min(1, f)) * 50);
+  if (q >= 50) return img;
+  const id = `${key}|${q}`;
+  const hit = shaded.get(id);
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  const g = c.getContext('2d')!;
+  g.drawImage(img, 0, 0);
+  g.globalCompositeOperation = 'multiply';
+  const v = Math.round((q / 50) * 255);
+  g.fillStyle = `rgb(${v},${v},${v})`;
+  g.fillRect(0, 0, c.width, c.height);
+  // 곱셈은 투명한 데까지 칠하므로 원본 알파로 다시 오린다
+  g.globalCompositeOperation = 'destination-in';
+  g.drawImage(img, 0, 0);
+  if (shaded.size >= SHADE_CACHE_MAX) shaded.clear();
+  shaded.set(id, c);
+  return c;
+}
+
+/**
  * 부지 (gx, gy, w, d) 위에 스프라이트를 놓는다.
  * 스프라이트 바닥 중심을 타일 바닥 중심에 맞춘다.
  */
-export function drawSprite(ctx: Ctx, cam: Cam, key: string, gx: number, gy: number, w: number, d: number): boolean {
+export function drawSprite(
+  ctx: Ctx,
+  cam: Cam,
+  key: string,
+  gx: number,
+  gy: number,
+  w: number,
+  d: number,
+  shadeF = 1,
+): boolean {
   const img = images.get(key);
   if (!img) return false;
   const entry = manifest.sprites[key] ?? { file: '' };
@@ -81,19 +130,25 @@ export function drawSprite(ctx: Ctx, cam: Cam, key: string, gx: number, gy: numb
   const drawW = footprintW;
   const drawH = (img.height / img.width) * drawW;
   const [bx, by] = project(gx + w / 2, gy + d / 2, 0, cam);
-  ctx.drawImage(img, bx - drawW * anchorX, by - drawH * anchorY, drawW, drawH);
+  ctx.drawImage(shadedImage(key, img, shadeF), bx - drawW * anchorX, by - drawH * anchorY, drawW, drawH);
   return true;
 }
 
-/** 바닥 타일 스프라이트 */
-export function drawTileSprite(ctx: Ctx, cam: Cam, key: string, gx: number, gy: number): boolean {
+/**
+ * 바닥 타일 스프라이트.
+ *
+ * 타일 그림은 **윗면 다이아몬드의 위 꼭짓점이 이미지 y=0** 이라는 약속으로 만든다
+ * (아이소 팩들이 다 그렇다). 그래서 이미지 왼쪽 위를 다이아몬드 윗꼭짓점에 그냥 맞추면
+ * 윗면이 정확히 겹치고, 남는 아래쪽은 블록 옆면으로 흘러내린다.
+ * 폭을 TW 에 맞추면 윗면 높이는 자동으로 TH 가 된다 (2:1 이라서).
+ */
+export function drawTileSprite(ctx: Ctx, cam: Cam, key: string, gx: number, gy: number, shadeF = 1): boolean {
   const img = images.get(key);
   if (!img) return false;
   const w = TW * cam.zoom;
   const h = (img.height / img.width) * w;
   const [px, py] = project(gx, gy, 0, cam);
-  // 타일 스프라이트는 다이아몬드 윗꼭짓점 기준
-  ctx.drawImage(img, px - w / 2, py - (h - (TH * cam.zoom) / 2) - (TH * cam.zoom) / 2, w, h);
+  ctx.drawImage(shadedImage(key, img, shadeF), px - w / 2, py, w, h);
   return true;
 }
 

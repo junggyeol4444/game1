@@ -1,6 +1,389 @@
 {
-  "_readme": "아트 팩을 여기에 넣습니다. docs/ART.md 참고. sprites 에 등록된 파일만 화면에 나옵니다. 등록되지 않은 키는 회색 플레이스홀더로 표시됩니다.",
-  "tileWidth": 128,
-  "tileHeight": 64,
-  "sprites": {}
+  "_readme": "Kenney CC0 아이소 팩(Isometric City / Buildings / Landscape / Vehicles)을 tools/art-build 로 조립한 결과. 직접 손대지 말고 스크립트를 고쳐 다시 뽑는다. docs/ART.md 참고.",
+  "_license": "Kenney (kenney.nl) — CC0 1.0. 사람 스프라이트 2종은 직접 그렸다.",
+  "tileWidth": 132,
+  "tileHeight": 66,
+  "sprites": {
+    "buildings/corp_1": {
+      "file": "buildings/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/corp_2": {
+      "file": "buildings/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/corp_3": {
+      "file": "buildings/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/corp_4": {
+      "file": "buildings/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/corp_5": {
+      "file": "buildings/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7098
+    },
+    "buildings/corp_6": {
+      "file": "buildings/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.778
+    },
+    "buildings/factory_1": {
+      "file": "buildings/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/factory_2": {
+      "file": "buildings/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4294
+    },
+    "buildings/factory_3": {
+      "file": "buildings/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/factory_4": {
+      "file": "buildings/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/factory_5": {
+      "file": "buildings/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5927
+    },
+    "buildings/factory_6": {
+      "file": "buildings/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6731
+    },
+    "buildings/fire_1": {
+      "file": "buildings/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/fire_2": {
+      "file": "buildings/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/fire_3": {
+      "file": "buildings/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/fire_4": {
+      "file": "buildings/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/fishery_1": {
+      "file": "buildings/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/fishery_2": {
+      "file": "buildings/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/fishery_3": {
+      "file": "buildings/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/fishery_4": {
+      "file": "buildings/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5236
+    },
+    "buildings/fishery_5": {
+      "file": "buildings/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/fishery_6": {
+      "file": "buildings/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6783
+    },
+    "buildings/green_1": {
+      "file": "buildings/green_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5302
+    },
+    "buildings/green_2": {
+      "file": "buildings/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/green_3": {
+      "file": "buildings/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/green_4": {
+      "file": "buildings/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/hospital_1": {
+      "file": "buildings/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/hospital_2": {
+      "file": "buildings/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/hospital_3": {
+      "file": "buildings/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/hospital_4": {
+      "file": "buildings/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6773
+    },
+    "buildings/housing_1": {
+      "file": "buildings/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5167
+    },
+    "buildings/housing_2": {
+      "file": "buildings/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.545
+    },
+    "buildings/housing_3": {
+      "file": "buildings/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/housing_4": {
+      "file": "buildings/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7098
+    },
+    "buildings/mine_1": {
+      "file": "buildings/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5491
+    },
+    "buildings/mine_2": {
+      "file": "buildings/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4712
+    },
+    "buildings/mine_3": {
+      "file": "buildings/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4326
+    },
+    "buildings/mine_4": {
+      "file": "buildings/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/mine_5": {
+      "file": "buildings/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5878
+    },
+    "buildings/mine_6": {
+      "file": "buildings/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6393
+    },
+    "buildings/park_1": {
+      "file": "buildings/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5367
+    },
+    "buildings/park_2": {
+      "file": "buildings/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/park_3": {
+      "file": "buildings/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.543
+    },
+    "buildings/park_4": {
+      "file": "buildings/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/park_5": {
+      "file": "buildings/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5894
+    },
+    "buildings/park_6": {
+      "file": "buildings/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6814
+    },
+    "buildings/police_1": {
+      "file": "buildings/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/police_2": {
+      "file": "buildings/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/police_3": {
+      "file": "buildings/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5792
+    },
+    "buildings/police_4": {
+      "file": "buildings/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/power_1": {
+      "file": "buildings/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6287
+    },
+    "buildings/power_2": {
+      "file": "buildings/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7055
+    },
+    "buildings/power_3": {
+      "file": "buildings/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.756
+    },
+    "buildings/power_4": {
+      "file": "buildings/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7918
+    },
+    "buildings/road_1": {
+      "file": "buildings/road_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/road_2": {
+      "file": "buildings/road_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/road_3": {
+      "file": "buildings/road_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/road_4": {
+      "file": "buildings/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5
+    },
+    "buildings/school_1": {
+      "file": "buildings/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/school_2": {
+      "file": "buildings/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/school_3": {
+      "file": "buildings/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/school_4": {
+      "file": "buildings/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6418
+    },
+    "buildings/shops_1": {
+      "file": "buildings/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/shops_2": {
+      "file": "buildings/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/shops_3": {
+      "file": "buildings/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/shops_4": {
+      "file": "buildings/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "ground/dirt": {
+      "file": "ground/dirt.png"
+    },
+    "ground/empty": {
+      "file": "ground/empty.png"
+    },
+    "ground/grass": {
+      "file": "ground/grass.png"
+    },
+    "ground/grass_alt": {
+      "file": "ground/grass_alt.png"
+    },
+    "ground/road": {
+      "file": "ground/road.png"
+    },
+    "ground/road_line": {
+      "file": "ground/road_line.png"
+    },
+    "ground/water": {
+      "file": "ground/water.png"
+    },
+    "props/car_a": {
+      "file": "props/car_a.png",
+      "anchorX": 0.5,
+      "anchorY": 1.0,
+      "scale": 0.78
+    },
+    "props/car_b": {
+      "file": "props/car_b.png",
+      "anchorX": 0.5,
+      "anchorY": 1.0,
+      "scale": 0.78
+    },
+    "props/citizen": {
+      "file": "props/citizen.png",
+      "anchorX": 0.5,
+      "anchorY": 0.97,
+      "scale": 0.55
+    },
+    "props/tree": {
+      "file": "props/tree.png",
+      "anchorX": 0.5,
+      "anchorY": 1.0,
+      "scale": 0.55
+    },
+    "props/worker": {
+      "file": "props/worker.png",
+      "anchorX": 0.5,
+      "anchorY": 0.97,
+      "scale": 0.55
+    }
+  }
 }
