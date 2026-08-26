@@ -117,10 +117,10 @@ export function hasSprite(key: string): boolean {
  * 이미지는 그렇게 못 하니 곱셈 합성한 사본을 만들어 캐시한다.
  * 계수는 0.02 단위로 뭉쳐서 사본 수를 몇 개로 묶는다.
  */
-function shadedImage(key: string, img: HTMLImageElement, f: number): CanvasImageSource {
+function shadedImage(key: string, img: HTMLImageElement, f: number, tint?: string): CanvasImageSource {
   const q = Math.round(Math.max(0.2, Math.min(1, f)) * 50);
-  if (q >= 50) return img;
-  const id = `${key}|${q}`;
+  if (q >= 50 && !tint) return img;
+  const id = `${key}|${q}|${tint ?? ''}`;
   const hit = shaded.get(id);
   if (hit) return hit;
   const c = document.createElement('canvas');
@@ -128,11 +128,20 @@ function shadedImage(key: string, img: HTMLImageElement, f: number): CanvasImage
   c.height = img.height;
   const g = c.getContext('2d')!;
   g.drawImage(img, 0, 0);
-  g.globalCompositeOperation = 'multiply';
-  const v = Math.round((q / 50) * 255);
-  g.fillStyle = `rgb(${v},${v},${v})`;
-  g.fillRect(0, 0, c.width, c.height);
-  // 곱셈은 투명한 데까지 칠하므로 원본 알파로 다시 오린다
+  if (tint) {
+    // 'color' 합성은 **밝기는 원본, 색상·채도는 칠한 색**을 쓴다.
+    // 잔디 타일 한 장으로 시대마다 다른 땅색을 낸다 (스프라이트를 늘리지 않는다).
+    g.globalCompositeOperation = 'color';
+    g.fillStyle = tint;
+    g.fillRect(0, 0, c.width, c.height);
+  }
+  if (q < 50) {
+    g.globalCompositeOperation = 'multiply';
+    const v = Math.round((q / 50) * 255);
+    g.fillStyle = `rgb(${v},${v},${v})`;
+    g.fillRect(0, 0, c.width, c.height);
+  }
+  // 합성은 투명한 데까지 칠하므로 원본 알파로 다시 오린다
   g.globalCompositeOperation = 'destination-in';
   g.drawImage(img, 0, 0);
   if (shaded.size >= SHADE_CACHE_MAX) shaded.clear();
@@ -153,6 +162,7 @@ export function drawSprite(
   w: number,
   d: number,
   shadeF = 1,
+  tint?: string,
 ): boolean {
   const img = images.get(key);
   if (!img) return false;
@@ -166,7 +176,7 @@ export function drawSprite(
   const drawW = footprintW;
   const drawH = (img.height / img.width) * drawW;
   const [bx, by] = project(gx + w / 2, gy + d / 2, 0, cam);
-  ctx.drawImage(shadedImage(key, img, shadeF), bx - drawW * anchorX, by - drawH * anchorY, drawW, drawH);
+  ctx.drawImage(shadedImage(key, img, shadeF, tint), bx - drawW * anchorX, by - drawH * anchorY, drawW, drawH);
   return true;
 }
 
@@ -178,13 +188,21 @@ export function drawSprite(
  * 윗면이 정확히 겹치고, 남는 아래쪽은 블록 옆면으로 흘러내린다.
  * 폭을 TW 에 맞추면 윗면 높이는 자동으로 TH 가 된다 (2:1 이라서).
  */
-export function drawTileSprite(ctx: Ctx, cam: Cam, key: string, gx: number, gy: number, shadeF = 1): boolean {
+export function drawTileSprite(
+  ctx: Ctx,
+  cam: Cam,
+  key: string,
+  gx: number,
+  gy: number,
+  shadeF = 1,
+  tint?: string,
+): boolean {
   const img = images.get(key);
   if (!img) return false;
   const w = TW * cam.zoom;
   const h = (img.height / img.width) * w;
   const [px, py] = project(gx, gy, 0, cam);
-  ctx.drawImage(shadedImage(key, img, shadeF), px - w / 2, py, w, h);
+  ctx.drawImage(shadedImage(key, img, shadeF, tint), px - w / 2, py, w, h);
   return true;
 }
 

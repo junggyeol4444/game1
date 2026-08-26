@@ -353,7 +353,7 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
         const f = water
           ? (night ? 0.6 : 1) * (0.93 + wob * 0.1)
           : (night ? 0.66 : 0.9) * ((gx + gy) % 2 === 0 ? 1 : 0.97);
-        tileAt(ctx, eraId, gx, gy, col, water ? 'ground/water' : 'ground/grass', f);
+        tileAt(ctx, eraId, gx, gy, col, water ? 'ground/water' : 'ground/grass', f, water ? pal.water : pal.ground);
       }
     }
     // 바깥 나무.
@@ -373,7 +373,7 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     }
     outTrees.sort((a, b) => a[0] + a[1] - (b[0] + b[1]));
     for (const [gx, gy, sz] of outTrees) {
-      drawAny(ctx, tileKeysFor(eraId, 'props/tree'), gx - sz / 2, gy - sz / 2, sz, sz, night ? 0.66 : 0.9);
+      drawAny(ctx, tileKeysFor(eraId, 'props/tree'), gx - sz / 2, gy - sz / 2, sz, sz, night ? 0.66 : 0.9, pal.ground);
     }
 
     // 도시 부지 타일
@@ -387,14 +387,14 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
         let col = isRoad ? (roadTier === 0 ? shade(pal.road, 1.08) : roadCol) : grass;
         if (!isRoad && (gx + gy) % 2 === 0) col = shade(col, 0.97);
         const f = (night ? (isRoad ? 0.68 : 0.72) : 1) * (!isRoad && (gx + gy) % 2 === 0 ? 0.97 : 1);
-        tileAt(ctx, eraId, gx, gy, col, isRoad ? (roadTier === 0 ? 'ground/dirt' : 'ground/road') : (gx + gy) % 2 === 0 ? 'ground/grass' : 'ground/grass_alt', f);
+        tileAt(ctx, eraId, gx, gy, col, isRoad ? (roadTier === 0 ? 'ground/dirt' : 'ground/road') : (gx + gy) % 2 === 0 ? 'ground/grass' : 'ground/grass_alt', f, isRoad ? (roadTier === 0 ? undefined : pal.road) : pal.ground);
       }
     }
     // 물
     for (let gy = GRID.rows - 1; gy < GRID.rows + 3; gy++) {
       for (let gx = -2; gx < GRID.cols + 2; gx++) {
         const wobble = Math.sin(gx * 0.8 + gy * 0.6 + t * 1.4) * 0.5 + 0.5;
-        tileAt(ctx, eraId, gx, gy, shade(night ? shade(pal.water, 0.6) : pal.water, 0.94 + wobble * 0.1), 'ground/water', (night ? 0.6 : 1) * (0.94 + wobble * 0.1));
+        tileAt(ctx, eraId, gx, gy, shade(night ? shade(pal.water, 0.6) : pal.water, 0.94 + wobble * 0.1), 'ground/water', (night ? 0.6 : 1) * (0.94 + wobble * 0.1), pal.water);
       }
     }
     // 차선
@@ -593,8 +593,9 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     w: number,
     d: number,
     shadeF = 1,
+    tint?: string,
   ): boolean {
-    for (const k of keys) if (drawSprite(ctx, cam, k, gx, gy, w, d, shadeF)) return true;
+    for (const k of keys) if (drawSprite(ctx, cam, k, gx, gy, w, d, shadeF, tint)) return true;
     return false;
   }
 
@@ -610,6 +611,13 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) tileAt(ctx, eraId, gx + x, gy + y, '#C4B191');
   }
 
+  /**
+   * 바닥 타일 한 칸.
+   *
+   * 타일 그림은 시대 공통 한 장뿐인데 시대마다 땅색이 달라야 한다
+   * (석기 초록 들판 ~ 우주 회청색 지표). 스프라이트를 9배로 늘리는 대신
+   * 시대 팔레트 색을 색조로 먹인다 — 밝기(음영)는 그림 그대로 남는다.
+   */
   function tileAt(
     ctx: CanvasRenderingContext2D,
     eraId: string,
@@ -618,9 +626,10 @@ export function createCityMap(game: Game, onEnter: (id: BuildingId) => void): Ma
     color: string,
     key?: string,
     shadeF = 1,
+    tint?: string,
   ): void {
     if (key) {
-      for (const k of tileKeysFor(eraId, key)) if (drawTileSprite(ctx, cam, k, gx, gy, shadeF)) return;
+      for (const k of tileKeysFor(eraId, key)) if (drawTileSprite(ctx, cam, k, gx, gy, shadeF, tint)) return;
     }
     const a = project(gx, gy, 0, cam);
     const b = project(gx + 1, gy, 0, cam);
