@@ -1,0 +1,2869 @@
+{
+  "_readme": "Kenney CC0 아이소 팩(Isometric City / Buildings / Landscape / Vehicles)을 tools/art-build 로 조립한 결과. 직접 손대지 말고 스크립트를 고쳐 다시 뽑는다. docs/ART.md 참고.",
+  "_license": "Kenney (kenney.nl) — CC0 1.0. 사람 스프라이트 2종은 직접 그렸다.",
+  "tileWidth": 132,
+  "tileHeight": 66,
+  "sprites": {
+    "buildings/bronze/corp_1": {
+      "file": "buildings/bronze/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/bronze/corp_2": {
+      "file": "buildings/bronze/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/corp_3": {
+      "file": "buildings/bronze/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/corp_4": {
+      "file": "buildings/bronze/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/corp_5": {
+      "file": "buildings/bronze/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/corp_6": {
+      "file": "buildings/bronze/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/factory_1": {
+      "file": "buildings/bronze/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/bronze/factory_2": {
+      "file": "buildings/bronze/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/factory_3": {
+      "file": "buildings/bronze/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/factory_4": {
+      "file": "buildings/bronze/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/factory_5": {
+      "file": "buildings/bronze/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/factory_6": {
+      "file": "buildings/bronze/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/fire_1": {
+      "file": "buildings/bronze/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/bronze/fire_2": {
+      "file": "buildings/bronze/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/fire_3": {
+      "file": "buildings/bronze/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/fire_4": {
+      "file": "buildings/bronze/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/fishery_1": {
+      "file": "buildings/bronze/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4712
+    },
+    "buildings/bronze/fishery_2": {
+      "file": "buildings/bronze/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/bronze/fishery_3": {
+      "file": "buildings/bronze/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5324
+    },
+    "buildings/bronze/fishery_4": {
+      "file": "buildings/bronze/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5324
+    },
+    "buildings/bronze/fishery_5": {
+      "file": "buildings/bronze/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/fishery_6": {
+      "file": "buildings/bronze/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/green_2": {
+      "file": "buildings/bronze/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/bronze/green_3": {
+      "file": "buildings/bronze/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/bronze/green_4": {
+      "file": "buildings/bronze/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/bronze/hospital_1": {
+      "file": "buildings/bronze/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/bronze/hospital_2": {
+      "file": "buildings/bronze/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/hospital_3": {
+      "file": "buildings/bronze/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/hospital_4": {
+      "file": "buildings/bronze/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/housing_1": {
+      "file": "buildings/bronze/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/bronze/housing_2": {
+      "file": "buildings/bronze/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.557
+    },
+    "buildings/bronze/housing_3": {
+      "file": "buildings/bronze/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/bronze/housing_4": {
+      "file": "buildings/bronze/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/mine_1": {
+      "file": "buildings/bronze/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4389
+    },
+    "buildings/bronze/mine_2": {
+      "file": "buildings/bronze/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/bronze/mine_3": {
+      "file": "buildings/bronze/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/mine_4": {
+      "file": "buildings/bronze/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/mine_5": {
+      "file": "buildings/bronze/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/mine_6": {
+      "file": "buildings/bronze/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/park_1": {
+      "file": "buildings/bronze/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/bronze/park_2": {
+      "file": "buildings/bronze/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/bronze/park_3": {
+      "file": "buildings/bronze/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/bronze/park_4": {
+      "file": "buildings/bronze/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.557
+    },
+    "buildings/bronze/park_5": {
+      "file": "buildings/bronze/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.557
+    },
+    "buildings/bronze/park_6": {
+      "file": "buildings/bronze/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.557
+    },
+    "buildings/bronze/police_1": {
+      "file": "buildings/bronze/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/bronze/police_2": {
+      "file": "buildings/bronze/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/police_3": {
+      "file": "buildings/bronze/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/police_4": {
+      "file": "buildings/bronze/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/power_1": {
+      "file": "buildings/bronze/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/bronze/power_2": {
+      "file": "buildings/bronze/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/bronze/power_3": {
+      "file": "buildings/bronze/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/power_4": {
+      "file": "buildings/bronze/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/road_4": {
+      "file": "buildings/bronze/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/bronze/school_1": {
+      "file": "buildings/bronze/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4712
+    },
+    "buildings/bronze/school_2": {
+      "file": "buildings/bronze/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/bronze/school_3": {
+      "file": "buildings/bronze/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5471
+    },
+    "buildings/bronze/school_4": {
+      "file": "buildings/bronze/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5324
+    },
+    "buildings/bronze/shops_1": {
+      "file": "buildings/bronze/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/bronze/shops_2": {
+      "file": "buildings/bronze/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/shops_3": {
+      "file": "buildings/bronze/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/bronze/shops_4": {
+      "file": "buildings/bronze/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/corp_1": {
+      "file": "buildings/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/corp_2": {
+      "file": "buildings/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/corp_3": {
+      "file": "buildings/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/corp_4": {
+      "file": "buildings/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/corp_5": {
+      "file": "buildings/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7098
+    },
+    "buildings/corp_6": {
+      "file": "buildings/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.778
+    },
+    "buildings/factory_1": {
+      "file": "buildings/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/factory_2": {
+      "file": "buildings/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4294
+    },
+    "buildings/factory_3": {
+      "file": "buildings/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/factory_4": {
+      "file": "buildings/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/factory_5": {
+      "file": "buildings/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5927
+    },
+    "buildings/factory_6": {
+      "file": "buildings/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6731
+    },
+    "buildings/fire_1": {
+      "file": "buildings/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/fire_2": {
+      "file": "buildings/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/fire_3": {
+      "file": "buildings/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/fire_4": {
+      "file": "buildings/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/fishery_1": {
+      "file": "buildings/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/fishery_2": {
+      "file": "buildings/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/fishery_3": {
+      "file": "buildings/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/fishery_4": {
+      "file": "buildings/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5236
+    },
+    "buildings/fishery_5": {
+      "file": "buildings/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/fishery_6": {
+      "file": "buildings/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6783
+    },
+    "buildings/green_1": {
+      "file": "buildings/green_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5302
+    },
+    "buildings/green_2": {
+      "file": "buildings/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/green_3": {
+      "file": "buildings/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/green_4": {
+      "file": "buildings/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/hospital_1": {
+      "file": "buildings/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/hospital_2": {
+      "file": "buildings/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/hospital_3": {
+      "file": "buildings/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/hospital_4": {
+      "file": "buildings/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6773
+    },
+    "buildings/housing_1": {
+      "file": "buildings/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5167
+    },
+    "buildings/housing_2": {
+      "file": "buildings/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.545
+    },
+    "buildings/housing_3": {
+      "file": "buildings/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/housing_4": {
+      "file": "buildings/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7098
+    },
+    "buildings/industrial/corp_1": {
+      "file": "buildings/industrial/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/industrial/corp_2": {
+      "file": "buildings/industrial/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/industrial/corp_3": {
+      "file": "buildings/industrial/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/corp_4": {
+      "file": "buildings/industrial/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/corp_5": {
+      "file": "buildings/industrial/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.638
+    },
+    "buildings/industrial/corp_6": {
+      "file": "buildings/industrial/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.638
+    },
+    "buildings/industrial/factory_1": {
+      "file": "buildings/industrial/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/industrial/factory_2": {
+      "file": "buildings/industrial/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/industrial/factory_3": {
+      "file": "buildings/industrial/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/factory_4": {
+      "file": "buildings/industrial/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/factory_5": {
+      "file": "buildings/industrial/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5894
+    },
+    "buildings/industrial/factory_6": {
+      "file": "buildings/industrial/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.638
+    },
+    "buildings/industrial/fire_1": {
+      "file": "buildings/industrial/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/industrial/fire_2": {
+      "file": "buildings/industrial/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/industrial/fire_3": {
+      "file": "buildings/industrial/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/fire_4": {
+      "file": "buildings/industrial/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/fishery_1": {
+      "file": "buildings/industrial/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4059
+    },
+    "buildings/industrial/fishery_2": {
+      "file": "buildings/industrial/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5025
+    },
+    "buildings/industrial/fishery_3": {
+      "file": "buildings/industrial/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5025
+    },
+    "buildings/industrial/fishery_4": {
+      "file": "buildings/industrial/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/fishery_5": {
+      "file": "buildings/industrial/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5894
+    },
+    "buildings/industrial/fishery_6": {
+      "file": "buildings/industrial/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.638
+    },
+    "buildings/industrial/green_2": {
+      "file": "buildings/industrial/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/industrial/green_3": {
+      "file": "buildings/industrial/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5144
+    },
+    "buildings/industrial/green_4": {
+      "file": "buildings/industrial/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/industrial/hospital_1": {
+      "file": "buildings/industrial/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/industrial/hospital_2": {
+      "file": "buildings/industrial/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/industrial/hospital_3": {
+      "file": "buildings/industrial/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/hospital_4": {
+      "file": "buildings/industrial/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/housing_1": {
+      "file": "buildings/industrial/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5471
+    },
+    "buildings/industrial/housing_2": {
+      "file": "buildings/industrial/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5409
+    },
+    "buildings/industrial/housing_3": {
+      "file": "buildings/industrial/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/housing_4": {
+      "file": "buildings/industrial/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/mine_1": {
+      "file": "buildings/industrial/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/industrial/mine_2": {
+      "file": "buildings/industrial/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4767
+    },
+    "buildings/industrial/mine_3": {
+      "file": "buildings/industrial/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4294
+    },
+    "buildings/industrial/mine_4": {
+      "file": "buildings/industrial/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/industrial/mine_5": {
+      "file": "buildings/industrial/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/mine_6": {
+      "file": "buildings/industrial/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.638
+    },
+    "buildings/industrial/park_1": {
+      "file": "buildings/industrial/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5388
+    },
+    "buildings/industrial/park_2": {
+      "file": "buildings/industrial/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5302
+    },
+    "buildings/industrial/park_3": {
+      "file": "buildings/industrial/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.559
+    },
+    "buildings/industrial/park_4": {
+      "file": "buildings/industrial/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/park_5": {
+      "file": "buildings/industrial/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5894
+    },
+    "buildings/industrial/park_6": {
+      "file": "buildings/industrial/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.638
+    },
+    "buildings/industrial/police_1": {
+      "file": "buildings/industrial/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/industrial/police_2": {
+      "file": "buildings/industrial/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/industrial/police_3": {
+      "file": "buildings/industrial/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/police_4": {
+      "file": "buildings/industrial/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/power_1": {
+      "file": "buildings/industrial/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5144
+    },
+    "buildings/industrial/power_2": {
+      "file": "buildings/industrial/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/industrial/power_3": {
+      "file": "buildings/industrial/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/power_4": {
+      "file": "buildings/industrial/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/road_4": {
+      "file": "buildings/industrial/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/industrial/school_1": {
+      "file": "buildings/industrial/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/school_2": {
+      "file": "buildings/industrial/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5025
+    },
+    "buildings/industrial/school_3": {
+      "file": "buildings/industrial/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/school_4": {
+      "file": "buildings/industrial/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/industrial/shops_1": {
+      "file": "buildings/industrial/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/industrial/shops_2": {
+      "file": "buildings/industrial/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/industrial/shops_3": {
+      "file": "buildings/industrial/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/industrial/shops_4": {
+      "file": "buildings/industrial/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/information/corp_1": {
+      "file": "buildings/information/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/information/corp_2": {
+      "file": "buildings/information/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/information/corp_3": {
+      "file": "buildings/information/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/information/corp_4": {
+      "file": "buildings/information/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/information/corp_5": {
+      "file": "buildings/information/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7098
+    },
+    "buildings/information/corp_6": {
+      "file": "buildings/information/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.778
+    },
+    "buildings/information/factory_1": {
+      "file": "buildings/information/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/information/factory_2": {
+      "file": "buildings/information/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/information/factory_3": {
+      "file": "buildings/information/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/information/factory_4": {
+      "file": "buildings/information/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/information/factory_5": {
+      "file": "buildings/information/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/information/factory_6": {
+      "file": "buildings/information/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6731
+    },
+    "buildings/information/fire_1": {
+      "file": "buildings/information/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/information/fire_2": {
+      "file": "buildings/information/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/information/fire_3": {
+      "file": "buildings/information/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/information/fire_4": {
+      "file": "buildings/information/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/information/fishery_1": {
+      "file": "buildings/information/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4128
+    },
+    "buildings/information/fishery_2": {
+      "file": "buildings/information/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/information/fishery_3": {
+      "file": "buildings/information/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5491
+    },
+    "buildings/information/fishery_4": {
+      "file": "buildings/information/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/information/fishery_5": {
+      "file": "buildings/information/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5792
+    },
+    "buildings/information/fishery_6": {
+      "file": "buildings/information/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6752
+    },
+    "buildings/information/green_2": {
+      "file": "buildings/information/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/information/green_3": {
+      "file": "buildings/information/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5
+    },
+    "buildings/information/green_4": {
+      "file": "buildings/information/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5738
+    },
+    "buildings/information/hospital_1": {
+      "file": "buildings/information/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/information/hospital_2": {
+      "file": "buildings/information/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/information/hospital_3": {
+      "file": "buildings/information/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/information/hospital_4": {
+      "file": "buildings/information/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6773
+    },
+    "buildings/information/housing_1": {
+      "file": "buildings/information/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.559
+    },
+    "buildings/information/housing_2": {
+      "file": "buildings/information/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5409
+    },
+    "buildings/information/housing_3": {
+      "file": "buildings/information/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/information/housing_4": {
+      "file": "buildings/information/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7098
+    },
+    "buildings/information/mine_1": {
+      "file": "buildings/information/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4628
+    },
+    "buildings/information/mine_2": {
+      "file": "buildings/information/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.543
+    },
+    "buildings/information/mine_3": {
+      "file": "buildings/information/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/information/mine_4": {
+      "file": "buildings/information/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5049
+    },
+    "buildings/information/mine_5": {
+      "file": "buildings/information/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5756
+    },
+    "buildings/information/mine_6": {
+      "file": "buildings/information/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.63
+    },
+    "buildings/information/park_1": {
+      "file": "buildings/information/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/information/park_2": {
+      "file": "buildings/information/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.545
+    },
+    "buildings/information/park_3": {
+      "file": "buildings/information/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.545
+    },
+    "buildings/information/park_4": {
+      "file": "buildings/information/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/information/park_5": {
+      "file": "buildings/information/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5792
+    },
+    "buildings/information/park_6": {
+      "file": "buildings/information/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6752
+    },
+    "buildings/information/police_1": {
+      "file": "buildings/information/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/information/police_2": {
+      "file": "buildings/information/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/information/police_3": {
+      "file": "buildings/information/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5792
+    },
+    "buildings/information/police_4": {
+      "file": "buildings/information/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/information/power_1": {
+      "file": "buildings/information/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.63
+    },
+    "buildings/information/power_2": {
+      "file": "buildings/information/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7055
+    },
+    "buildings/information/power_3": {
+      "file": "buildings/information/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7566
+    },
+    "buildings/information/power_4": {
+      "file": "buildings/information/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7922
+    },
+    "buildings/information/road_4": {
+      "file": "buildings/information/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/information/school_1": {
+      "file": "buildings/information/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4128
+    },
+    "buildings/information/school_2": {
+      "file": "buildings/information/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/information/school_3": {
+      "file": "buildings/information/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5491
+    },
+    "buildings/information/school_4": {
+      "file": "buildings/information/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6341
+    },
+    "buildings/information/shops_1": {
+      "file": "buildings/information/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/information/shops_2": {
+      "file": "buildings/information/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/information/shops_3": {
+      "file": "buildings/information/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/information/shops_4": {
+      "file": "buildings/information/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/iron/corp_1": {
+      "file": "buildings/iron/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/iron/corp_2": {
+      "file": "buildings/iron/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/iron/corp_3": {
+      "file": "buildings/iron/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/corp_4": {
+      "file": "buildings/iron/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/corp_5": {
+      "file": "buildings/iron/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/corp_6": {
+      "file": "buildings/iron/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/factory_1": {
+      "file": "buildings/iron/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/iron/factory_2": {
+      "file": "buildings/iron/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/iron/factory_3": {
+      "file": "buildings/iron/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/factory_4": {
+      "file": "buildings/iron/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/factory_5": {
+      "file": "buildings/iron/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/factory_6": {
+      "file": "buildings/iron/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/fire_1": {
+      "file": "buildings/iron/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/iron/fire_2": {
+      "file": "buildings/iron/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/iron/fire_3": {
+      "file": "buildings/iron/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/fire_4": {
+      "file": "buildings/iron/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/fishery_1": {
+      "file": "buildings/iron/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/iron/fishery_2": {
+      "file": "buildings/iron/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5302
+    },
+    "buildings/iron/fishery_3": {
+      "file": "buildings/iron/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4847
+    },
+    "buildings/iron/fishery_4": {
+      "file": "buildings/iron/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.545
+    },
+    "buildings/iron/fishery_5": {
+      "file": "buildings/iron/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/fishery_6": {
+      "file": "buildings/iron/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/green_2": {
+      "file": "buildings/iron/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/iron/green_3": {
+      "file": "buildings/iron/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/iron/green_4": {
+      "file": "buildings/iron/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/iron/hospital_1": {
+      "file": "buildings/iron/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/iron/hospital_2": {
+      "file": "buildings/iron/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/iron/hospital_3": {
+      "file": "buildings/iron/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/hospital_4": {
+      "file": "buildings/iron/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/housing_1": {
+      "file": "buildings/iron/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/iron/housing_2": {
+      "file": "buildings/iron/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/iron/housing_3": {
+      "file": "buildings/iron/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/iron/housing_4": {
+      "file": "buildings/iron/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/mine_1": {
+      "file": "buildings/iron/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4794
+    },
+    "buildings/iron/mine_2": {
+      "file": "buildings/iron/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/iron/mine_3": {
+      "file": "buildings/iron/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4294
+    },
+    "buildings/iron/mine_4": {
+      "file": "buildings/iron/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/mine_5": {
+      "file": "buildings/iron/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/mine_6": {
+      "file": "buildings/iron/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/park_1": {
+      "file": "buildings/iron/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.557
+    },
+    "buildings/iron/park_2": {
+      "file": "buildings/iron/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5346
+    },
+    "buildings/iron/park_3": {
+      "file": "buildings/iron/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/park_4": {
+      "file": "buildings/iron/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/park_5": {
+      "file": "buildings/iron/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5471
+    },
+    "buildings/iron/park_6": {
+      "file": "buildings/iron/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/police_1": {
+      "file": "buildings/iron/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/iron/police_2": {
+      "file": "buildings/iron/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/iron/police_3": {
+      "file": "buildings/iron/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/police_4": {
+      "file": "buildings/iron/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/power_1": {
+      "file": "buildings/iron/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/iron/power_2": {
+      "file": "buildings/iron/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/iron/power_3": {
+      "file": "buildings/iron/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/power_4": {
+      "file": "buildings/iron/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/road_4": {
+      "file": "buildings/iron/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/iron/school_1": {
+      "file": "buildings/iron/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.495
+    },
+    "buildings/iron/school_2": {
+      "file": "buildings/iron/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5302
+    },
+    "buildings/iron/school_3": {
+      "file": "buildings/iron/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/school_4": {
+      "file": "buildings/iron/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/shops_1": {
+      "file": "buildings/iron/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/iron/shops_2": {
+      "file": "buildings/iron/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/iron/shops_3": {
+      "file": "buildings/iron/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/iron/shops_4": {
+      "file": "buildings/iron/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/medieval/corp_1": {
+      "file": "buildings/medieval/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/medieval/corp_2": {
+      "file": "buildings/medieval/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/medieval/corp_3": {
+      "file": "buildings/medieval/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/corp_4": {
+      "file": "buildings/medieval/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/corp_5": {
+      "file": "buildings/medieval/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/corp_6": {
+      "file": "buildings/medieval/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/factory_1": {
+      "file": "buildings/medieval/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/medieval/factory_2": {
+      "file": "buildings/medieval/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/medieval/factory_3": {
+      "file": "buildings/medieval/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/factory_4": {
+      "file": "buildings/medieval/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/factory_5": {
+      "file": "buildings/medieval/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/factory_6": {
+      "file": "buildings/medieval/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/fire_1": {
+      "file": "buildings/medieval/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/medieval/fire_2": {
+      "file": "buildings/medieval/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/medieval/fire_3": {
+      "file": "buildings/medieval/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/fire_4": {
+      "file": "buildings/medieval/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/fishery_1": {
+      "file": "buildings/medieval/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/medieval/fishery_2": {
+      "file": "buildings/medieval/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/medieval/fishery_3": {
+      "file": "buildings/medieval/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/medieval/fishery_4": {
+      "file": "buildings/medieval/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/fishery_5": {
+      "file": "buildings/medieval/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/fishery_6": {
+      "file": "buildings/medieval/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/green_2": {
+      "file": "buildings/medieval/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/medieval/green_3": {
+      "file": "buildings/medieval/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5144
+    },
+    "buildings/medieval/green_4": {
+      "file": "buildings/medieval/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/medieval/hospital_1": {
+      "file": "buildings/medieval/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/medieval/hospital_2": {
+      "file": "buildings/medieval/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/medieval/hospital_3": {
+      "file": "buildings/medieval/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/hospital_4": {
+      "file": "buildings/medieval/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/housing_1": {
+      "file": "buildings/medieval/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.545
+    },
+    "buildings/medieval/housing_2": {
+      "file": "buildings/medieval/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.528
+    },
+    "buildings/medieval/housing_3": {
+      "file": "buildings/medieval/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/housing_4": {
+      "file": "buildings/medieval/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/mine_1": {
+      "file": "buildings/medieval/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4294
+    },
+    "buildings/medieval/mine_2": {
+      "file": "buildings/medieval/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/medieval/mine_3": {
+      "file": "buildings/medieval/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4294
+    },
+    "buildings/medieval/mine_4": {
+      "file": "buildings/medieval/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/mine_5": {
+      "file": "buildings/medieval/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/mine_6": {
+      "file": "buildings/medieval/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/park_1": {
+      "file": "buildings/medieval/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4847
+    },
+    "buildings/medieval/park_2": {
+      "file": "buildings/medieval/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/medieval/park_3": {
+      "file": "buildings/medieval/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/medieval/park_4": {
+      "file": "buildings/medieval/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/park_5": {
+      "file": "buildings/medieval/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/park_6": {
+      "file": "buildings/medieval/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/police_1": {
+      "file": "buildings/medieval/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/medieval/police_2": {
+      "file": "buildings/medieval/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/medieval/police_3": {
+      "file": "buildings/medieval/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/police_4": {
+      "file": "buildings/medieval/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/power_1": {
+      "file": "buildings/medieval/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5144
+    },
+    "buildings/medieval/power_2": {
+      "file": "buildings/medieval/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5144
+    },
+    "buildings/medieval/power_3": {
+      "file": "buildings/medieval/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/power_4": {
+      "file": "buildings/medieval/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/road_4": {
+      "file": "buildings/medieval/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/medieval/school_1": {
+      "file": "buildings/medieval/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/medieval/school_2": {
+      "file": "buildings/medieval/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/medieval/school_3": {
+      "file": "buildings/medieval/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.543
+    },
+    "buildings/medieval/school_4": {
+      "file": "buildings/medieval/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/medieval/shops_1": {
+      "file": "buildings/medieval/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/medieval/shops_2": {
+      "file": "buildings/medieval/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/medieval/shops_3": {
+      "file": "buildings/medieval/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/medieval/shops_4": {
+      "file": "buildings/medieval/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/mine_1": {
+      "file": "buildings/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5491
+    },
+    "buildings/mine_2": {
+      "file": "buildings/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4712
+    },
+    "buildings/mine_3": {
+      "file": "buildings/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4326
+    },
+    "buildings/mine_4": {
+      "file": "buildings/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/mine_5": {
+      "file": "buildings/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5878
+    },
+    "buildings/mine_6": {
+      "file": "buildings/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6393
+    },
+    "buildings/park_1": {
+      "file": "buildings/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5367
+    },
+    "buildings/park_2": {
+      "file": "buildings/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5258
+    },
+    "buildings/park_3": {
+      "file": "buildings/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.543
+    },
+    "buildings/park_4": {
+      "file": "buildings/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/park_5": {
+      "file": "buildings/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5894
+    },
+    "buildings/park_6": {
+      "file": "buildings/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6814
+    },
+    "buildings/police_1": {
+      "file": "buildings/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/police_2": {
+      "file": "buildings/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/police_3": {
+      "file": "buildings/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5792
+    },
+    "buildings/police_4": {
+      "file": "buildings/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/power_1": {
+      "file": "buildings/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6287
+    },
+    "buildings/power_2": {
+      "file": "buildings/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7055
+    },
+    "buildings/power_3": {
+      "file": "buildings/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.756
+    },
+    "buildings/power_4": {
+      "file": "buildings/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7918
+    },
+    "buildings/renaissance/corp_1": {
+      "file": "buildings/renaissance/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/renaissance/corp_2": {
+      "file": "buildings/renaissance/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/renaissance/corp_3": {
+      "file": "buildings/renaissance/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/corp_4": {
+      "file": "buildings/renaissance/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/corp_5": {
+      "file": "buildings/renaissance/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6367
+    },
+    "buildings/renaissance/corp_6": {
+      "file": "buildings/renaissance/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6367
+    },
+    "buildings/renaissance/factory_1": {
+      "file": "buildings/renaissance/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/renaissance/factory_2": {
+      "file": "buildings/renaissance/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/renaissance/factory_3": {
+      "file": "buildings/renaissance/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/factory_4": {
+      "file": "buildings/renaissance/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/factory_5": {
+      "file": "buildings/renaissance/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5894
+    },
+    "buildings/renaissance/factory_6": {
+      "file": "buildings/renaissance/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6367
+    },
+    "buildings/renaissance/fire_1": {
+      "file": "buildings/renaissance/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/renaissance/fire_2": {
+      "file": "buildings/renaissance/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/renaissance/fire_3": {
+      "file": "buildings/renaissance/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/fire_4": {
+      "file": "buildings/renaissance/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/fishery_1": {
+      "file": "buildings/renaissance/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4925
+    },
+    "buildings/renaissance/fishery_2": {
+      "file": "buildings/renaissance/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.543
+    },
+    "buildings/renaissance/fishery_3": {
+      "file": "buildings/renaissance/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.519
+    },
+    "buildings/renaissance/fishery_4": {
+      "file": "buildings/renaissance/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/fishery_5": {
+      "file": "buildings/renaissance/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5894
+    },
+    "buildings/renaissance/fishery_6": {
+      "file": "buildings/renaissance/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6367
+    },
+    "buildings/renaissance/green_2": {
+      "file": "buildings/renaissance/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/renaissance/green_3": {
+      "file": "buildings/renaissance/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5144
+    },
+    "buildings/renaissance/green_4": {
+      "file": "buildings/renaissance/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5861
+    },
+    "buildings/renaissance/hospital_1": {
+      "file": "buildings/renaissance/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/renaissance/hospital_2": {
+      "file": "buildings/renaissance/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/renaissance/hospital_3": {
+      "file": "buildings/renaissance/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/hospital_4": {
+      "file": "buildings/renaissance/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/housing_1": {
+      "file": "buildings/renaissance/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5346
+    },
+    "buildings/renaissance/housing_2": {
+      "file": "buildings/renaissance/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.528
+    },
+    "buildings/renaissance/housing_3": {
+      "file": "buildings/renaissance/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/housing_4": {
+      "file": "buildings/renaissance/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/mine_1": {
+      "file": "buildings/renaissance/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/renaissance/mine_2": {
+      "file": "buildings/renaissance/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/renaissance/mine_3": {
+      "file": "buildings/renaissance/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4294
+    },
+    "buildings/renaissance/mine_4": {
+      "file": "buildings/renaissance/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/mine_5": {
+      "file": "buildings/renaissance/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/mine_6": {
+      "file": "buildings/renaissance/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6367
+    },
+    "buildings/renaissance/park_1": {
+      "file": "buildings/renaissance/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.559
+    },
+    "buildings/renaissance/park_2": {
+      "file": "buildings/renaissance/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5511
+    },
+    "buildings/renaissance/park_3": {
+      "file": "buildings/renaissance/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.545
+    },
+    "buildings/renaissance/park_4": {
+      "file": "buildings/renaissance/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/park_5": {
+      "file": "buildings/renaissance/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5894
+    },
+    "buildings/renaissance/park_6": {
+      "file": "buildings/renaissance/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6367
+    },
+    "buildings/renaissance/police_1": {
+      "file": "buildings/renaissance/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/renaissance/police_2": {
+      "file": "buildings/renaissance/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/renaissance/police_3": {
+      "file": "buildings/renaissance/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/police_4": {
+      "file": "buildings/renaissance/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/power_1": {
+      "file": "buildings/renaissance/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5144
+    },
+    "buildings/renaissance/power_2": {
+      "file": "buildings/renaissance/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5144
+    },
+    "buildings/renaissance/power_3": {
+      "file": "buildings/renaissance/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/power_4": {
+      "file": "buildings/renaissance/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/road_4": {
+      "file": "buildings/renaissance/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/renaissance/school_1": {
+      "file": "buildings/renaissance/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4541
+    },
+    "buildings/renaissance/school_2": {
+      "file": "buildings/renaissance/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.543
+    },
+    "buildings/renaissance/school_3": {
+      "file": "buildings/renaissance/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/school_4": {
+      "file": "buildings/renaissance/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/renaissance/shops_1": {
+      "file": "buildings/renaissance/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/renaissance/shops_2": {
+      "file": "buildings/renaissance/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4229
+    },
+    "buildings/renaissance/shops_3": {
+      "file": "buildings/renaissance/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5213
+    },
+    "buildings/renaissance/shops_4": {
+      "file": "buildings/renaissance/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5844
+    },
+    "buildings/road_1": {
+      "file": "buildings/road_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/road_2": {
+      "file": "buildings/road_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/road_3": {
+      "file": "buildings/road_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/road_4": {
+      "file": "buildings/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5
+    },
+    "buildings/school_1": {
+      "file": "buildings/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/school_2": {
+      "file": "buildings/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/school_3": {
+      "file": "buildings/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/school_4": {
+      "file": "buildings/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6418
+    },
+    "buildings/shops_1": {
+      "file": "buildings/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/shops_2": {
+      "file": "buildings/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/shops_3": {
+      "file": "buildings/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/shops_4": {
+      "file": "buildings/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/space/corp_1": {
+      "file": "buildings/space/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/space/corp_2": {
+      "file": "buildings/space/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/space/corp_3": {
+      "file": "buildings/space/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/space/corp_4": {
+      "file": "buildings/space/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/space/corp_5": {
+      "file": "buildings/space/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7098
+    },
+    "buildings/space/corp_6": {
+      "file": "buildings/space/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.778
+    },
+    "buildings/space/factory_1": {
+      "file": "buildings/space/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/space/factory_2": {
+      "file": "buildings/space/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/space/factory_3": {
+      "file": "buildings/space/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/space/factory_4": {
+      "file": "buildings/space/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/space/factory_5": {
+      "file": "buildings/space/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/space/factory_6": {
+      "file": "buildings/space/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6731
+    },
+    "buildings/space/fire_1": {
+      "file": "buildings/space/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/space/fire_2": {
+      "file": "buildings/space/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/space/fire_3": {
+      "file": "buildings/space/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/space/fire_4": {
+      "file": "buildings/space/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/space/fishery_1": {
+      "file": "buildings/space/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.557
+    },
+    "buildings/space/fishery_2": {
+      "file": "buildings/space/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/space/fishery_3": {
+      "file": "buildings/space/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5409
+    },
+    "buildings/space/fishery_4": {
+      "file": "buildings/space/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/space/fishery_5": {
+      "file": "buildings/space/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5792
+    },
+    "buildings/space/fishery_6": {
+      "file": "buildings/space/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6752
+    },
+    "buildings/space/green_2": {
+      "file": "buildings/space/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/space/green_3": {
+      "file": "buildings/space/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5
+    },
+    "buildings/space/green_4": {
+      "file": "buildings/space/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5738
+    },
+    "buildings/space/hospital_1": {
+      "file": "buildings/space/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/space/hospital_2": {
+      "file": "buildings/space/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/space/hospital_3": {
+      "file": "buildings/space/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/space/hospital_4": {
+      "file": "buildings/space/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6773
+    },
+    "buildings/space/housing_1": {
+      "file": "buildings/space/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5471
+    },
+    "buildings/space/housing_2": {
+      "file": "buildings/space/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5471
+    },
+    "buildings/space/housing_3": {
+      "file": "buildings/space/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5826
+    },
+    "buildings/space/housing_4": {
+      "file": "buildings/space/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7098
+    },
+    "buildings/space/mine_1": {
+      "file": "buildings/space/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4511
+    },
+    "buildings/space/mine_2": {
+      "file": "buildings/space/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5346
+    },
+    "buildings/space/mine_3": {
+      "file": "buildings/space/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/space/mine_4": {
+      "file": "buildings/space/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5049
+    },
+    "buildings/space/mine_5": {
+      "file": "buildings/space/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5756
+    },
+    "buildings/space/mine_6": {
+      "file": "buildings/space/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.63
+    },
+    "buildings/space/park_1": {
+      "file": "buildings/space/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.528
+    },
+    "buildings/space/park_2": {
+      "file": "buildings/space/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.559
+    },
+    "buildings/space/park_3": {
+      "file": "buildings/space/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5491
+    },
+    "buildings/space/park_4": {
+      "file": "buildings/space/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/space/park_5": {
+      "file": "buildings/space/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5792
+    },
+    "buildings/space/park_6": {
+      "file": "buildings/space/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6752
+    },
+    "buildings/space/police_1": {
+      "file": "buildings/space/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/space/police_2": {
+      "file": "buildings/space/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/space/police_3": {
+      "file": "buildings/space/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5792
+    },
+    "buildings/space/police_4": {
+      "file": "buildings/space/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/space/power_1": {
+      "file": "buildings/space/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.63
+    },
+    "buildings/space/power_2": {
+      "file": "buildings/space/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7055
+    },
+    "buildings/space/power_3": {
+      "file": "buildings/space/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7566
+    },
+    "buildings/space/power_4": {
+      "file": "buildings/space/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.7922
+    },
+    "buildings/space/road_4": {
+      "file": "buildings/space/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4975
+    },
+    "buildings/space/school_1": {
+      "file": "buildings/space/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4821
+    },
+    "buildings/space/school_2": {
+      "file": "buildings/space/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/space/school_3": {
+      "file": "buildings/space/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5409
+    },
+    "buildings/space/school_4": {
+      "file": "buildings/space/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6341
+    },
+    "buildings/space/shops_1": {
+      "file": "buildings/space/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/space/shops_2": {
+      "file": "buildings/space/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/space/shops_3": {
+      "file": "buildings/space/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5097
+    },
+    "buildings/space/shops_4": {
+      "file": "buildings/space/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.6354
+    },
+    "buildings/stone/corp_1": {
+      "file": "buildings/stone/corp_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/stone/corp_2": {
+      "file": "buildings/stone/corp_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/corp_3": {
+      "file": "buildings/stone/corp_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/corp_4": {
+      "file": "buildings/stone/corp_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/corp_5": {
+      "file": "buildings/stone/corp_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/corp_6": {
+      "file": "buildings/stone/corp_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/factory_1": {
+      "file": "buildings/stone/factory_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/stone/factory_2": {
+      "file": "buildings/stone/factory_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/factory_3": {
+      "file": "buildings/stone/factory_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/factory_4": {
+      "file": "buildings/stone/factory_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/factory_5": {
+      "file": "buildings/stone/factory_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/factory_6": {
+      "file": "buildings/stone/factory_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/fire_1": {
+      "file": "buildings/stone/fire_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/stone/fire_2": {
+      "file": "buildings/stone/fire_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/fire_3": {
+      "file": "buildings/stone/fire_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/fire_4": {
+      "file": "buildings/stone/fire_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/fishery_1": {
+      "file": "buildings/stone/fishery_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4094
+    },
+    "buildings/stone/fishery_2": {
+      "file": "buildings/stone/fishery_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5025
+    },
+    "buildings/stone/fishery_3": {
+      "file": "buildings/stone/fishery_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.559
+    },
+    "buildings/stone/fishery_4": {
+      "file": "buildings/stone/fishery_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.545
+    },
+    "buildings/stone/fishery_5": {
+      "file": "buildings/stone/fishery_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/fishery_6": {
+      "file": "buildings/stone/fishery_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/green_2": {
+      "file": "buildings/stone/green_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/stone/green_3": {
+      "file": "buildings/stone/green_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/stone/green_4": {
+      "file": "buildings/stone/green_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5346
+    },
+    "buildings/stone/hospital_1": {
+      "file": "buildings/stone/hospital_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/stone/hospital_2": {
+      "file": "buildings/stone/hospital_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/hospital_3": {
+      "file": "buildings/stone/hospital_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/hospital_4": {
+      "file": "buildings/stone/hospital_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/housing_1": {
+      "file": "buildings/stone/housing_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5073
+    },
+    "buildings/stone/housing_2": {
+      "file": "buildings/stone/housing_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5551
+    },
+    "buildings/stone/housing_3": {
+      "file": "buildings/stone/housing_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4712
+    },
+    "buildings/stone/housing_4": {
+      "file": "buildings/stone/housing_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/mine_1": {
+      "file": "buildings/stone/mine_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4767
+    },
+    "buildings/stone/mine_2": {
+      "file": "buildings/stone/mine_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4767
+    },
+    "buildings/stone/mine_3": {
+      "file": "buildings/stone/mine_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/mine_4": {
+      "file": "buildings/stone/mine_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/mine_5": {
+      "file": "buildings/stone/mine_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/mine_6": {
+      "file": "buildings/stone/mine_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/park_1": {
+      "file": "buildings/stone/park_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.528
+    },
+    "buildings/stone/park_2": {
+      "file": "buildings/stone/park_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5302
+    },
+    "buildings/stone/park_3": {
+      "file": "buildings/stone/park_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5302
+    },
+    "buildings/stone/park_4": {
+      "file": "buildings/stone/park_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/stone/park_5": {
+      "file": "buildings/stone/park_5.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/stone/park_6": {
+      "file": "buildings/stone/park_6.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4925
+    },
+    "buildings/stone/police_1": {
+      "file": "buildings/stone/police_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/stone/police_2": {
+      "file": "buildings/stone/police_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/police_3": {
+      "file": "buildings/stone/police_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/police_4": {
+      "file": "buildings/stone/police_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/power_1": {
+      "file": "buildings/stone/power_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/stone/power_2": {
+      "file": "buildings/stone/power_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/power_3": {
+      "file": "buildings/stone/power_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/power_4": {
+      "file": "buildings/stone/power_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/road_4": {
+      "file": "buildings/stone/road_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5121
+    },
+    "buildings/stone/school_1": {
+      "file": "buildings/stone/school_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4451
+    },
+    "buildings/stone/school_2": {
+      "file": "buildings/stone/school_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5025
+    },
+    "buildings/stone/school_3": {
+      "file": "buildings/stone/school_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.559
+    },
+    "buildings/stone/school_4": {
+      "file": "buildings/stone/school_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.559
+    },
+    "buildings/stone/shops_1": {
+      "file": "buildings/stone/shops_1.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4024
+    },
+    "buildings/stone/shops_2": {
+      "file": "buildings/stone/shops_2.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/shops_3": {
+      "file": "buildings/stone/shops_3.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "buildings/stone/shops_4": {
+      "file": "buildings/stone/shops_4.png",
+      "anchorX": 0.5,
+      "anchorY": 0.4195
+    },
+    "ground/dirt": {
+      "file": "ground/dirt.png"
+    },
+    "ground/empty": {
+      "file": "ground/empty.png"
+    },
+    "ground/grass": {
+      "file": "ground/grass.png"
+    },
+    "ground/grass_alt": {
+      "file": "ground/grass_alt.png"
+    },
+    "ground/road": {
+      "file": "ground/road.png"
+    },
+    "ground/road_line": {
+      "file": "ground/road_line.png"
+    },
+    "ground/water": {
+      "file": "ground/water.png"
+    },
+    "props/car_a": {
+      "file": "props/car_a.png",
+      "anchorX": 0.5,
+      "anchorY": 1.0,
+      "scale": 0.78
+    },
+    "props/car_b": {
+      "file": "props/car_b.png",
+      "anchorX": 0.5,
+      "anchorY": 1.0,
+      "scale": 0.78
+    },
+    "props/citizen": {
+      "file": "props/citizen.png",
+      "anchorX": 0.5,
+      "anchorY": 0.97,
+      "scale": 0.55
+    },
+    "props/tree": {
+      "file": "props/tree.png",
+      "anchorX": 0.5,
+      "anchorY": 1.0,
+      "scale": 0.55
+    },
+    "props/worker": {
+      "file": "props/worker.png",
+      "anchorX": 0.5,
+      "anchorY": 0.97,
+      "scale": 0.55
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "도시 키우기 : 방치형 시티",
+  "short_name": "방치형 시티",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EEF4F8",
+  "theme_color": "#9FD8E8",
+  "icons": []
+}
