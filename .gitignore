@@ -4,3 +4,11 @@ dist/
 *.log
 android/
 ios/
+
+# Unity generated directories
+unity/Library/
+unity/Temp/
+unity/Logs/
+unity/UserSettings/
+unity/obj/
+unity/Builds/
