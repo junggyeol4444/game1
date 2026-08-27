@@ -24,7 +24,7 @@ import {
 } from './economy';
 import { buyFacility as doBuyFacility, facilityCost, facilityUnlocked, isBuilt } from './facilities';
 import { tickEvents } from './events';
-import { PIGGY_GOAL, piggyReady, type IapId, type PurchaseProvider } from './iap';
+import { IAP_PRODUCTS, PIGGY_GOAL, piggyReady, type IapId, type PurchaseProvider } from './iap';
 import {
   allMissionsClaimed,
   bumpMission,
@@ -598,7 +598,10 @@ export class Game {
   // ── 상점 ──
   async purchase(id: IapId): Promise<boolean> {
     if (!this.purchases) return false;
-    const ok = await this.purchases.purchase(`city_idle_${id}`);
+    const product = IAP_PRODUCTS.find((p) => p.id === id);
+    if (!product) return false;
+    if (product.oneTime && this.state.shop.purchases.includes(id)) return false;
+    const ok = await this.purchases.purchase(product.sku);
     if (!ok) return false;
     this.applyPurchase(id);
     this.state.shop.purchases.push(id);

@@ -153,6 +153,27 @@ test('결제 성공하면 지급되고 기록된다', async () => {
   setTimeSource(deviceTime);
 });
 
+test('상점에 등록된 실제 SKU로 결제를 요청한다', async () => {
+  const { Game } = await import('../src/core/game');
+  const g = new Game(provider());
+  let requested = '';
+  g.purchases = { name: 'test', purchase: async (sku) => { requested = sku; return true; }, restore: async () => [] };
+  assert.equal(await g.purchase('starter'), true);
+  assert.equal(requested, 'city_idle_starter_199');
+  setTimeSource(deviceTime);
+});
+
+test('일회성 상품은 두 번 결제하지 않는다', async () => {
+  const { Game } = await import('../src/core/game');
+  const g = new Game(provider());
+  let calls = 0;
+  g.purchases = { name: 'test', purchase: async () => { calls += 1; return true; }, restore: async () => [] };
+  assert.equal(await g.purchase('adFree'), true);
+  assert.equal(await g.purchase('adFree'), false);
+  assert.equal(calls, 1);
+  setTimeSource(deviceTime);
+});
+
 test('광고 제거를 사면 광고 없이도 2배를 받는다', async () => {
   const { Game } = await import('../src/core/game');
   const g = new Game(provider('failed'));
