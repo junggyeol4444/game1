@@ -5,6 +5,7 @@ import { StubPurchaseProvider } from './core/iap';
 import { mountApp } from './ui/app';
 import { loadArt, manifestSize } from './ui/art/assets';
 import { h, qs } from './ui/dom';
+import { configureNativeServices } from './native/bootstrap';
 
 /**
  * 웹/개발 빌드용 광고 스텁.
@@ -65,6 +66,7 @@ game.purchases = new StubPurchaseProvider(async (sku) => {
   // 개발 빌드: 실제 결제 대신 확인창. 네이티브에서는 스토어 결제 플러그인으로 교체.
   return confirm(`[개발용] ${sku} 결제를 진행할까요?\n실제 결제는 발생하지 않습니다.`);
 });
+void configureNativeServices(game);
 
 // 아트 팩을 먼저 불러온다. 없으면 플레이스홀더로 뜬다 (docs/ART.md)
 void loadArt().then(() => {
