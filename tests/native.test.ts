@@ -70,7 +70,7 @@ test('한 번 보여준 광고는 다시 준비될 때까지 isReady 가 false �
 });
 
 test('모듈이 없으면(초기화 실패) 광고가 failed 이고 준비도 안 된다', async () => {
-  const p = new AdMobProvider(ids);
+  const p = new AdMobProvider(ids, null);
   assert.equal(p.isReady('tabBoost'), false);
   assert.equal(await p.showRewarded('tabBoost'), 'failed');
 });
@@ -97,7 +97,9 @@ function rcMod(purchase: () => Promise<unknown>, restore?: () => Promise<unknown
   return {
     Purchases: {
       configure: async () => undefined,
-      getOfferings: async () => ({}),
+      getProducts: async ({ productIdentifiers }: { productIdentifiers: string[] }) => ({
+        products: productIdentifiers.map((identifier) => ({ identifier })),
+      }),
       purchaseStoreProduct: purchase,
       restorePurchases: (restore ?? (async () => ({ customerInfo: { allPurchasedProductIdentifiers: [] } }))) as never,
     },
@@ -109,6 +111,15 @@ test('결제가 성공하면 true', async () => {
   assert.equal(await p.purchase('city_idle_starter_199'), true);
 });
 
+test('스토어에 등록되지 않은 상품이면 결제하지 않는다', async () => {
+  let called = false;
+  const mod = rcMod(async () => { called = true; });
+  mod.Purchases.getProducts = async () => ({ products: [] });
+  const p = new RevenueCatProvider('key', mod as never);
+  assert.equal(await p.purchase('missing'), false);
+  assert.equal(called, false);
+});
+
 test('결제 취소/실패는 false 이고 안 던진다', async () => {
   const p = new RevenueCatProvider('key', rcMod(async () => {
     throw new Error('user cancelled');
@@ -117,7 +128,7 @@ test('결제 취소/실패는 false 이고 안 던진다', async () => {
 });
 
 test('모듈이 없으면 결제가 false', async () => {
-  const p = new RevenueCatProvider('key');
+  const p = new RevenueCatProvider('key', null);
   assert.equal(await p.purchase('x'), false);
   assert.deepEqual(await p.restore(), []);
 });
