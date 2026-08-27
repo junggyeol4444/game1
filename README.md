@@ -18,6 +18,7 @@ npm run build      # 타입체크 + 프로덕션 빌드 -> dist/
 npm run preview    # 빌드 결과 확인
 npm test           # 유닛 테스트 (세이브 · 문명 전환 · 경제 · 표기)
 npm run check      # 타입체크 + 테스트
+npm run check:all  # 푸시 전 전체 검사 (위 검사 + 아트 + Unity + 웹 빌드)
 npm run sim        # 밸런스 시뮬레이터 (npm run sim -- --days 30)
 npm run art:check  # 스프라이트 발주서 / 누락 현황
 

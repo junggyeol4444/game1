@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "description": "도시 발전 방치형 게임 - 코어 프로토타입",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "vite --host",
     "build": "tsc --noEmit && npm test && vite build",
@@ -16,7 +19,8 @@
     "android:sync": "npm run build && cap sync android",
     "android:open": "npm run build && cap sync android && cap open android",
     "test": "tsx --test tests/*.test.ts",
-    "check": "tsc --noEmit && npm test"
+    "check": "tsc --noEmit && npm test",
+    "check:all": "npm run check && npm run art:check && npm run unity:check && vite build"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.0",
