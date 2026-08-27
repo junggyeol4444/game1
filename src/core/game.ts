@@ -611,6 +611,31 @@ export class Game {
     return true;
   }
 
+  /**
+   * 영구 상품 복원. **사용자가 버튼을 눌렀을 때만** 부른다.
+   *
+   * iOS 의 restorePurchases 는 App Store 로그인 창을 띄울 수 있어서, 앱을 켤 때마다
+   * 자동으로 부르면 심사에서 걸린다 (복원은 사용자가 시작해야 한다는 규정).
+   * 소비성 팩(저금통·재개발권 등)은 복원하면 중복 지급되므로 영구 상품만 되살린다.
+   */
+  async restorePurchases(): Promise<'restored' | 'none' | 'unavailable'> {
+    if (!this.purchases) return 'unavailable';
+    const owned = await this.purchases.restore();
+    if (owned.length === 0) return 'none';
+    let changed = false;
+    for (const p of IAP_PRODUCTS) {
+      if (!p.oneTime || !owned.includes(p.sku)) continue;
+      if (this.state.shop.purchases.includes(p.id)) continue;
+      this.applyPurchase(p.id);
+      this.state.shop.purchases.push(p.id);
+      changed = true;
+    }
+    if (!changed) return 'none';
+    this.persist();
+    this.emit('structure');
+    return 'restored';
+  }
+
   private applyPurchase(id: IapId): void {
     const s = this.state;
     const rate = totalCashPerSecond(s);

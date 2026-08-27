@@ -154,6 +154,8 @@ export interface SettingsState {
   reducedMotion: boolean;
   haptics: boolean;
   sound: boolean;
+  /** 배경음. 효과음(sound)과 따로 끈다 — 방치형은 켜 두고 소리만 죽이는 사람이 많다 */
+  bgm: boolean;
 }
 
 export interface ShopState {

@@ -87,7 +87,7 @@ export function createInitialState(now = Date.now()): GameState {
     prestige: { blueprints: 0, upgrades: {}, count: 0, lastAt: now },
     missions: { day: '', ids: [], targets: [], progress: [], claimed: [] },
     attendance: { day: '', streak: 0, claimedToday: false },
-    settings: { notation: 'short', textScale: 1, reducedMotion: false, haptics: true, sound: true },
+    settings: { notation: 'short', textScale: 1, reducedMotion: false, haptics: true, sound: true, bgm: true },
     shop: { adFree: false, piggyValue: 0, piggyBought: 0, purchases: [], firstPurchaseDone: false },
     stats: {
       cashEarnedRun: 0,

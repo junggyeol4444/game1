@@ -1,5 +1,4 @@
 import type { AdPlacement, AdProvider, AdResult } from '../core/ads';
-import { AdMob } from '@capacitor-community/admob';
 
 /**
  * 네이티브(Capacitor) 보상형 광고 어댑터.
@@ -9,7 +8,10 @@ import { AdMob } from '@capacitor-community/admob';
  *   npx cap add android && npx cap add ios
  *
  * 미디에이션은 AdMob 콘솔 또는 AppLovin MAX 에서 붙인다.
- * 플러그인은 앱 의존성으로 설치하며, 테스트에서는 같은 형태의 모듈을 주입한다.
+ *
+ * 플러그인은 **동적 import** 로 가져온다. 정적으로 넣으면 웹 번들에 SDK 가 딸려 들어간다
+ * (실측 +21.8KB). 웹은 스텁을 쓰고 네이티브에서만 실제로 필요하다.
+ * 테스트는 같은 형태의 모듈을 생성자로 주입한다.
  */
 export interface AdUnitIds {
   rewarded: string;
@@ -31,17 +33,20 @@ export class AdMobProvider implements AdProvider {
   private ready = false;
   private preparedFor: AdPlacement | null = null;
 
-  /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용). 기본값은 설치된 AdMob 플러그인 */
+  /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용). 안 넣으면 init() 이 동적 import */
   constructor(
     private ids: AdUnitIds,
-    mod: AdMobModule | null = { AdMob },
+    mod: AdMobModule | null = null,
   ) {
     this.mod = mod;
   }
 
   async init(): Promise<boolean> {
     try {
-      if (!this.mod) return false;
+      if (!this.mod) {
+        const spec = '@capacitor-community/admob';
+        this.mod = (await import(/* @vite-ignore */ spec)) as unknown as AdMobModule;
+      }
       await this.mod.AdMob.initialize({ initializeForTesting: false });
       return true;
     } catch (e) {
@@ -66,9 +71,9 @@ export class AdMobProvider implements AdProvider {
   }
 
   isReady(placement: AdPlacement): boolean {
-    if (!this.ready) return false;
-    // 같은 광고 단위를 공유하는 배치들은 준비된 광고 한 개를 함께 사용할 수 있다.
-    return this.preparedFor === placement || this.unitId(this.preparedFor!) === this.unitId(placement);
+    if (!this.ready || this.preparedFor === null) return false;
+    // 같은 광고 단위를 공유하는 배치들은 준비된 광고 한 개를 함께 쓴다.
+    return this.preparedFor === placement || this.unitId(this.preparedFor) === this.unitId(placement);
   }
 
   async showRewarded(placement: AdPlacement): Promise<AdResult> {

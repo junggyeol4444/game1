@@ -1,5 +1,4 @@
 import type { PurchaseProvider } from '../core/iap';
-import { PRODUCT_CATEGORY, Purchases } from '@revenuecat/purchases-capacitor';
 
 /**
  * 네이티브 일회성 인앱결제 어댑터.
@@ -9,10 +8,17 @@ import { PRODUCT_CATEGORY, Purchases } from '@revenuecat/purchases-capacitor';
  *
  * 주의: 소비성 아이템(스타터팩/저금통)은 반드시 서버 또는 RevenueCat 영수증 검증을 거쳐야 한다.
  */
+/**
+ * SDK 는 **동적 import** 로 가져온다. 정적으로 넣으면 웹 번들에 딸려 들어간다.
+ * `PRODUCT_CATEGORY` 도 값이라 같이 끌려오므로 문자열 상수를 직접 쓴다
+ * (RevenueCat 의 NON_SUBSCRIPTION 열거값과 같다).
+ */
+const NON_SUBSCRIPTION = 'NON_SUBSCRIPTION';
+
 type PurchasesModule = {
   Purchases: {
     configure(opts: { apiKey: string }): Promise<void>;
-    getProducts(opts: { productIdentifiers: string[]; type: PRODUCT_CATEGORY }): Promise<{ products: { identifier: string }[] }>;
+    getProducts(opts: { productIdentifiers: string[]; type: string }): Promise<{ products: { identifier: string }[] }>;
     purchaseStoreProduct(opts: { product: { identifier: string } }): Promise<unknown>;
     restorePurchases(): Promise<{ customerInfo: { allPurchasedProductIdentifiers: string[] } }>;
   };
@@ -22,17 +28,20 @@ export class RevenueCatProvider implements PurchaseProvider {
   readonly name = 'revenuecat';
   private mod: PurchasesModule | null = null;
 
-  /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용) */
+  /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용). 안 넣으면 init() 이 동적 import */
   constructor(
     private apiKey: string,
-    mod: PurchasesModule | null = { Purchases },
+    mod: PurchasesModule | null = null,
   ) {
     this.mod = mod;
   }
 
   async init(): Promise<boolean> {
     try {
-      if (!this.mod) return false;
+      if (!this.mod) {
+        const spec = '@revenuecat/purchases-capacitor';
+        this.mod = (await import(/* @vite-ignore */ spec)) as unknown as PurchasesModule;
+      }
       await this.mod.Purchases.configure({ apiKey: this.apiKey });
       return true;
     } catch (e) {
@@ -46,7 +55,7 @@ export class RevenueCatProvider implements PurchaseProvider {
     try {
       const { products } = await this.mod.Purchases.getProducts({
         productIdentifiers: [sku],
-        type: PRODUCT_CATEGORY.NON_SUBSCRIPTION,
+        type: NON_SUBSCRIPTION,
       });
       const product = products.find((p) => p.identifier === sku);
       if (!product) return false;

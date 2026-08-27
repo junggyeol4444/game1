@@ -46,21 +46,24 @@ let enabled = true;
 let unlocked = false;
 let bgmTimer: ReturnType<typeof setTimeout> | null = null;
 let bgmBus: GainNode | null = null;
+let bgmEnabled = true;
+/** 다음 마디를 예약할 시각 (AudioContext 시계). setTimeout 시계로 이어붙이면 이음매가 들린다 */
+let bgmNextAt = 0;
 const lastAt = new Map<Sfx, number[]>();
 
 /** 설정에서 호출. 끄면 재생 중인 것도 즉시 멈춘다 */
 export function setSoundEnabled(on: boolean): void {
   enabled = on;
   if (master) master.gain.value = on ? 0.5 : 0;
-  if (on && ctx && master) startBgm();
-  if (!on && bgmTimer !== null) {
-    clearTimeout(bgmTimer);
-    bgmTimer = null;
-  }
-  if (!on && bgmBus) {
-    bgmBus.disconnect();
-    bgmBus = null;
-  }
+  if (on) startBgm();
+  else stopBgm();
+}
+
+/** 배경음만 끈다. 효과음은 그대로 */
+export function setBgmEnabled(on: boolean): void {
+  bgmEnabled = on;
+  if (on) startBgm();
+  else stopBgm();
 }
 
 /**
@@ -83,45 +86,75 @@ export function unlockAudio(): void {
 }
 
 // ── 배경음 ──────────────────────────────────────────────────
-// 8마디를 한꺼번에 예약해서 메인 루프가 잠깐 밀려도 박자가 흔들리지 않는다.
-// 짧은 삼각파만 써서 별도 음원 다운로드와 디코딩 비용은 없다.
+// 한 마디씩 앞당겨 예약한다. 예약 시각은 **AudioContext 시계**로 이어 붙인다 —
+// setTimeout 기준으로 매번 `currentTime + 여유` 부터 다시 잡으면 타이머가 밀린 만큼
+// 마디 사이에 공백이 생겨 루프마다 이음매가 들린다.
 const BGM_STEP_SECONDS = 0.48;
 const BGM_MELODY = [0, 4, 7, 4, 2, 5, 9, 5, -2, 2, 5, 2, 0, 4, 7, 9] as const;
 const BGM_ROOTS = [131, 110, 98, 123] as const;
+const BGM_LOOP_SECONDS = BGM_MELODY.length * BGM_STEP_SECONDS;
+/** 다음 루프를 미리 깔아 둘 여유. 타이머가 이만큼 밀려도 소리는 안 끊긴다 */
+const BGM_LOOKAHEAD = 0.5;
 
+function bgmOn(): boolean {
+  return enabled && bgmEnabled && ctx !== null && master !== null;
+}
+
+function stopBgm(): void {
+  if (bgmTimer !== null) {
+    clearTimeout(bgmTimer);
+    bgmTimer = null;
+  }
+  if (bgmBus) {
+    bgmBus.disconnect();
+    bgmBus = null;
+  }
+  bgmNextAt = 0;
+}
+
+/** bgmNextAt 부터 한 루프를 깔고, 다음 루프를 예약한다 */
 function scheduleBgm(): void {
-  if (!enabled || !ctx || !master) return;
-  const start = ctx.currentTime + 0.08;
-  const bgm = ctx.createGain();
-  bgm.gain.value = 0.075;
-  bgm.connect(master);
-  bgmBus = bgm;
+  if (!bgmOn()) {
+    stopBgm();
+    return;
+  }
+  const audio = ctx!;
+  // 버스는 한 번만 만든다. 루프마다 새로 만들면 노드가 계속 쌓인다
+  if (!bgmBus) {
+    bgmBus = audio.createGain();
+    bgmBus.gain.value = 0.075;
+    bgmBus.connect(master!);
+  }
+  const bus = bgmBus;
+
+  // 탭이 백그라운드에 있다 돌아오면 예약 시각이 과거일 수 있다 — 그때만 현재로 당긴다
+  if (bgmNextAt < audio.currentTime) bgmNextAt = audio.currentTime + 0.08;
+  const start = bgmNextAt;
 
   BGM_MELODY.forEach((semitone, i) => {
     const root = BGM_ROOTS[Math.floor(i / 4) % BGM_ROOTS.length];
     const at = start + i * BGM_STEP_SECONDS;
-    tone(ctx!, bgm, at, {
+    tone(audio, bus, at, {
       freq: root * 2 * Math.pow(2, semitone / 12),
       dur: BGM_STEP_SECONDS * 0.78,
       type: 'triangle',
       gain: 0.12,
     });
     if (i % 4 === 0) {
-      tone(ctx!, bgm, at, { freq: root, dur: BGM_STEP_SECONDS * 3.5, type: 'sine', gain: 0.09 });
+      tone(audio, bus, at, { freq: root, dur: BGM_STEP_SECONDS * 3.5, type: 'sine', gain: 0.09 });
     }
   });
 
-  const loopMs = BGM_MELODY.length * BGM_STEP_SECONDS * 1000;
+  bgmNextAt = start + BGM_LOOP_SECONDS;
+  const waitMs = Math.max(0, (bgmNextAt - audio.currentTime - BGM_LOOKAHEAD) * 1000);
   bgmTimer = setTimeout(() => {
-    bgm.disconnect();
-    if (bgmBus === bgm) bgmBus = null;
     bgmTimer = null;
     scheduleBgm();
-  }, loopMs);
+  }, waitMs);
 }
 
 function startBgm(): void {
-  if (bgmTimer !== null || !enabled || !ctx || !master) return;
+  if (bgmTimer !== null || !bgmOn()) return;
   scheduleBgm();
 }
 

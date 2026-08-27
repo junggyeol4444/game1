@@ -28,7 +28,7 @@ import type { BusinessDef, BusinessId, GameState, OfflineReport } from '../core/
 import type { MinigameResult } from './minigames/host';
 import { append, clear, h } from './dom';
 import { exportSave, importSave, wipe } from '../core/save';
-import { setSoundEnabled } from '../core/audio';
+import { setBgmEnabled, setSoundEnabled } from '../core/audio';
 
 const fmt = (state: GameState, v: number) => formatNumber(v, state.settings.notation);
 
@@ -463,9 +463,31 @@ export function showShopSheet(game: Game): void {
           ),
         );
       });
+      // 복원은 사용자가 눌러야 한다 — iOS 는 앱 실행마다 복원하면 로그인 창이 뜬다
+      const restoreBtn = h('button', {
+        class: 'wide',
+        style: { marginTop: '10px' },
+        onclick: async (e: Event) => {
+          const btn = e.currentTarget as HTMLButtonElement;
+          btn.disabled = true;
+          btn.textContent = '복원 중…';
+          const r = await game.restorePurchases();
+          btn.disabled = false;
+          btn.textContent = '구매 복원';
+          if (r === 'restored') {
+            hd.close();
+            showShopSheet(game);
+          } else {
+            game.toast(r === 'none' ? '복원할 구매가 없습니다' : '이 기기에서는 복원할 수 없습니다');
+          }
+        },
+      }, '구매 복원');
       return [
         ...items,
+        restoreBtn,
         h('div', { class: 'small muted center', style: { marginTop: '10px' } },
+          '기기를 바꿨거나 앱을 다시 깔았다면 영구 상품(광고 제거)을 되살립니다.'),
+        h('div', { class: 'small muted center', style: { marginTop: '6px' } },
           '※ 확률형 아이템(가챠)은 판매하지 않습니다.'),
       ];
     },
@@ -513,9 +535,13 @@ export function showSettingsSheet(game: Game): void {
           ['켜기', () => !s.settings.reducedMotion, () => (s.settings.reducedMotion = false)],
           ['줄이기', () => s.settings.reducedMotion, () => (s.settings.reducedMotion = true)],
         ]),
-        seg('소리', [
+        seg('효과음', [
           ['켜기', () => s.settings.sound, () => { s.settings.sound = true; setSoundEnabled(true); }],
           ['끄기', () => !s.settings.sound, () => { s.settings.sound = false; setSoundEnabled(false); }],
+        ]),
+        seg('배경음', [
+          ['켜기', () => s.settings.bgm, () => { s.settings.bgm = true; setBgmEnabled(true); }],
+          ['끄기', () => !s.settings.bgm, () => { s.settings.bgm = false; setBgmEnabled(false); }],
         ]),
         seg('진동', [
           ['켜기', () => s.settings.haptics, () => (s.settings.haptics = true)],

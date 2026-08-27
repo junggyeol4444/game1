@@ -183,7 +183,7 @@ export function serialize(state: GameState): Record<string, unknown> {
       first_purchase: state.shop.firstPurchaseDone,
     },
     settings: {
-      bgm: state.settings.sound,
+      bgm: state.settings.bgm,
       sfx: state.settings.sound,
       haptic: state.settings.haptics,
       font_size: state.settings.textScale,
@@ -354,7 +354,10 @@ export function deserialize(input: Record<string, unknown>): GameState {
     textScale: g(set, 'font_size', 1) as 1 | 1.15 | 1.3,
     reducedMotion: g(set, 'reduced_motion', false),
     haptics: g(set, 'haptic', true),
-    sound: g(set, 'bgm', true),
+    // 스키마는 처음부터 bgm/sfx 두 칸이었는데 둘 다 하나의 sound 로 접혀 있었다.
+    // 배경음을 따로 끄게 되면서 원래 칸대로 쓴다. 예전 세이브는 두 값이 같아서 그대로 살아난다.
+    sound: g(set, 'sfx', true),
+    bgm: g(set, 'bgm', true),
   };
 
   const st = raw.stats as Record<string, unknown> | undefined;

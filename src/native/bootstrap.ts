@@ -1,8 +1,10 @@
 import { Capacitor } from '@capacitor/core';
+import type { AdPlacement } from '../core/ads';
 import type { Game } from '../core/game';
-import { IAP_PRODUCTS } from '../core/iap';
 import { AdMobProvider } from './ads-admob';
 import { RevenueCatProvider } from './purchases';
+
+const AD_PLACEMENTS: AdPlacement[] = ['dailyDouble', 'tabBoost', 'trialManager', 'cashDrop', 'prestigeBonus'];
 
 type NativeEnv = {
   VITE_ADMOB_REWARDED_ID?: string;
@@ -25,8 +27,9 @@ export async function configureNativeServices(
     const ads = new AdMobProvider({ rewarded: adId });
     if (await ads.init()) {
       game.ads.setProvider(ads);
-      // 플러그인은 보상형 광고 한 개를 캐시한다. 모든 배치가 같은 단위를 공유한다.
-      await ads.preload('dailyDouble');
+      // 배치마다 광고 단위를 나눌 수 있으므로(AdUnitIds.perPlacement) 전 배치를 예열한다.
+      // 지금처럼 한 단위를 공유하면 마지막 것만 남지만 isReady 가 단위로 비교해 전부 true 다.
+      for (const p of AD_PLACEMENTS) await ads.preload(p);
     }
   } else {
     console.warn('VITE_ADMOB_REWARDED_ID가 없어 실제 광고를 시작하지 않았습니다.');
@@ -43,14 +46,6 @@ export async function configureNativeServices(
   const purchases = new RevenueCatProvider(key);
   if (!(await purchases.init())) return;
   game.purchases = purchases;
-
-  // 소비성 팩은 복원하면 중복 지급되므로 복원하지 않는다. 영구 상품만 복구한다.
-  const restored = await purchases.restore();
-  const adFreeSku = IAP_PRODUCTS.find((p) => p.id === 'adFree')?.sku;
-  if (adFreeSku && restored.includes(adFreeSku) && !game.state.shop.adFree) {
-    game.state.shop.adFree = true;
-    if (!game.state.shop.purchases.includes('adFree')) game.state.shop.purchases.push('adFree');
-    game.persist();
-    game.emit('structure');
-  }
+  // 복원은 여기서 하지 않는다 — 상점의 '구매 복원' 버튼이 game.restorePurchases() 를 부른다.
+  // iOS 는 앱 실행마다 복원하면 App Store 로그인 창이 떠서 심사에 걸린다.
 }
