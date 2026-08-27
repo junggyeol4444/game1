@@ -1,5 +1,5 @@
 /**
- * 효과음 (아트 문서 10장).
+ * 효과음 + 배경음 (아트 문서 10장).
  *
  * 음원 파일을 쓰지 않고 WebAudio 로 합성한다.
  *  - 에셋 0개 · 용량 0 · 로딩 0. 1인 개발이라 음원 발주 대신 코드로 만든다.
@@ -44,12 +44,23 @@ let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let enabled = true;
 let unlocked = false;
+let bgmTimer: ReturnType<typeof setTimeout> | null = null;
+let bgmBus: GainNode | null = null;
 const lastAt = new Map<Sfx, number[]>();
 
 /** 설정에서 호출. 끄면 재생 중인 것도 즉시 멈춘다 */
 export function setSoundEnabled(on: boolean): void {
   enabled = on;
   if (master) master.gain.value = on ? 0.5 : 0;
+  if (on && ctx && master) startBgm();
+  if (!on && bgmTimer !== null) {
+    clearTimeout(bgmTimer);
+    bgmTimer = null;
+  }
+  if (!on && bgmBus) {
+    bgmBus.disconnect();
+    bgmBus = null;
+  }
 }
 
 /**
@@ -65,9 +76,53 @@ export function unlockAudio(): void {
     master = ctx.createGain();
     master.gain.value = enabled ? 0.5 : 0;
     master.connect(ctx.destination);
+    startBgm();
   } catch {
     ctx = null; // 오디오를 못 쓰는 환경 — 조용히 포기한다
   }
+}
+
+// ── 배경음 ──────────────────────────────────────────────────
+// 8마디를 한꺼번에 예약해서 메인 루프가 잠깐 밀려도 박자가 흔들리지 않는다.
+// 짧은 삼각파만 써서 별도 음원 다운로드와 디코딩 비용은 없다.
+const BGM_STEP_SECONDS = 0.48;
+const BGM_MELODY = [0, 4, 7, 4, 2, 5, 9, 5, -2, 2, 5, 2, 0, 4, 7, 9] as const;
+const BGM_ROOTS = [131, 110, 98, 123] as const;
+
+function scheduleBgm(): void {
+  if (!enabled || !ctx || !master) return;
+  const start = ctx.currentTime + 0.08;
+  const bgm = ctx.createGain();
+  bgm.gain.value = 0.075;
+  bgm.connect(master);
+  bgmBus = bgm;
+
+  BGM_MELODY.forEach((semitone, i) => {
+    const root = BGM_ROOTS[Math.floor(i / 4) % BGM_ROOTS.length];
+    const at = start + i * BGM_STEP_SECONDS;
+    tone(ctx!, bgm, at, {
+      freq: root * 2 * Math.pow(2, semitone / 12),
+      dur: BGM_STEP_SECONDS * 0.78,
+      type: 'triangle',
+      gain: 0.12,
+    });
+    if (i % 4 === 0) {
+      tone(ctx!, bgm, at, { freq: root, dur: BGM_STEP_SECONDS * 3.5, type: 'sine', gain: 0.09 });
+    }
+  });
+
+  const loopMs = BGM_MELODY.length * BGM_STEP_SECONDS * 1000;
+  bgmTimer = setTimeout(() => {
+    bgm.disconnect();
+    if (bgmBus === bgm) bgmBus = null;
+    bgmTimer = null;
+    scheduleBgm();
+  }, loopMs);
+}
+
+function startBgm(): void {
+  if (bgmTimer !== null || !enabled || !ctx || !master) return;
+  scheduleBgm();
 }
 
 // ── 파형 조각 ────────────────────────────────────────────────

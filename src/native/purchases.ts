@@ -1,7 +1,8 @@
 import type { PurchaseProvider } from '../core/iap';
+import { PRODUCT_CATEGORY, Purchases } from '@revenuecat/purchases-capacitor';
 
 /**
- * 네이티브 인앱결제 어댑터 스텁.
+ * 네이티브 일회성 인앱결제 어댑터.
  * 권장: RevenueCat (@revenuecat/purchases-capacitor) — 영수증 검증/구독 관리를 대신 해준다.
  *
  *   npm i @revenuecat/purchases-capacitor
@@ -11,8 +12,8 @@ import type { PurchaseProvider } from '../core/iap';
 type PurchasesModule = {
   Purchases: {
     configure(opts: { apiKey: string }): Promise<void>;
-    getOfferings(): Promise<unknown>;
-    purchaseStoreProduct(opts: unknown): Promise<unknown>;
+    getProducts(opts: { productIdentifiers: string[]; type: PRODUCT_CATEGORY }): Promise<{ products: { identifier: string }[] }>;
+    purchaseStoreProduct(opts: { product: { identifier: string } }): Promise<unknown>;
     restorePurchases(): Promise<{ customerInfo: { allPurchasedProductIdentifiers: string[] } }>;
   };
 };
@@ -24,15 +25,14 @@ export class RevenueCatProvider implements PurchaseProvider {
   /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용) */
   constructor(
     private apiKey: string,
-    mod: PurchasesModule | null = null,
+    mod: PurchasesModule | null = { Purchases },
   ) {
     this.mod = mod;
   }
 
   async init(): Promise<boolean> {
     try {
-      const spec = '@revenuecat/purchases-capacitor';
-      this.mod = (await import(/* @vite-ignore */ spec)) as unknown as PurchasesModule;
+      if (!this.mod) return false;
       await this.mod.Purchases.configure({ apiKey: this.apiKey });
       return true;
     } catch (e) {
@@ -44,7 +44,13 @@ export class RevenueCatProvider implements PurchaseProvider {
   async purchase(sku: string): Promise<boolean> {
     if (!this.mod) return false;
     try {
-      await this.mod.Purchases.purchaseStoreProduct({ product: { identifier: sku } });
+      const { products } = await this.mod.Purchases.getProducts({
+        productIdentifiers: [sku],
+        type: PRODUCT_CATEGORY.NON_SUBSCRIPTION,
+      });
+      const product = products.find((p) => p.identifier === sku);
+      if (!product) return false;
+      await this.mod.Purchases.purchaseStoreProduct({ product });
       return true;
     } catch (e) {
       console.warn('결제 실패/취소', e);

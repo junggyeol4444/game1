@@ -1,6 +1,6 @@
 # Android / iOS 빌드
 
-웹 코어를 Capacitor로 감싸 스토어에 올린다. 게임 로직은 그대로 두고 광고·결제·저장만 네이티브로 바꾼다.
+웹 코어를 Capacitor로 감싸 스토어에 올린다. 게임 로직과 로컬 저장은 그대로 두고 광고·결제만 네이티브로 바꾼다.
 
 ## 1. Capacitor
 
@@ -32,29 +32,13 @@ Android Studio 가 있는 로컬에서 해야 한다. 밸런스 수치가 전부
 
 ## 2. 광고 연동
 
-```bash
-npm i @capacitor-community/admob
-```
-
-`src/main.ts` 에서 광고 제공자를 교체한다:
+SDK는 저장소 의존성에 포함되어 있다. 네이티브 빌드 전에 실제 보상형 광고 단위를 주입한다:
 
 ```ts
-import { AdMobProvider } from './native/ads-admob';
-
-const admob = new AdMobProvider({
-  rewarded: 'ca-app-pub-XXXXXXXX/YYYYYYYY',
-});
-const ok = await admob.init();
-if (ok) {
-  game.ads.setProvider(admob);
-  for (const p of ['dailyDouble', 'tabBoost', 'trialManager', 'cashDrop', 'prestigeBonus'] as const) {
-    void admob.preload(p);
-  }
-}
+VITE_ADMOB_REWARDED_ID=ca-app-pub-XXXXXXXX/YYYYYYYY npm run android:sync
 ```
 
-`src/native/ads-admob.ts` 는 이미 작성되어 있고 `AdProvider` 인터페이스만 구현한다.
-게임 쪽 코드는 한 줄도 바뀌지 않는다.
+`src/native/bootstrap.ts` 가 네이티브 플랫폼을 감지해 광고를 초기화하고 전 배치를 미리 로드한다.
 
 **미디에이션**: AdMob 콘솔에서 AppLovin / Unity Ads / Meta 어댑터를 붙인다.
 안드로이드 광고 수익화 점유율이 AdMob 28% / AppLovin 24% 이므로 둘 중 하나를 메인 미디에이터로 두고 나머지를 네트워크로 넣는 구성이 무난하다.
@@ -68,14 +52,12 @@ if (ok) {
 ## 3. 인앱결제 연동
 
 ```bash
-npm i @revenuecat/purchases-capacitor
+VITE_REVENUECAT_ANDROID_KEY=goog_XXXX npm run android:sync
+# iOS: VITE_REVENUECAT_IOS_KEY=appl_XXXX npm run build && npx cap sync ios
 ```
 
-```ts
-import { RevenueCatProvider } from './native/purchases';
-const rc = new RevenueCatProvider('appl_XXXX / goog_XXXX');
-if (await rc.init()) game.purchases = rc;
-```
+구독은 사용하지 않는다. RevenueCat은 일회성 상품 조회·결제·영수증 검증과 광고 제거 영구
+상품 복원에만 사용한다. 소비성 팩은 복원 시 중복 지급하지 않는다.
 
 스토어에 등록할 상품 ID는 `src/core/iap.ts` 의 `sku` 필드 그대로 쓰면 된다:
 
@@ -89,17 +71,12 @@ if (await rc.init()) game.purchases = rc;
 
 소비성 상품은 **반드시 영수증 검증**을 거쳐야 한다. RevenueCat을 쓰면 서버 없이 해결된다.
 
-## 4. 저장 / 시간 검증
+## 4. 로컬 저장 / 시간
 
-- 현재 저장은 `localStorage`. Capacitor WebView에서도 동작하지만 **앱 데이터 삭제 시 날아간다.**
-  출시 전 `@capacitor/preferences` + 클라우드 백업(Play Games / GameCenter 또는 자체 서버)으로 교체할 것.
-- 오프라인 수익은 기기 시간을 쓴다. `src/core/save.ts` 의 `setTimeSource()` 에 서버 시간을 주입하면 시간 조작이 막힌다.
-
-```ts
-setTimeSource({ now: () => serverNowMs() });
-```
-
-지금은 시간 역행만 감지해 보상을 주지 않고 `state.timeSkew` 에 누적한다.
+- 저장은 의도적으로 `localStorage`만 사용한다. 앱 데이터 삭제나 기기 교체 시 자동 복원하지 않는다.
+- 설정의 세이브 내보내기/가져오기로 사용자가 직접 백업할 수 있다.
+- 오프라인 수익은 기기 시간을 사용한다. 시간이 역행한 구간에는 보상을 지급하지 않고
+  `state.timeSkew`에 기록한다. 서버 시간과 클라우드 저장은 도입하지 않는다.
 
 ## 5. 스토어 제출 전 체크리스트
 
@@ -109,6 +86,4 @@ setTimeSource({ now: () => serverNowMs() });
 - [ ] 개인정보처리방침 URL (광고 SDK 때문에 필수)
 - [ ] 데이터 안전 / App Privacy 설문
 - [ ] 연령 등급 설문 (확률형 아이템 없음 → 국내 확률 표시 의무 대상 아님)
-- [ ] 클라우드 저장
-- [ ] 서버 시간 검증
 - [ ] Play Console 에서 **현재 수수료 조건 직접 확인** (30% → 최저 10% 개편 진행 중, 법적 다툼 중)
