@@ -1,4 +1,5 @@
 import type { AdPlacement, AdProvider, AdResult } from '../core/ads';
+import { AdMob } from '@capacitor-community/admob';
 
 /**
  * 네이티브(Capacitor) 보상형 광고 어댑터.
@@ -8,7 +9,7 @@ import type { AdPlacement, AdProvider, AdResult } from '../core/ads';
  *   npx cap add android && npx cap add ios
  *
  * 미디에이션은 AdMob 콘솔 또는 AppLovin MAX 에서 붙인다.
- * 이 파일은 플러그인이 없어도 빌드가 깨지지 않도록 동적 import 를 쓴다.
+ * 플러그인은 앱 의존성으로 설치하며, 테스트에서는 같은 형태의 모듈을 주입한다.
  */
 export interface AdUnitIds {
   rewarded: string;
@@ -19,7 +20,7 @@ export interface AdUnitIds {
 type AdMobModule = {
   AdMob: {
     initialize(opts: unknown): Promise<void>;
-    prepareRewardVideoAd(opts: unknown): Promise<void>;
+    prepareRewardVideoAd(opts: unknown): Promise<unknown>;
     showRewardVideoAd(): Promise<{ type?: string; amount?: number }>;
   };
 };
@@ -27,20 +28,20 @@ type AdMobModule = {
 export class AdMobProvider implements AdProvider {
   readonly name = 'admob';
   private mod: AdMobModule | null = null;
-  private ready = new Set<AdPlacement>();
+  private ready = false;
+  private preparedFor: AdPlacement | null = null;
 
-  /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용). 안 넣으면 init() 이 동적 import */
+  /** mod 를 넣으면 그걸 쓴다 (테스트 · SDK 교체용). 기본값은 설치된 AdMob 플러그인 */
   constructor(
     private ids: AdUnitIds,
-    mod: AdMobModule | null = null,
+    mod: AdMobModule | null = { AdMob },
   ) {
     this.mod = mod;
   }
 
   async init(): Promise<boolean> {
     try {
-      const spec = '@capacitor-community/admob';
-      this.mod = (await import(/* @vite-ignore */ spec)) as unknown as AdMobModule;
+      if (!this.mod) return false;
       await this.mod.AdMob.initialize({ initializeForTesting: false });
       return true;
     } catch (e) {
@@ -57,28 +58,33 @@ export class AdMobProvider implements AdProvider {
     if (!this.mod) return;
     try {
       await this.mod.AdMob.prepareRewardVideoAd({ adId: this.unitId(placement) });
-      this.ready.add(placement);
+      this.ready = true;
+      this.preparedFor = placement;
     } catch (e) {
       console.warn('광고 로드 실패', placement, e);
     }
   }
 
   isReady(placement: AdPlacement): boolean {
-    return this.ready.has(placement);
+    if (!this.ready) return false;
+    // 같은 광고 단위를 공유하는 배치들은 준비된 광고 한 개를 함께 사용할 수 있다.
+    return this.preparedFor === placement || this.unitId(this.preparedFor!) === this.unitId(placement);
   }
 
   async showRewarded(placement: AdPlacement): Promise<AdResult> {
     if (!this.mod) return 'failed';
     try {
       const res = await this.mod.AdMob.showRewardVideoAd();
-      this.ready.delete(placement);
+      this.ready = false;
+      this.preparedFor = null;
       void this.preload(placement);
       // 보상을 실제로 받았을 때만 completed 다.
       // `(res.amount ?? 0) >= 0` 은 항상 참이라, 광고를 닫아도 보상이 나갔다.
       return (res?.amount ?? 0) > 0 ? 'completed' : 'skipped';
     } catch (e) {
       console.warn('광고 표시 실패', e);
-      this.ready.delete(placement);
+      this.ready = false;
+      this.preparedFor = null;
       void this.preload(placement);
       return 'failed';
     }
